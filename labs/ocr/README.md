@@ -40,13 +40,25 @@ The harness is optional-engine based. Missing engines are reported and skipped.
 Fast smoke test against the real tequila photos:
 
 ```bash
-python labs/ocr/run_stage1.py --case real-tequila --engines trocr --variant-set core
+python labs/ocr/run_stage1.py --case real-tequila --engines easyocr,doctr --variant-set native
+```
+
+Targeted high-resolution rescue pass:
+
+```bash
+python labs/ocr/run_stage1.py --case real-tequila --engines easyocr,doctr --variant-set targeted
+```
+
+Adaptive native-then-detail cascade:
+
+```bash
+python labs/ocr/run_stage1.py --case real-tequila --engines easyocr,doctr --variant-set cascade
 ```
 
 Wide local sweep:
 
 ```bash
-python labs/ocr/run_stage1.py --engines easyocr,doctr,trocr,tesseract-cli --variant-set wide
+python labs/ocr/run_stage1.py --engines easyocr,doctr,trocr,tesseract-cli --variant-set multiscale
 ```
 
 Synthetic packet sweep:
@@ -63,6 +75,17 @@ Each run writes:
 Run outputs are written under `labs/ocr/runs/` and ignored by git.
 
 See `labs/ocr/FINDINGS.md` for the current ranking and next-step recommendation.
+
+## Variant Presets
+
+- `native`: original image only. This tests the OCR engine's internal text detector without external crops.
+- `minimal`: one upscaled grayscale full-image variant.
+- `detail`: lower detail, inverted lower detail, and warning/detail crops.
+- `targeted`: original image plus lower detail, inverted lower detail, and warning/detail crops.
+- `core`: full upscaled image, central label, lower detail, inverted lower detail, and warning/detail crops.
+- `multiscale`: core-style regions plus wide label, horizontal bands, and left/right overlap tiles.
+- `wide`: all available variants, including additional quadrant tiles and adaptive thresholding.
+- `cascade`: run native first and add detail crops only when field scores are below conservative thresholds.
 
 ## How To Interpret Scores
 

@@ -20,6 +20,7 @@ def write_summary(path: Path, payload: dict[str, Any]) -> None:
         rows.append(
             {
                 "engine": result["engine"],
+                "variant_set": result.get("variant_set", payload.get("variant_set", "")),
                 "case": result["case_id"],
                 "kind": result["kind"],
                 "score": result["scores"]["score"],
@@ -47,13 +48,13 @@ def write_summary(path: Path, payload: dict[str, Any]) -> None:
             "",
             "## Results",
             "",
-            "| Engine | Case | Kind | Score | Time ms | Chars | Status | Field Scores |",
-            "|---|---|---|---:|---:|---:|---|---|",
+            "| Engine | Variant Set | Case | Kind | Score | Time ms | Chars | Status | Field Scores |",
+            "|---|---|---|---|---:|---:|---:|---|---|",
         ]
     )
     for row in rows:
         lines.append(
-            f"| {row['engine']} | {row['case']} | {row['kind']} | {row['score']:.3f} | "
+            f"| {row['engine']} | {row['variant_set']} | {row['case']} | {row['kind']} | {row['score']:.3f} | "
             f"{row['ms']} | {row['chars']} | {row['status']} | {row['fields']} |"
         )
     lines.extend(

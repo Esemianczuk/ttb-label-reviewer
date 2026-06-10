@@ -17,6 +17,9 @@ from ocr_lab.engines import resolve_engines
 from ocr_lab.metrics import score_fields
 from ocr_lab.reporting import write_json, write_summary
 
+CASCADE_FIELD_THRESHOLD = 0.9
+CASCADE_OVERALL_THRESHOLD = 0.96
+
 
 def repo_root_from_script() -> Path:
     return Path(__file__).resolve().parents[2]
@@ -41,10 +44,34 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--synthetic-only", action="store_true", help="Skip real local photos and use synthetic packets only.")
     parser.add_argument("--real-only", action="store_true", help="Skip synthetic packets and use real local photos only.")
     parser.add_argument("--limit-cases", type=int, default=0, help="Limit number of cases after filtering.")
-    parser.add_argument("--variant-set", choices=["minimal", "core", "wide"], default="core")
+    parser.add_argument("--variant-set", choices=["native", "minimal", "detail", "targeted", "core", "multiscale", "wide", "cascade"], default="core")
     parser.add_argument("--device", choices=["auto", "cuda", "cpu"], default="auto")
     parser.add_argument("--out-dir", default="", help="Override run output directory.")
     return parser.parse_args()
+
+
+def combined_text_from_outputs(image_outputs: list[dict]) -> str:
+    return "\n\n--- next image ---\n\n".join(output["raw_text"] for output in image_outputs)
+
+
+def should_escalate(scores: dict) -> bool:
+    if scores["score"] < CASCADE_OVERALL_THRESHOLD:
+        return True
+    return any(field_score["score"] < CASCADE_FIELD_THRESHOLD for field_score in scores.get("field_scores", {}).values())
+
+
+def run_case_variant(engine, case, variant_set: str) -> list[dict]:
+    previous_variant_set = engine.variant_set
+    engine.variant_set = variant_set
+    try:
+        image_outputs = []
+        for image in case.images:
+            print(f"  {engine.name}/{variant_set}: {image.path.name}")
+            output = engine.recognize(image.path)
+            image_outputs.append(asdict(output))
+        return image_outputs
+    finally:
+        engine.variant_set = previous_variant_set
 
 
 def main() -> int:
@@ -76,7 +103,8 @@ def main() -> int:
             continue
         try:
             print(f"load {engine_class.name}...")
-            engines.append(engine_class(device=args.device, variant_set=args.variant_set))
+            initial_variant_set = "native" if args.variant_set == "cascade" else args.variant_set
+            engines.append(engine_class(device=args.device, variant_set=initial_variant_set))
         except Exception as exc:
             engine_status[engine_class.name] = {"available": False, "reason": f"load failed: {exc}"}
             print(f"skip {engine_class.name}: load failed: {exc}")
@@ -104,12 +132,24 @@ def main() -> int:
             status = "ok"
             error = ""
             combined_text = ""
+            stage_results = []
             try:
-                for image in case.images:
-                    print(f"  {engine.name}: {image.path.name}")
-                    output = engine.recognize(image.path)
-                    image_outputs.append(asdict(output))
-                combined_text = "\n\n--- next image ---\n\n".join(output["raw_text"] for output in image_outputs)
+                if args.variant_set == "cascade":
+                    native_outputs = run_case_variant(engine, case, "native")
+                    image_outputs.extend(native_outputs)
+                    combined_text = combined_text_from_outputs(image_outputs)
+                    native_scores = score_fields(expected_fields, combined_text)
+                    stage_results.append({"variant_set": "native", "scores": native_scores})
+
+                    if should_escalate(native_scores):
+                        detail_outputs = run_case_variant(engine, case, "detail")
+                        image_outputs.extend(detail_outputs)
+                        combined_text = combined_text_from_outputs(image_outputs)
+                        detail_scores = score_fields(expected_fields, combined_text)
+                        stage_results.append({"variant_set": "detail", "scores": detail_scores})
+                else:
+                    image_outputs = run_case_variant(engine, case, args.variant_set)
+                    combined_text = combined_text_from_outputs(image_outputs)
             except Exception as exc:
                 status = "error"
                 error = f"{type(exc).__name__}: {exc}"
@@ -120,6 +160,7 @@ def main() -> int:
             results.append(
                 {
                     "engine": engine.name,
+                    "variant_set": args.variant_set,
                     "case_id": case.case_id,
                     "title": case.title,
                     "kind": case.kind,
@@ -127,6 +168,7 @@ def main() -> int:
                     "error": error,
                     "duration_ms": duration_ms,
                     "scores": scores,
+                    "stages": stage_results,
                     "images": image_outputs,
                     "expected_fields": expected_fields,
                     "combined_text": combined_text,

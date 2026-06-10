@@ -22,9 +22,40 @@ Timings below exclude model download and engine initialization. They measure the
 | docTR | full image | 0.895 | 326 ms | Very fast and clean, but weaker on warning and alcohol detail than EasyOCR. |
 | TrOCR | core crops | 0.131 | 2321 ms | Poor for whole label/crop OCR because it is a recognizer without text detection. |
 
-Current winner for accuracy: EasyOCR with the core preprocessing variants.
+Initial winner for accuracy before docTR was run on the same crop variants: EasyOCR with the core preprocessing variants.
 
-Current winner for speed: docTR, especially as a first-pass candidate. It may be useful to run docTR first, then escalate to EasyOCR when the stage-one score or required field coverage is low.
+Initial speed winner: docTR on the original image. The follow-up sweep below adds a stronger adaptive recommendation.
+
+## Multiscale Strategy Sweep
+
+Follow-up scope: test whether external multiscale crops improve detector-recognizer engines that already detect text internally.
+
+Real tequila phone-photo results:
+
+| Candidate | Variant Set | Score | Time | Read |
+|---|---:|---:|---:|---|
+| EasyOCR | native | 0.939 | 692 ms | Very strong internal detection baseline, but warning text is weaker. |
+| EasyOCR | targeted | 0.976 | 3829 ms | Best EasyOCR balance. Adds only lower/detail and warning crops. |
+| EasyOCR | cascade | 0.976 | 5353 ms | Same score as targeted, slower on the hard case because it escalates. |
+| EasyOCR | core | 0.977 | 6307 ms | Slightly higher than targeted, slower. |
+| EasyOCR | multiscale | 0.973 | 13299 ms | Slower and slightly worse than core. |
+| docTR | native | 0.895 | 788 ms | Fast, but weaker on alcohol and warning detail. |
+| docTR | targeted | 0.985 | 5411 ms | Best practical docTR balance. |
+| docTR | cascade | 0.985 | 6246 ms | Same score as targeted, slightly slower on the hard case because it escalates. |
+| docTR | core | 0.987 | 9704 ms | Highest practical score, slower than targeted. |
+| docTR | multiscale | 0.988 | 23076 ms | Tiny gain over core, not worth the latency. |
+
+Conclusion: the engines do internally detect text, but external targeted high-resolution crops help significantly on curved bottle photos. Full multiscale tiling does not currently pay for itself.
+
+Recommended strategy:
+
+1. Use `targeted` as the practical fixed default for hard phone photos.
+2. Use docTR `targeted` when accuracy is the priority; use EasyOCR `targeted` when a slightly faster pass is acceptable.
+3. Use docTR `core` as the high-confidence fallback when targeted still leaves required fields weak.
+4. Keep `cascade` as the path for future adaptive escalation, but current thresholds are conservative and often escalate.
+5. Keep `multiscale` and `wide` as debugging or last-resort research modes.
+
+Best default for a high-accuracy local reviewer right now: docTR `targeted`, with docTR `core` as the high-confidence fallback. EasyOCR `targeted` remains a strong alternative and is faster on the real tequila pair.
 
 ## Synthetic Packet Sweep
 
@@ -38,9 +69,11 @@ Using minimal preprocessing across the six synthetic sample packets:
 
 The next default local PyTorch OCR path should be:
 
-1. EasyOCR with core variants for high-accuracy local review.
-2. docTR as a fast candidate and possible first-pass filter.
-3. TrOCR only after a detector produces clean text-line crops, or after a fine-tuning experiment focused on cropped text recognition.
+1. docTR targeted for high-accuracy local review.
+2. docTR core when the targeted pass still leaves required fields weak.
+3. EasyOCR targeted as a strong alternate engine.
+4. Native OCR and cascade once stage-two normalization can make better escalation decisions.
+5. TrOCR only after a detector produces clean text-line crops, or after a fine-tuning experiment focused on cropped text recognition.
 
 The current browser app should not switch directly to PyTorch. The practical browser path is:
 

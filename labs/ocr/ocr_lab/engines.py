@@ -124,13 +124,8 @@ class DocTrEngine(BaseEngine):
         if hasattr(self.predictor, "to"):
             self.predictor = self.predictor.to(self.torch_device)
 
-    def recognize(self, image_path: Path) -> OcrOutput:
-        from doctr.io import DocumentFile
-
-        started = time.perf_counter()
-        document = DocumentFile.from_images(str(image_path))
-        result = self.predictor(document)
-        exported = result.export()
+    @staticmethod
+    def _lines_from_export(exported: dict[str, Any]) -> list[str]:
         lines = []
         for page in exported.get("pages", []):
             for block in page.get("blocks", []):
@@ -139,12 +134,32 @@ class DocTrEngine(BaseEngine):
                     text = " ".join(word for word in words if word)
                     if text:
                         lines.append(text)
+        return lines
+
+    def _recognize_variant(self, variant: Variant) -> list[str]:
+        from doctr.io import DocumentFile
+
+        with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
+            variant.image.save(tmp.name)
+            document = DocumentFile.from_images(tmp.name)
+            result = self.predictor(document)
+        return self._lines_from_export(result.export())
+
+    def recognize(self, image_path: Path) -> OcrOutput:
+        started = time.perf_counter()
+        texts = []
+        variant_stats = []
+        for variant in self._variants(image_path):
+            lines = self._recognize_variant(variant)
+            if lines:
+                texts.append(f"[{variant.variant_id}]\n" + "\n".join(lines))
+            variant_stats.append({"variant": variant.variant_id, "lines": len(lines)})
         return OcrOutput(
             self.name,
             str(image_path),
-            "\n".join(lines),
+            "\n".join(texts),
             round((time.perf_counter() - started) * 1000),
-            {"device": self.torch_device},
+            {"device": self.torch_device, "variants": variant_stats},
         )
 
 
