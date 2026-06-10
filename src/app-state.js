@@ -40,8 +40,12 @@ export function createInitialState() {
   return {
     expected: { ...SAMPLE_EXPECTED_FIELDS },
     images: [],
+    imageStatuses: {},
+    samplePackets: [],
+    selectedSampleId: '',
     review: null,
     isProcessing: false,
+    workerCount: 1,
     progress: [],
     error: '',
   };

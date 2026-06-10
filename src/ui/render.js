@@ -30,24 +30,48 @@ function confidenceText(confidence) {
   return `${Math.round(confidence * 100)}% match confidence`;
 }
 
-function imageList(images) {
+function imageStatusLabel(status) {
+  return {
+    ready: 'Ready',
+    queued: 'Queued',
+    processing: 'Processing',
+    done: 'Done',
+    error: 'Error',
+  }[status] || 'Ready';
+}
+
+function imageList(images, state) {
   if (!images.length) {
     return '<p class="empty-note">No label images selected.</p>';
   }
   return `
-    <div class="image-list">
+    <div class="image-list ${state.isProcessing ? 'is-processing' : ''}">
       ${images
-        .map(
-          (image) => `
-            <figure class="image-thumb">
+        .map((image) => {
+          const status = state.imageStatuses[image.id] || { status: 'ready', message: 'Ready' };
+          const activeClass = status.status === 'processing' ? 'is-active' : 'is-muted';
+          return `
+            <figure class="image-thumb ${state.isProcessing ? activeClass : ''} status-${escapeHtml(status.status)}">
+              <div class="image-preview">
               <img src="${escapeHtml(image.url)}" alt="${escapeHtml(image.name)} preview" />
+                ${
+                  state.isProcessing
+                    ? `<div class="image-overlay">
+                        ${status.status === 'processing' ? '<span class="spinner" aria-hidden="true"></span>' : ''}
+                        <span>${escapeHtml(imageStatusLabel(status.status))}</span>
+                      </div>`
+                    : ''
+                }
+              </div>
               <figcaption>
                 <strong>${escapeHtml(image.name)}</strong>
-                <span>${image.source === 'sample' ? 'Bundled sample' : `${Math.round((image.size || 0) / 1024)} KB`}</span>
+                <span>${image.source === 'sample' ? 'Sample packet' : image.source === 'generated' ? 'Custom generated' : `${Math.round((image.size || 0) / 1024)} KB`}</span>
+                <span class="image-status">${escapeHtml(status.message || imageStatusLabel(status.status))}</span>
+                <button class="icon-button" data-action="remove-image" data-image-id="${escapeHtml(image.id)}" type="button" aria-label="Remove ${escapeHtml(image.name)}">Remove</button>
               </figcaption>
             </figure>
-          `,
-        )
+          `;
+        })
         .join('')}
     </div>
   `;
@@ -135,6 +159,16 @@ function progressPanel(state) {
 }
 
 export function renderApp(state) {
+  const sampleOptions = state.samplePackets
+    .map(
+      (packet) => `
+        <option value="${escapeHtml(packet.id)}" ${packet.id === state.selectedSampleId ? 'selected' : ''}>
+          ${escapeHtml(packet.title)}
+        </option>
+      `,
+    )
+    .join('');
+
   return `
     <main class="app-shell">
       <section class="top-band">
@@ -154,16 +188,28 @@ export function renderApp(state) {
           <section class="panel upload-panel">
             <div class="panel-heading">
               <h2>1. Label Images</h2>
-              <button class="secondary" data-action="load-sample" type="button">Load Sample Packet</button>
+            </div>
+            <div class="sample-picker">
+              <label>
+                Sample Library
+                <select id="sample-select" ${state.samplePackets.length ? '' : 'disabled'}>
+                  ${sampleOptions || '<option>Loading samples...</option>'}
+                </select>
+              </label>
+              <button class="secondary" data-action="load-sample" type="button" ${state.samplePackets.length ? '' : 'disabled'}>Load Sample Packet</button>
             </div>
             <label class="drop-zone" for="image-input" id="drop-zone">
               <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp" multiple />
               <span class="drop-title">Drop front/back label images here</span>
               <span class="drop-subtitle">PNG, JPG/JPEG, or WebP. Multiple images are reviewed together as one label packet.</span>
             </label>
-            ${imageList(state.images)}
             <div class="inline-actions">
+              <button class="secondary" data-action="trigger-upload" type="button">Choose Images</button>
               <button class="secondary" data-action="clear-images" type="button" ${state.images.length ? '' : 'disabled'}>Clear Images</button>
+            </div>
+            ${imageList(state.images, state)}
+            <div class="inline-actions">
+              <button class="secondary" data-action="create-custom" type="button">Create Custom Label Images</button>
             </div>
           </section>
 
@@ -220,6 +266,11 @@ export function renderApp(state) {
             <button class="primary" data-action="run-review" type="button" ${state.images.length && !state.isProcessing ? '' : 'disabled'}>
               ${state.isProcessing ? 'Reviewing...' : 'Review Label'}
             </button>
+            ${
+              state.isProcessing
+                ? `<p class="worker-note">Using up to ${escapeHtml(state.workerCount)} local OCR worker${state.workerCount === 1 ? '' : 's'}.</p>`
+                : ''
+            }
           </section>
           ${progressPanel(state)}
           ${reviewPanel(state.review)}

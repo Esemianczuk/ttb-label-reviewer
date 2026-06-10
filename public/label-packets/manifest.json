@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "packets": [
+    {
+      "id": "old-tom-pass",
+      "title": "Old Tom, passing label",
+      "description": "Synthetic distilled spirits packet with matching front and back evidence.",
+      "expectedOutcome": "PASS",
+      "expectedPath": "label-packets/old-tom-pass/expected.json",
+      "ocrFixturePath": "label-packets/old-tom-pass/ocr-fixture.json",
+      "images": [
+        {
+          "id": "front",
+          "role": "front",
+          "name": "old-tom-pass-front.png",
+          "path": "label-packets/old-tom-pass/front.png",
+          "type": "image/png"
+        },
+        {
+          "id": "back",
+          "role": "back",
+          "name": "old-tom-pass-back.png",
+          "path": "label-packets/old-tom-pass/back.png",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "old-tom-bad-abv",
+      "title": "Old Tom, alcohol mismatch",
+      "description": "Expected 45% ABV, label evidence shows 40% ABV.",
+      "expectedOutcome": "FAIL",
+      "expectedPath": "label-packets/old-tom-bad-abv/expected.json",
+      "ocrFixturePath": "label-packets/old-tom-bad-abv/ocr-fixture.json",
+      "images": [
+        {
+          "id": "front",
+          "role": "front",
+          "name": "old-tom-bad-abv-front.png",
+          "path": "label-packets/old-tom-bad-abv/front.png",
+          "type": "image/png"
+        },
+        {
+          "id": "back",
+          "role": "back",
+          "name": "old-tom-bad-abv-back.png",
+          "path": "label-packets/old-tom-bad-abv/back.png",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "old-tom-missing-warning",
+      "title": "Old Tom, missing warning",
+      "description": "Synthetic packet with matching fields but no government warning.",
+      "expectedOutcome": "FAIL",
+      "expectedPath": "label-packets/old-tom-missing-warning/expected.json",
+      "ocrFixturePath": "label-packets/old-tom-missing-warning/ocr-fixture.json",
+      "images": [
+        {
+          "id": "front",
+          "role": "front",
+          "name": "old-tom-missing-warning-front.png",
+          "path": "label-packets/old-tom-missing-warning/front.png",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "stones-throw-punctuation",
+      "title": "Stone's Throw, punctuation variance",
+      "description": "Brand text differs by case and apostrophe style but should pass.",
+      "expectedOutcome": "PASS",
+      "expectedPath": "label-packets/stones-throw-punctuation/expected.json",
+      "ocrFixturePath": "label-packets/stones-throw-punctuation/ocr-fixture.json",
+      "images": [
+        {
+          "id": "front",
+          "role": "front",
+          "name": "stones-throw-front.png",
+          "path": "label-packets/stones-throw-punctuation/front.png",
+          "type": "image/png"
+        },
+        {
+          "id": "back",
+          "role": "back",
+          "name": "stones-throw-back.png",
+          "path": "label-packets/stones-throw-punctuation/back.png",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "warning-needs-review",
+      "title": "Warning text needs review",
+      "description": "Most warning evidence is present, but required legal text is incomplete.",
+      "expectedOutcome": "NEEDS_REVIEW",
+      "expectedPath": "label-packets/warning-needs-review/expected.json",
+      "ocrFixturePath": "label-packets/warning-needs-review/ocr-fixture.json",
+      "images": [
+        {
+          "id": "front",
+          "role": "front",
+          "name": "warning-review-front.png",
+          "path": "label-packets/warning-needs-review/front.png",
+          "type": "image/png"
+        },
+        {
+          "id": "back",
+          "role": "back",
+          "name": "warning-review-back.png",
+          "path": "label-packets/warning-needs-review/back.png",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "tequila-extracted-synthetic",
+      "title": "Tequila photo extraction, synthetic",
+      "description": "Synthetic packet using text extracted from the local tequila front/back images.",
+      "expectedOutcome": "PASS",
+      "expectedPath": "label-packets/tequila-extracted-synthetic/expected.json",
+      "ocrFixturePath": "label-packets/tequila-extracted-synthetic/ocr-fixture.json",
+      "images": [
+        {
+          "id": "front",
+          "role": "front",
+          "name": "tequila-extracted-front.png",
+          "path": "label-packets/tequila-extracted-synthetic/front.png",
+          "type": "image/png"
+        },
+        {
+          "id": "back",
+          "role": "back",
+          "name": "tequila-extracted-back.png",
+          "path": "label-packets/tequila-extracted-synthetic/back.png",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

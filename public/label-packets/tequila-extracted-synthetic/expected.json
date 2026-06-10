@@ -1,0 +1,11 @@
+{
+  "brandName": "Jose Cuervo Especial",
+  "classType": "Blue Agave Gold Tequila",
+  "alcoholContent": "40% Alc by Vol (80 Proof)",
+  "netContents": "750 mL",
+  "governmentWarningRequired": true,
+  "producerName": "Jose Cuervo",
+  "countryOfOrigin": "Mexico",
+  "applicationId": "SAMPLE-TEQUILA-EXTRACTED",
+  "labelId": "Synthetic packet from local tequila image extraction"
+}

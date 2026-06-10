@@ -41,6 +41,20 @@ npm run preview
 
 Multiple images are reviewed together as one label packet, which lets a front image carry brand/class/ABV/net contents and a back image carry the government warning.
 
+## Sample Packet Library
+
+Sample labels are data-driven. The app loads `public/label-packets/manifest.json`, then reads each packet's images, expected fields, OCR fixture, and expected outcome from that folder.
+
+Current packets include passing labels, alcohol mismatch, missing warning, warning needs review, punctuation/case variance, and a synthetic packet based on text extracted from a local tequila front/back photo set. The public sample images are synthetic.
+
+New samples can be added without changing application logic. See `docs/sample-packets.md`.
+
+## Uploads and Custom Labels
+
+Users can click **Choose Images** or drag images into the label area. New selections are additive, so front/back images can be dropped in separate steps and reviewed as one packet.
+
+The **Create Custom Label Images** button renders a synthetic front/back packet from the expected-fields form. Those generated images stay in the browser session and can be reviewed with the same OCR and validation flow.
+
 ## Local-only Privacy Model
 
 Version 1 runs entirely in the browser. Label images are processed locally and are not uploaded to a server. No cloud OCR, LLM, or external inference API is used at runtime.
@@ -53,7 +67,7 @@ The app does not ask AI to decide whether a label passes. The pipeline is:
 
 1. Load one or more label images in the browser.
 2. Preprocess images with deterministic resizing, grayscale conversion, and contrast enhancement.
-3. Run browser-local OCR using Tesseract.js.
+3. Run browser-local OCR using Tesseract.js with a small worker pool.
 4. Search OCR output for targeted evidence related to the expected application fields.
 5. Apply deterministic validators.
 6. Show field, expected value, extracted evidence, status, reason, and confidence hint.
