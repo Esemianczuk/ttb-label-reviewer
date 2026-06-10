@@ -53,6 +53,19 @@ Jobs with `depends_on` metadata are not scored until predecessor stages finish, 
 
 The assignment response includes `worker_id`, `engine_id`, `score_ms`, `reason_codes`, and the score components documented in `packages/shared/schemas/assignment-decision.schema.json`.
 
+## Phase 6 Worker Join
+
+Workers now join the coordinator through a short-lived manual token:
+
+1. Coordinator issues a token from `POST /api/cluster/join-token`.
+2. The response includes a copyable `python -m ttb_worker --coordinator ... --join-token ...` command.
+3. Worker registration requires a valid token for first join.
+4. Coordinator returns a persistent worker secret once.
+5. Worker stores that secret in `.worker-cache/worker-secret.txt`.
+6. Subsequent heartbeat, claim, complete, fail, and recalibrate calls require `Authorization: Bearer <worker secret>` or the still-valid join token.
+
+mDNS discovery is optional through `zeroconf`. The coordinator does not bind beyond localhost unless `TTB_API_HOST=0.0.0.0` or another explicit host is supplied, and the scripts print a LAN warning in that mode.
+
 ## Phase 4 Worker Agent
 
 `apps/worker` contains a Python worker package runnable with:

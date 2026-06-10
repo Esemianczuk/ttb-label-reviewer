@@ -68,6 +68,18 @@ def upload_image(client: TestClient, application_id: str, session_id: str = "ses
     return response.json()
 
 
+def create_join_token(client: TestClient) -> str:
+    response = client.post("/api/cluster/join-token", json={"ttlSeconds": 300})
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert "python -m ttb_worker" in body["command"]
+    return body["token"]
+
+
+def worker_auth(secret: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {secret}"}
+
+
 def register_worker(client: TestClient) -> dict:
     response = client.post(
         "/api/workers/register",
@@ -77,18 +89,21 @@ def register_worker(client: TestClient) -> dict:
             "platform": "linux",
             "arch": "x86_64",
             "version": "test",
+            "joinToken": create_join_token(client),
             "maxConcurrency": 1,
             "capabilities": {"ocr": True, "evidence_crop": True, "validation": True},
             "calibration": {"ocrMs": 1},
         },
     )
     assert response.status_code == 201, response.text
+    assert response.json()["workerSecret"].startswith("ttb_worker_")
     return response.json()
 
 
-def claim_job(client: TestClient, expected_type: str) -> dict:
+def claim_job(client: TestClient, expected_type: str, secret: str) -> dict:
     response = client.post(
         "/api/workers/worker-test-1/claim",
+        headers=worker_auth(secret),
         json={"sessionId": "session-a", "supportedJobTypes": ["ocr", "evidence_crop", "validation"]},
     )
     assert response.status_code == 200, response.text
@@ -99,8 +114,8 @@ def claim_job(client: TestClient, expected_type: str) -> dict:
     return body["job"]
 
 
-def complete_job(client: TestClient, job_id: str, result: dict) -> dict:
-    response = client.post("/api/workers/worker-test-1/complete", json={"jobId": job_id, "result": result})
+def complete_job(client: TestClient, job_id: str, result: dict, secret: str) -> dict:
+    response = client.post("/api/workers/worker-test-1/complete", headers=worker_auth(secret), json={"jobId": job_id, "result": result})
     assert response.status_code == 200, response.text
     return response.json()
 
@@ -155,18 +170,19 @@ def test_review_queue_fake_worker_and_report_flow(client: TestClient):
     review = review_response.json()
     assert review["status"] == "queued"
 
-    register_worker(client)
+    worker = register_worker(client)
+    secret = worker["workerSecret"]
 
-    ocr_job = claim_job(client, "ocr")
-    heartbeat = client.post("/api/workers/worker-test-1/heartbeat", json={"activeJobs": 1, "status": "online"})
+    ocr_job = claim_job(client, "ocr", secret)
+    heartbeat = client.post("/api/workers/worker-test-1/heartbeat", headers=worker_auth(secret), json={"activeJobs": 1, "status": "online"})
     assert heartbeat.status_code == 200
-    complete_job(client, ocr_job["id"], {"text": "Hollow Ridge", "status": "OCR_DONE"})
+    complete_job(client, ocr_job["id"], {"text": "Hollow Ridge", "status": "OCR_DONE"}, secret)
     assert client.get(f"/api/reviews/{review['id']}", headers=headers()).json()["status"] == "processing"
 
-    evidence_job = claim_job(client, "evidence_crop")
-    complete_job(client, evidence_job["id"], {"crops": [{"field": "brandName", "confidence": 0.99}]})
+    evidence_job = claim_job(client, "evidence_crop", secret)
+    complete_job(client, evidence_job["id"], {"crops": [{"field": "brandName", "confidence": 0.99}]}, secret)
 
-    validation_job = claim_job(client, "validation")
+    validation_job = claim_job(client, "validation", secret)
     final_result = {
         "overallStatus": "PASS",
         "review_result": {
@@ -183,7 +199,7 @@ def test_review_queue_fake_worker_and_report_flow(client: TestClient):
             "notes": "Fake worker completed deterministic validation.",
         },
     }
-    complete_job(client, validation_job["id"], final_result)
+    complete_job(client, validation_job["id"], final_result, secret)
 
     review_after = client.get(f"/api/reviews/{review['id']}", headers=headers()).json()
     assert review_after["status"] == "pass"
@@ -196,6 +212,7 @@ def test_review_queue_fake_worker_and_report_flow(client: TestClient):
 
     empty_claim = client.post(
         "/api/workers/worker-test-1/claim",
+        headers=worker_auth(secret),
         json={"sessionId": "session-a", "supportedJobTypes": ["ocr", "evidence_crop", "validation"]},
     ).json()
     assert empty_claim == {"job": None, "assignment": None}
@@ -205,8 +222,9 @@ def test_job_cancel_releases_worker_capacity(client: TestClient):
     application = create_application(client)
     upload_image(client, application["id"], data=b"\x89PNG\r\n\x1a\ncancel")
     review = client.post(f"/api/applications/{application['id']}/review", json={}, headers=headers()).json()
-    register_worker(client)
-    job = claim_job(client, "ocr")
+    worker = register_worker(client)
+    secret = worker["workerSecret"]
+    job = claim_job(client, "ocr", secret)
 
     cancelled = client.post(f"/api/jobs/{job['id']}/cancel", headers=headers()).json()
     assert cancelled["status"] == "cancelled"

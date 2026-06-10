@@ -41,10 +41,14 @@ The backend serves `browser-demo/dist` from `/` when a production browser build 
 The Python worker agent in `apps/worker` lets trusted local machines register with the coordinator from Linux, macOS, or Windows. It probes host capabilities, calibrates available OCR engines, heartbeats, claims leased jobs, downloads scoped assets, and completes OCR/evidence/validation tasks. Browser clients never process another browser client's uploaded images.
 
 ```bash
-./scripts/dev-worker.sh --session-id local-dev-session
+JOIN_TOKEN="$(curl -sS -X POST http://127.0.0.1:8000/api/cluster/join-token \
+  -H 'Content-Type: application/json' \
+  -d '{"ttlSeconds":900}' | python -c 'import json,sys; print(json.load(sys.stdin)["token"])')"
+./scripts/dev-worker.sh --session-id local-dev-session --join-token "$JOIN_TOKEN"
 ```
 
 The worker always includes a deterministic null OCR engine for demos and tests. If local OCR tooling such as Tesseract is installed, the worker advertises and can use it without making those packages mandatory.
+Manual join tokens are short-lived; the worker receives and stores a persistent secret after registration.
 
 ## Current Repository Layout
 
@@ -119,3 +123,4 @@ The V1 app remains in `browser-demo/`. New shared contracts start in `packages/s
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/DISTRIBUTED_MODE.md](docs/DISTRIBUTED_MODE.md), and [docs/EVALUATOR_GUIDE.md](docs/EVALUATOR_GUIDE.md) for the coordinator and worker shape.
 The Phase 5 hardware-aware scheduler is documented in [docs/SCHEDULER.md](docs/SCHEDULER.md).
+Phase 6 worker join/discovery is documented in [docs/DISTRIBUTED_MODE.md](docs/DISTRIBUTED_MODE.md).

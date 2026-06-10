@@ -7,6 +7,15 @@ cd "$ROOT_DIR"
 export PYTHONPATH="$ROOT_DIR/apps/worker:$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}"
 export TTB_WORKER_COORDINATOR="${TTB_WORKER_COORDINATOR:-http://127.0.0.1:8000}"
 export TTB_WORKER_DATA_DIR="${TTB_WORKER_DATA_DIR:-$ROOT_DIR/.worker-cache}"
+export TTB_WORKER_SECRET_FILE="${TTB_WORKER_SECRET_FILE:-$TTB_WORKER_DATA_DIR/worker-secret.txt}"
+
+EXTRA_ARGS=()
+if [[ -n "${TTB_WORKER_JOIN_TOKEN:-}" ]]; then
+  EXTRA_ARGS+=(--join-token "$TTB_WORKER_JOIN_TOKEN")
+fi
+if [[ -n "${TTB_WORKER_SECRET:-}" ]]; then
+  EXTRA_ARGS+=(--worker-secret "$TTB_WORKER_SECRET")
+fi
 
 python -m ttb_worker \
   --coordinator "$TTB_WORKER_COORDINATOR" \
@@ -14,4 +23,6 @@ python -m ttb_worker \
   --concurrency "${TTB_WORKER_CONCURRENCY:-auto}" \
   --engines "${TTB_WORKER_ENGINES:-auto}" \
   --data-dir "$TTB_WORKER_DATA_DIR" \
+  --secret-file "$TTB_WORKER_SECRET_FILE" \
+  "${EXTRA_ARGS[@]}" \
   "$@"

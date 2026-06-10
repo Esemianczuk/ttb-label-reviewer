@@ -51,13 +51,16 @@ Use the same `X-Session-Id` header for application, asset, job, review, and repo
 Start the backend first, then in another terminal run:
 
 ```bash
-./scripts/dev-worker.sh --session-id local-dev-session
+JOIN_TOKEN="$(curl -sS -X POST http://127.0.0.1:8000/api/cluster/join-token \
+  -H 'Content-Type: application/json' \
+  -d '{"ttlSeconds":900}' | python -c 'import json,sys; print(json.load(sys.stdin)["token"])')"
+./scripts/dev-worker.sh --session-id local-dev-session --join-token "$JOIN_TOKEN"
 ```
 
 For a finite smoke run:
 
 ```bash
-./scripts/dev-worker.sh --session-id local-dev-session --once
+./scripts/dev-worker.sh --session-id local-dev-session --join-token "$JOIN_TOKEN" --once
 ```
 
 The equivalent module command is:
@@ -72,6 +75,8 @@ python -m ttb_worker \
 ```
 
 Use `--probe` to print capability and engine availability JSON without registering.
+
+Use `POST /api/cluster/join-token` whenever you want a fresh manual worker join command. mDNS discovery is optional and skipped when `zeroconf` is not installed.
 
 ## Scheduler Smoke
 

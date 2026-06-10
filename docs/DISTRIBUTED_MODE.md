@@ -4,6 +4,8 @@ Phase 4 adds a Python worker agent that can connect to the local FastAPI coordin
 
 Phase 5 adds hardware-aware assignment scoring. Workers still pull jobs from the coordinator, but the coordinator scores each queued job against every eligible backend worker and only leases a job to the best candidate.
 
+Phase 6 adds secure worker discovery and join. Manual join is the reliable default; mDNS is optional.
+
 ## Start
 
 Terminal 1:
@@ -15,13 +17,16 @@ Terminal 1:
 Terminal 2:
 
 ```bash
-./scripts/dev-worker.sh --session-id local-dev-session
+JOIN_TOKEN="$(curl -sS -X POST http://127.0.0.1:8000/api/cluster/join-token \
+  -H 'Content-Type: application/json' \
+  -d '{"ttlSeconds":900}' | python -c 'import json,sys; print(json.load(sys.stdin)["token"])')"
+./scripts/dev-worker.sh --session-id local-dev-session --join-token "$JOIN_TOKEN"
 ```
 
 The worker can also run once and exit:
 
 ```bash
-./scripts/dev-worker.sh --session-id local-dev-session --once
+./scripts/dev-worker.sh --session-id local-dev-session --join-token "$JOIN_TOKEN" --once
 ```
 
 ## Capabilities
@@ -57,14 +62,50 @@ The worker does not download model weights or require cloud services.
 
 ## Job Flow
 
-1. Worker registers with coordinator capabilities and calibration.
-2. Coordinator scores eligible queued jobs across all online backend workers.
-3. Coordinator leases a queued session-scoped job only when the claiming worker is the best candidate.
-4. Worker downloads needed assets through `/api/assets/{asset_id}/content` with `X-Session-Id`.
-5. Downloaded assets are cached locally and reported on future heartbeats.
-6. OCR jobs return text, confidence, lines, words, timings, and engine metadata.
-7. Evidence jobs return auditable field candidates.
-8. Validation jobs rerun OCR over application assets and return a final deterministic `ReviewResult`.
-9. Heartbeats keep leases alive; failures are reported with structured errors and retryable jobs return to the queue.
+1. Coordinator creates a short-lived join token and displays a copyable `python -m ttb_worker --coordinator ... --join-token ...` command.
+2. Worker registers with the join token, capabilities, and calibration.
+3. Coordinator returns a persistent worker secret once.
+4. Worker saves the secret in `.worker-cache/worker-secret.txt`.
+5. Subsequent heartbeat, claim, complete, fail, and recalibrate calls use `Authorization: Bearer <worker secret>`.
+6. Coordinator scores eligible queued jobs across all online backend workers.
+7. Coordinator leases a queued session-scoped job only when the claiming worker is the best candidate.
+8. Worker downloads needed assets through `/api/assets/{asset_id}/content` with `X-Session-Id`.
+9. Downloaded assets are cached locally and reported on future heartbeats.
+10. OCR jobs return text, confidence, lines, words, timings, and engine metadata.
+11. Evidence jobs return auditable field candidates.
+12. Validation jobs rerun OCR over application assets and return a final deterministic `ReviewResult`.
+13. Heartbeats keep leases alive; failures are reported with structured errors and retryable jobs return to the queue.
 
 See [SCHEDULER.md](SCHEDULER.md) for the assignment score model.
+
+## Discovery
+
+Manual join remains the dependable path:
+
+```bash
+curl -sS -X POST http://127.0.0.1:8000/api/cluster/join-token \
+  -H 'Content-Type: application/json' \
+  -d '{"ttlSeconds":900}' | python -m json.tool
+```
+
+The response includes `coordinatorUrl`, `token`, `expiresAt`, and a ready-to-copy command.
+
+mDNS/zeroconf discovery is optional:
+
+```bash
+python -m pip install -e apps/api[discovery] -e apps/worker[discovery]
+TTB_ENABLE_MDNS=1 TTB_API_HOST=0.0.0.0 ./scripts/dev-local-backend.sh
+python -m ttb_worker --discover --join-token "$JOIN_TOKEN"
+```
+
+The coordinator never binds beyond localhost by default. If `TTB_API_HOST=0.0.0.0` or `::` is used, scripts print a LAN-mode warning.
+
+## Lab Hosts
+
+Use [scripts/register-lab-hosts.example.sh](../scripts/register-lab-hosts.example.sh) to print copyable commands for:
+
+- `eric@bigbertha.sherpa-map.internal`
+- `eric@thevault.sherpa-map.internal`
+- `ssh mac`
+
+It does not SSH or install anything automatically.

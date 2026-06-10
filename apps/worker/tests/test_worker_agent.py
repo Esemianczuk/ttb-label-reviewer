@@ -67,8 +67,19 @@ def create_review(api_client: TestClient) -> dict:
     return review_response.json()
 
 
+def create_join_token(api_client: TestClient) -> str:
+    response = api_client.post("/api/cluster/join-token", json={"ttlSeconds": 300})
+    assert response.status_code == 201, response.text
+    return response.json()["token"]
+
+
+def worker_auth(secret: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {secret}"}
+
+
 def worker_agent(api_client: TestClient, tmp_path: Path) -> WorkerAgent:
-    client = CoordinatorClient("http://testserver", session_id="worker-session", http_client=api_client)
+    join_token = create_join_token(api_client)
+    client = CoordinatorClient("http://testserver", session_id="worker-session", join_token=join_token, http_client=api_client)
     capabilities = {
         "hostname": "pytest-host",
         "platform": "linux",
@@ -87,6 +98,8 @@ def worker_agent(api_client: TestClient, tmp_path: Path) -> WorkerAgent:
             engines="null",
             data_dir=tmp_path / ".worker-cache",
             session_id="worker-session",
+            join_token=join_token,
+            secret_file=tmp_path / ".worker-cache" / "worker-secret.txt",
         ),
         client=client,
         engines=[NullOcrEngine()],
@@ -99,7 +112,10 @@ def test_worker_processes_fake_review_end_to_end(api_client: TestClient, tmp_pat
     agent = worker_agent(api_client, tmp_path)
 
     assert agent.register()["id"] == "worker-pytest"
-    assert api_client.post("/api/workers/worker-pytest/recalibrate").json()["calibration"]["recalibrationStatus"] == "requested"
+    assert agent.client.worker_secret
+    assert (tmp_path / ".worker-cache" / "worker-secret.txt").exists()
+    recalibrate = api_client.post("/api/workers/worker-pytest/recalibrate", headers=worker_auth(agent.client.worker_secret))
+    assert recalibrate.json()["calibration"]["recalibrationStatus"] == "requested"
 
     assert agent.run_once() is True
     assert api_client.get(f"/api/reviews/{review['id']}", headers=headers()).json()["status"] == "processing"
@@ -127,8 +143,9 @@ def test_worker_probe_and_cli_helpers(tmp_path: Path):
             concurrency="auto",
             engines="null",
             data_dir=tmp_path / ".worker-cache",
+            join_token="ttb_join_test",
         ),
-        client=CoordinatorClient("http://unreachable.test", http_client=_NoopClient()),
+        client=CoordinatorClient("http://unreachable.test", join_token="ttb_join_test", http_client=_NoopClient()),
         engines=[NullOcrEngine()],
         capabilities={"hostname": "probe", "platform": "linux", "arch": "x86_64"},
     )

@@ -1,12 +1,25 @@
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import sessionmaker
 
-from .api import routes_applications, routes_assets, routes_health, routes_jobs, routes_reports, routes_reviews, routes_workers, ws_progress
+from .api import (
+    routes_applications,
+    routes_assets,
+    routes_cluster,
+    routes_health,
+    routes_jobs,
+    routes_reports,
+    routes_reviews,
+    routes_workers,
+    ws_progress,
+)
 from .config import Settings, get_settings
+from .core.mdns import MdnsAdvertiser
 from .db import init_db, make_session_factory
 
 
@@ -18,7 +31,21 @@ def create_app(settings: Settings | None = None, session_factory: sessionmaker |
         settings.asset_root.mkdir(parents=True, exist_ok=True)
         init_db(session_factory)
 
-    app = FastAPI(title=settings.app_name, version=settings.version)
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        app.state.mdns_advertiser = None
+        if settings.enable_mdns:
+            advertiser = MdnsAdvertiser("TTB Label Reviewer", settings.host, settings.port)
+            if advertiser.start():
+                app.state.mdns_advertiser = advertiser
+        try:
+            yield
+        finally:
+            advertiser = getattr(app.state, "mdns_advertiser", None)
+            if advertiser:
+                advertiser.stop()
+
+    app = FastAPI(title=settings.app_name, version=settings.version, lifespan=lifespan)
     app.state.settings = settings
     app.state.session_factory = session_factory
 
@@ -34,6 +61,7 @@ def create_app(settings: Settings | None = None, session_factory: sessionmaker |
     app.dependency_overrides[db.get_session] = override_get_session
 
     app.include_router(routes_health.router)
+    app.include_router(routes_cluster.router)
     app.include_router(routes_applications.router)
     app.include_router(routes_jobs.router)
     app.include_router(routes_reviews.router)
@@ -52,7 +80,10 @@ app = create_app()
 
 
 def main() -> None:
-    uvicorn.run("apps.api.app.main:app", host="127.0.0.1", port=8000, reload=False)
+    settings = get_settings()
+    if settings.lan_mode:
+        print("WARNING: LAN mode is enabled. Only run the coordinator on a trusted network.")
+    uvicorn.run("apps.api.app.main:app", host=settings.host, port=settings.port, reload=False)
 
 
 if __name__ == "__main__":

@@ -109,6 +109,7 @@ class WorkerRegister(BaseModel):
     platform: str
     arch: str
     version: str = "unknown"
+    joinToken: str | None = None
     capabilities: dict[str, Any] = Field(default_factory=dict)
     calibration: dict[str, Any] = Field(default_factory=dict)
     maxConcurrency: int = 1
@@ -136,6 +137,32 @@ class WorkerRead(BaseModel):
     createdAt: datetime
 
 
+class WorkerRegisterResponse(WorkerRead):
+    workerSecret: str | None = None
+
+
+class JoinTokenCreate(BaseModel):
+    ttlSeconds: int | None = None
+    coordinatorUrl: str | None = None
+
+
+class JoinTokenRead(BaseModel):
+    token: str
+    expiresAt: datetime
+    coordinatorUrl: str
+    command: str
+    mdnsService: str | None = None
+    warning: str | None = None
+
+
+class ClusterStatusRead(BaseModel):
+    coordinatorUrl: str
+    mdnsEnabled: bool
+    mdnsService: str
+    lanMode: bool
+    warning: str | None = None
+
+
 class JobClaimRequest(BaseModel):
     sessionId: str | None = None
     supportedJobTypes: list[str] = Field(default_factory=lambda: ["ocr", "validation", "evidence_crop", "report"])
@@ -161,4 +188,3 @@ class HealthRead(BaseModel):
     ok: bool
     database: str
     assetRoot: str
-

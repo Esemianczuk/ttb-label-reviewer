@@ -18,11 +18,15 @@ class CoordinatorClient:
         base_url: str,
         *,
         session_id: str | None = None,
+        join_token: str | None = None,
+        worker_secret: str | None = None,
         timeout: float = 30.0,
         http_client: Any | None = None,
     ):
         self.base_url = base_url.rstrip("/")
         self.session_id = session_id
+        self.join_token = join_token
+        self.worker_secret = worker_secret
         self._owns_client = http_client is None
         self.client = http_client or httpx.Client(base_url=self.base_url, timeout=timeout)
 
@@ -34,7 +38,10 @@ class CoordinatorClient:
         return self._request("GET", "/api/health").json()
 
     def register_worker(self, payload: dict[str, Any]) -> dict[str, Any]:
-        return self._request("POST", "/api/workers/register", json=payload).json()
+        response = self._request("POST", "/api/workers/register", json=payload).json()
+        if response.get("workerSecret"):
+            self.worker_secret = response["workerSecret"]
+        return response
 
     def heartbeat(self, worker_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         return self._request("POST", f"/api/workers/{worker_id}/heartbeat", json=payload).json()
@@ -69,7 +76,12 @@ class CoordinatorClient:
 
     def _headers(self, session_id: str | None = None) -> dict[str, str]:
         effective_session_id = session_id or self.session_id
-        return {"X-Session-Id": effective_session_id} if effective_session_id else {}
+        headers = {"X-Session-Id": effective_session_id} if effective_session_id else {}
+        if self.worker_secret:
+            headers["Authorization"] = f"Bearer {self.worker_secret}"
+        if self.join_token:
+            headers["X-Join-Token"] = self.join_token
+        return headers
 
 
 def _safe_json(response) -> Any:

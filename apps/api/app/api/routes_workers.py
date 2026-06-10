@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 
 from .. import models
 from ..api.serializers import job_to_read, worker_to_read
+from ..core.auth import generate_secret, hash_secret, verify_secret
+from ..core.join_tokens import consume_join_token, token_expired
 from ..core.scheduler import claim_next_job
 from ..db import get_session
 from ..schemas import (
@@ -19,6 +21,7 @@ from ..schemas import (
     WorkerHeartbeat,
     WorkerRead,
     WorkerRegister,
+    WorkerRegisterResponse,
 )
 
 router = APIRouter(prefix="/api/workers", tags=["workers"])
@@ -42,9 +45,23 @@ def get_worker(worker_id: str, session: Session = Depends(get_session)):
     return worker_to_read(require_worker(session, worker_id))
 
 
-@router.post("/register", response_model=WorkerRead, status_code=201)
-def register_worker(payload: WorkerRegister, session: Session = Depends(get_session)):
+@router.post("/register", response_model=WorkerRegisterResponse, status_code=201)
+def register_worker(payload: WorkerRegister, request: Request, session: Session = Depends(get_session)):
     worker = session.get(models.Worker, payload.id)
+    existing_secret_valid = bool(worker and worker_secret_authorized(request, worker, session))
+    joined = False
+    if payload.joinToken:
+        joined = consume_join_token(session, payload.joinToken, payload.id)
+    if request.app.state.settings.require_worker_join_token and not existing_secret_valid and not joined:
+        raise HTTPException(status_code=401, detail="A valid worker join token is required.")
+
+    worker_secret = None
+    if not existing_secret_valid:
+        worker_secret = generate_secret("ttb_worker")
+        worker_secret_hash = hash_secret(worker_secret)
+    else:
+        worker_secret_hash = worker.worker_secret_hash if worker else None
+
     if worker:
         worker.hostname = payload.hostname
         worker.platform = payload.platform
@@ -54,6 +71,7 @@ def register_worker(payload: WorkerRegister, session: Session = Depends(get_sess
         worker.capabilities = payload.capabilities
         worker.calibration = payload.calibration
         worker.max_concurrency = payload.maxConcurrency
+        worker.worker_secret_hash = worker_secret_hash
         worker.last_seen_at = models.now_utc()
     else:
         worker = models.Worker(
@@ -66,18 +84,28 @@ def register_worker(payload: WorkerRegister, session: Session = Depends(get_sess
             capabilities=payload.capabilities,
             calibration=payload.calibration,
             max_concurrency=payload.maxConcurrency,
+            worker_secret_hash=worker_secret_hash,
             last_seen_at=models.now_utc(),
         )
         session.add(worker)
-    session.add(models.WorkerEvent(worker_id=worker.id, event_type="worker_registered", payload_json=payload.model_dump(mode="json")))
+    session.add(
+        models.WorkerEvent(
+            worker_id=worker.id,
+            event_type="worker_registered",
+            payload_json=payload.model_dump(mode="json", exclude={"joinToken"}),
+        )
+    )
     session.commit()
     session.refresh(worker)
-    return worker_to_read(worker)
+    response = worker_to_read(worker)
+    response["workerSecret"] = worker_secret
+    return response
 
 
 @router.post("/{worker_id}/heartbeat", response_model=WorkerRead)
 def heartbeat(worker_id: str, payload: WorkerHeartbeat, request: Request, session: Session = Depends(get_session)):
     worker = require_worker(session, worker_id)
+    require_worker_auth(request, worker, session)
     now = models.now_utc()
     worker.status = payload.status
     worker.active_jobs = payload.activeJobs
@@ -102,8 +130,9 @@ def heartbeat(worker_id: str, payload: WorkerHeartbeat, request: Request, sessio
 
 
 @router.post("/{worker_id}/recalibrate", response_model=WorkerRead)
-def recalibrate(worker_id: str, session: Session = Depends(get_session)):
+def recalibrate(worker_id: str, request: Request, session: Session = Depends(get_session)):
     worker = require_worker(session, worker_id)
+    require_worker_auth(request, worker, session)
     calibration = dict(worker.calibration or {})
     calibration["recalibrationRequestedAt"] = models.now_utc().isoformat()
     calibration["recalibrationStatus"] = "requested"
@@ -124,6 +153,7 @@ def recalibrate(worker_id: str, session: Session = Depends(get_session)):
 @router.post("/{worker_id}/claim", response_model=JobClaimResponse)
 def claim(worker_id: str, payload: JobClaimRequest, request: Request, session: Session = Depends(get_session)):
     worker = require_worker(session, worker_id)
+    require_worker_auth(request, worker, session)
     job, assignment = claim_next_job(
         session,
         worker=worker,
@@ -141,8 +171,9 @@ def claim(worker_id: str, payload: JobClaimRequest, request: Request, session: S
 
 
 @router.post("/{worker_id}/complete", response_model=JobRead)
-def complete(worker_id: str, payload: JobCompleteRequest, session: Session = Depends(get_session)):
+def complete(worker_id: str, payload: JobCompleteRequest, request: Request, session: Session = Depends(get_session)):
     worker = require_worker(session, worker_id)
+    require_worker_auth(request, worker, session)
     job = session.get(models.Job, payload.jobId)
     if not job or job.assigned_worker_id != worker.id:
         raise HTTPException(status_code=404, detail="Assigned job not found.")
@@ -175,8 +206,9 @@ def complete(worker_id: str, payload: JobCompleteRequest, session: Session = Dep
 
 
 @router.post("/{worker_id}/fail", response_model=JobRead)
-def fail(worker_id: str, payload: JobFailRequest, session: Session = Depends(get_session)):
+def fail(worker_id: str, payload: JobFailRequest, request: Request, session: Session = Depends(get_session)):
     worker = require_worker(session, worker_id)
+    require_worker_auth(request, worker, session)
     job = session.get(models.Job, payload.jobId)
     if not job or job.assigned_worker_id != worker.id:
         raise HTTPException(status_code=404, detail="Assigned job not found.")
@@ -197,3 +229,31 @@ def fail(worker_id: str, payload: JobFailRequest, session: Session = Depends(get
     session.commit()
     session.refresh(job)
     return job_to_read(job)
+
+
+def require_worker_auth(request: Request, worker: models.Worker, session: Session) -> None:
+    if worker_secret_authorized(request, worker, session):
+        return
+    raise HTTPException(status_code=401, detail="A valid worker secret or join token is required.")
+
+
+def worker_secret_authorized(request: Request, worker: models.Worker, session: Session) -> bool:
+    bearer = bearer_token(request)
+    if verify_secret(bearer, worker.worker_secret_hash):
+        return True
+    join_token = request.headers.get("X-Join-Token")
+    if not join_token:
+        return False
+    now = models.now_utc()
+    for record in session.scalars(select(models.WorkerJoinToken).where(models.WorkerJoinToken.worker_id == worker.id)).all():
+        if not token_expired(record.expires_at, now) and verify_secret(join_token, record.token_hash):
+            return True
+    return False
+
+
+def bearer_token(request: Request) -> str | None:
+    authorization = request.headers.get("Authorization", "")
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        return None
+    return token.strip()

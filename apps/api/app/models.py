@@ -113,7 +113,19 @@ class Worker(Base):
     calibration: Mapped[dict] = mapped_column(json_column_type(), default=dict)
     active_jobs: Mapped[int] = mapped_column(Integer, default=0)
     max_concurrency: Mapped[int] = mapped_column(Integer, default=1)
+    worker_secret_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
     last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class WorkerJoinToken(Base):
+    __tablename__ = "worker_join_tokens"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    token_hash: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    worker_id: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
 

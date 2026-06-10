@@ -25,6 +25,9 @@ class WorkerConfig:
     engines: str = "auto"
     data_dir: Path = Path(".worker-cache")
     session_id: str | None = None
+    join_token: str | None = None
+    worker_secret: str | None = None
+    secret_file: Path | None = None
     poll_interval_seconds: float = 1.0
     heartbeat_interval_seconds: float = 5.0
     recalibrate: bool = False
@@ -41,7 +44,13 @@ class WorkerAgent:
     ):
         self.config = config
         self.config.data_dir.mkdir(parents=True, exist_ok=True)
-        self.client = client or CoordinatorClient(config.coordinator, session_id=config.session_id)
+        loaded_secret = config.worker_secret or load_worker_secret(config.secret_file)
+        self.client = client or CoordinatorClient(
+            config.coordinator,
+            session_id=config.session_id,
+            join_token=config.join_token,
+            worker_secret=loaded_secret,
+        )
         self.capabilities = capabilities or probe_capabilities(config.coordinator, config.data_dir)
         self.engines = engines or build_engines(config.engines, self.capabilities)
         self.capabilities["engines"] = inspect_engines(config.engines, self.capabilities)
@@ -62,11 +71,14 @@ class WorkerAgent:
             "platform": platform_name,
             "arch": arch,
             "version": "0.1.0",
+            "joinToken": self.config.join_token,
             "capabilities": self._registration_capabilities(),
             "calibration": self.calibration,
             "maxConcurrency": self.max_concurrency,
         }
         response = self.client.register_worker(payload)
+        if response.get("workerSecret"):
+            save_worker_secret(self.config.secret_file, response["workerSecret"])
         self.registered = True
         self.heartbeat.mark_sent()
         return response
@@ -188,3 +200,21 @@ def cached_asset_ids(cache_dir: Path) -> list[str]:
     if not cache_dir.exists():
         return []
     return sorted(path.stem for path in cache_dir.glob("*.bin") if path.is_file())
+
+
+def load_worker_secret(secret_file: Path | None) -> str | None:
+    if not secret_file or not secret_file.exists():
+        return None
+    value = secret_file.read_text(encoding="utf-8").strip()
+    return value or None
+
+
+def save_worker_secret(secret_file: Path | None, secret: str) -> None:
+    if not secret_file:
+        return
+    secret_file.parent.mkdir(parents=True, exist_ok=True)
+    secret_file.write_text(secret + "\n", encoding="utf-8")
+    try:
+        secret_file.chmod(0o600)
+    except OSError:
+        pass

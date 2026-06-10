@@ -8,11 +8,16 @@ from pathlib import Path
 from .agent import WorkerAgent, WorkerConfig
 from .capabilities import probe_capabilities
 from .engines import inspect_engines
+from .transport.mdns import discover_coordinators
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m ttb_worker", description="Run a local TTB Label Reviewer worker agent.")
     parser.add_argument("--coordinator", default="http://127.0.0.1:8000", help="Coordinator base URL.")
+    parser.add_argument("--discover", action="store_true", help="Discover a LAN coordinator with optional mDNS/zeroconf.")
+    parser.add_argument("--join-token", default=None, help="Short-lived coordinator join token for first registration.")
+    parser.add_argument("--worker-secret", default=None, help="Persistent worker secret. Prefer --secret-file for normal use.")
+    parser.add_argument("--secret-file", default=None, help="Path for storing the persistent worker secret.")
     parser.add_argument("--name", default="auto", help="Worker id, or auto for a generated id.")
     parser.add_argument("--concurrency", default="auto", help="Maximum concurrent jobs, or auto.")
     parser.add_argument("--engines", default="auto", help="Comma-separated OCR engines, or auto.")
@@ -30,19 +35,30 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     data_dir = Path(args.data_dir).resolve()
+    coordinator = args.coordinator
+    if args.discover:
+        discovered = discover_coordinators()
+        if not discovered:
+            print(json.dumps({"discovered": False, "message": "No mDNS coordinator found; use --coordinator and --join-token."}))
+            return 2
+        coordinator = discovered[0].url
+
     if args.probe:
-        capabilities = probe_capabilities(args.coordinator, data_dir)
+        capabilities = probe_capabilities(coordinator, data_dir)
         capabilities["engines"] = inspect_engines(args.engines, capabilities)
         print(json.dumps(capabilities, indent=2, sort_keys=True))
         return 0
 
     config = WorkerConfig(
-        coordinator=args.coordinator,
+        coordinator=coordinator,
         name=args.name,
         concurrency=args.concurrency,
         engines=args.engines,
         data_dir=data_dir,
         session_id=args.session_id,
+        join_token=args.join_token,
+        worker_secret=args.worker_secret,
+        secret_file=Path(args.secret_file).resolve() if args.secret_file else data_dir / "worker-secret.txt",
         poll_interval_seconds=args.poll_interval,
         heartbeat_interval_seconds=args.heartbeat_interval,
         recalibrate=args.recalibrate,
