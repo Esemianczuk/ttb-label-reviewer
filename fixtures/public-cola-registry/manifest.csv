@@ -1,0 +1,7 @@
+fixture_id,ttb_id,brand_name,class_type,product_type,asset_count,record_dir,expected_json
+ttb_19344001000769_beer-drinking-is-not-a-crime,19344001000769,BEER DRINKING IS NOT A CRIME,ALE,malt_beverage,2,records/19344001000769,records/19344001000769/expected.json
+ttb_20010001000197_sunstone-winery,20010001000197,SUNSTONE WINERY,TABLE WHITE WINE,wine,3,records/20010001000197,records/20010001000197/expected.json
+ttb_20010001000803_cutwater,20010001000803,CUTWATER,OTHER SPECIALTIES & PROPRIETARIES,distilled_spirits,2,records/20010001000803,records/20010001000803/expected.json
+ttb_20014001001179_what-the-phoque,20014001001179,WHAT THE PHOQUE,TABLE RED WINE,wine,3,records/20014001001179,records/20014001001179/expected.json
+ttb_20016001000598_monaco,20016001000598,MONACO,VODKA SPECIALTIES,distilled_spirits,2,records/20016001000598,records/20016001000598/expected.json
+ttb_20041001000838_natural-light,20041001000838,NATURAL LIGHT,MALT BEVERAGES SPECIALITIES - FLAVORED,malt_beverage,2,records/20041001000838,records/20041001000838/expected.json

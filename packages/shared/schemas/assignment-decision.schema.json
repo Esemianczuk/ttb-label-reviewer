@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/ttb-label-reviewer/assignment-decision.schema.json",
+  "title": "AssignmentDecision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["worker_id", "engine_id", "score_ms", "reason_codes", "estimated_components"],
+  "properties": {
+    "worker_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "engine_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "score_ms": {
+      "type": "number",
+      "minimum": 0
+    },
+    "reason_codes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "estimated_components": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "queue_penalty_ms",
+        "network_transfer_ms",
+        "disk_penalty_ms",
+        "model_warmup_penalty_ms",
+        "ocr_estimate_ms",
+        "reliability_penalty_ms",
+        "session_fairness_penalty_ms"
+      ],
+      "properties": {
+        "queue_penalty_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "network_transfer_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "disk_penalty_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "model_warmup_penalty_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ocr_estimate_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reliability_penalty_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "session_fairness_penalty_ms": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

@@ -1,31 +1,26 @@
-# Logs
-logs
+fixtures/public-cola-registry/bulk/
+tools/ttb_collector/cache/
+
+**/node_modules/
+**/dist/
+**/.vite/
+**/.cache/
+**/coverage/
+**/playwright-report/
+**/test-results/
 *.log
-.demo-server.pid
-.easyocr-service.pid
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-__pycache__
+__pycache__/
 *.py[cod]
-.venv-ocr-lab
-labs/ocr/runs
-labs/ocr/model-cache
+.pytest_cache/
+.venv/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.traineddata
+/*.png
+data/
+.worker-cache/
+benchmarks/results/

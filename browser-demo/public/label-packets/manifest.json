@@ -1,0 +1,221 @@
+{
+  "version": 1,
+  "packets": [
+    {
+      "id": "hollow-ridge-bourbon",
+      "title": "Hollow Ridge bourbon COLA sheet",
+      "description": "Synthetic TTB/COLA submission sheet for a bourbon application.",
+      "expectedOutcome": "PASS",
+      "expectedPath": "label-packets/hollow-ridge-bourbon/expected.json",
+      "ocrFixturePath": "label-packets/hollow-ridge-bourbon/ocr-fixture.json",
+      "useFixtureByDefault": true,
+      "images": [
+        {
+          "id": "sheet",
+          "role": "cola-sheet",
+          "name": "hollow-ridge-bourbon-cola-sheet.png",
+          "path": "label-packets/hollow-ridge-bourbon/cola-sheet.png",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "highland-coast-lightkeeper-gin",
+      "title": "Highland Coast Lightkeeper Gin COLA sheet",
+      "description": "Synthetic TTB/COLA submission sheet for a gin application.",
+      "expectedOutcome": "PASS",
+      "expectedPath": "label-packets/highland-coast-lightkeeper-gin/expected.json",
+      "ocrFixturePath": "label-packets/highland-coast-lightkeeper-gin/ocr-fixture.json",
+      "useFixtureByDefault": true,
+      "images": [
+        {
+          "id": "sheet",
+          "role": "cola-sheet",
+          "name": "highland-coast-lightkeeper-gin-cola-sheet.png",
+          "path": "label-packets/highland-coast-lightkeeper-gin/cola-sheet.png",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "tideline-california-gin",
+      "title": "Tideline California Gin COLA sheet",
+      "description": "Synthetic TTB/COLA submission sheet with clean application fields and label warning evidence.",
+      "expectedOutcome": "PASS",
+      "expectedPath": "label-packets/tideline-california-gin/expected.json",
+      "ocrFixturePath": "label-packets/tideline-california-gin/ocr-fixture.json",
+      "useFixtureByDefault": true,
+      "images": [
+        {
+          "id": "sheet",
+          "role": "cola-sheet",
+          "name": "tideline-california-gin-cola-sheet.png",
+          "path": "label-packets/tideline-california-gin/cola-sheet.png",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "riverlight-rye-whiskey",
+      "title": "Riverlight rye whiskey COLA sheet",
+      "description": "Synthetic TTB/COLA submission sheet for a rye whiskey application.",
+      "expectedOutcome": "PASS",
+      "expectedPath": "label-packets/riverlight-rye-whiskey/expected.json",
+      "ocrFixturePath": "label-packets/riverlight-rye-whiskey/ocr-fixture.json",
+      "useFixtureByDefault": true,
+      "images": [
+        {
+          "id": "sheet",
+          "role": "cola-sheet",
+          "name": "riverlight-rye-whiskey-cola-sheet.png",
+          "path": "label-packets/riverlight-rye-whiskey/cola-sheet.png",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "sundaze-hard-seltzer",
+      "title": "Sundaze hard seltzer COLA sheet",
+      "description": "Synthetic TTB/COLA submission sheet for a six-pack hard seltzer application.",
+      "expectedOutcome": "PASS",
+      "expectedPath": "label-packets/sundaze-hard-seltzer/expected.json",
+      "ocrFixturePath": "label-packets/sundaze-hard-seltzer/ocr-fixture.json",
+      "useFixtureByDefault": true,
+      "images": [
+        {
+          "id": "sheet",
+          "role": "cola-sheet",
+          "name": "sundaze-hard-seltzer-cola-sheet.png",
+          "path": "label-packets/sundaze-hard-seltzer/cola-sheet.png",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "horizon-point-sunset-reserve",
+      "title": "Horizon Point Sunset Reserve COLA sheet",
+      "description": "Synthetic TTB/COLA submission sheet with front, back, side, and neck labels.",
+      "expectedOutcome": "PASS",
+      "expectedPath": "label-packets/horizon-point-sunset-reserve/expected.json",
+      "ocrFixturePath": "label-packets/horizon-point-sunset-reserve/ocr-fixture.json",
+      "useFixtureByDefault": true,
+      "images": [
+        {
+          "id": "sheet",
+          "role": "cola-sheet",
+          "name": "horizon-point-sunset-reserve-bourbon-cola-sheet.png",
+          "path": "label-packets/horizon-point-sunset-reserve/cola-sheet.png",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "sunburst-social-peach-lime-fizz",
+      "title": "Sunburst Social Peach Lime Fizz COLA sheet",
+      "description": "Synthetic TTB/COLA submission sheet for a sparkling vodka cocktail application.",
+      "expectedOutcome": "PASS",
+      "expectedPath": "label-packets/sunburst-social-peach-lime-fizz/expected.json",
+      "ocrFixturePath": "label-packets/sunburst-social-peach-lime-fizz/ocr-fixture.json",
+      "useFixtureByDefault": true,
+      "images": [
+        {
+          "id": "sheet",
+          "role": "cola-sheet",
+          "name": "sunburst-social-peach-lime-fizz-cola-sheet.png",
+          "path": "label-packets/sunburst-social-peach-lime-fizz/cola-sheet.png",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "lumin8-blue-raspberry",
+      "title": "Lumin8 Blue Raspberry COLA sheet",
+      "description": "Synthetic TTB/COLA submission sheet for a ready-to-drink vodka beverage application.",
+      "expectedOutcome": "PASS",
+      "expectedPath": "label-packets/lumin8-blue-raspberry/expected.json",
+      "ocrFixturePath": "label-packets/lumin8-blue-raspberry/ocr-fixture.json",
+      "useFixtureByDefault": true,
+      "images": [
+        {
+          "id": "sheet",
+          "role": "cola-sheet",
+          "name": "lumin8-blue-raspberry-cola-sheet.png",
+          "path": "label-packets/lumin8-blue-raspberry/cola-sheet.png",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "arbor-hill-cabernet-sauvignon",
+      "title": "Arbor Hill Cabernet Sauvignon COLA sheet",
+      "description": "Synthetic TTB/COLA submission sheet for a table wine application.",
+      "expectedOutcome": "PASS",
+      "expectedPath": "label-packets/arbor-hill-cabernet-sauvignon/expected.json",
+      "ocrFixturePath": "label-packets/arbor-hill-cabernet-sauvignon/ocr-fixture.json",
+      "useFixtureByDefault": true,
+      "images": [
+        {
+          "id": "sheet",
+          "role": "cola-sheet",
+          "name": "arbor-hill-cabernet-sauvignon-cola-sheet.png",
+          "path": "label-packets/arbor-hill-cabernet-sauvignon/cola-sheet.png",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "northern-lights-vodka",
+      "title": "Northern Lights Vodka COLA sheet",
+      "description": "Synthetic TTB/COLA submission sheet for a vodka application.",
+      "expectedOutcome": "PASS",
+      "expectedPath": "label-packets/northern-lights-vodka/expected.json",
+      "ocrFixturePath": "label-packets/northern-lights-vodka/ocr-fixture.json",
+      "useFixtureByDefault": true,
+      "images": [
+        {
+          "id": "sheet",
+          "role": "cola-sheet",
+          "name": "northern-lights-vodka-cola-sheet.png",
+          "path": "label-packets/northern-lights-vodka/cola-sheet.png",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "high-tide-pineapple-passionfruit",
+      "title": "High Tide Pineapple Passionfruit COLA sheet",
+      "description": "Synthetic TTB/COLA submission sheet for a spiked sparkling water application.",
+      "expectedOutcome": "PASS",
+      "expectedPath": "label-packets/high-tide-pineapple-passionfruit/expected.json",
+      "ocrFixturePath": "label-packets/high-tide-pineapple-passionfruit/ocr-fixture.json",
+      "useFixtureByDefault": true,
+      "images": [
+        {
+          "id": "sheet",
+          "role": "cola-sheet",
+          "name": "high-tide-pineapple-passionfruit-cola-sheet.png",
+          "path": "label-packets/high-tide-pineapple-passionfruit/cola-sheet.png",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "estrella-tequila-blanco",
+      "title": "Estrella Tequila Blanco COLA sheet",
+      "description": "Synthetic TTB/COLA submission sheet for a tequila blanco application.",
+      "expectedOutcome": "PASS",
+      "expectedPath": "label-packets/estrella-tequila-blanco/expected.json",
+      "ocrFixturePath": "label-packets/estrella-tequila-blanco/ocr-fixture.json",
+      "useFixtureByDefault": true,
+      "images": [
+        {
+          "id": "sheet",
+          "role": "cola-sheet",
+          "name": "estrella-tequila-blanco-cola-sheet.png",
+          "path": "label-packets/estrella-tequila-blanco/cola-sheet.png",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

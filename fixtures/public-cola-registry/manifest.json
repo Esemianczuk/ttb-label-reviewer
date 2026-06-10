@@ -1,0 +1,67 @@
+{
+  "generated_at": "2026-06-10T19:38:54Z",
+  "source": "TTB Public COLA Registry",
+  "records_count": 6,
+  "records": [
+    {
+      "fixture_id": "ttb_19344001000769_beer-drinking-is-not-a-crime",
+      "ttb_id": "19344001000769",
+      "brand_name": "BEER DRINKING IS NOT A CRIME",
+      "class_type": "ALE",
+      "product_type": "malt_beverage",
+      "asset_count": 2,
+      "record_dir": "records/19344001000769",
+      "expected_json": "records/19344001000769/expected.json"
+    },
+    {
+      "fixture_id": "ttb_20010001000197_sunstone-winery",
+      "ttb_id": "20010001000197",
+      "brand_name": "SUNSTONE WINERY",
+      "class_type": "TABLE WHITE WINE",
+      "product_type": "wine",
+      "asset_count": 3,
+      "record_dir": "records/20010001000197",
+      "expected_json": "records/20010001000197/expected.json"
+    },
+    {
+      "fixture_id": "ttb_20010001000803_cutwater",
+      "ttb_id": "20010001000803",
+      "brand_name": "CUTWATER",
+      "class_type": "OTHER SPECIALTIES & PROPRIETARIES",
+      "product_type": "distilled_spirits",
+      "asset_count": 2,
+      "record_dir": "records/20010001000803",
+      "expected_json": "records/20010001000803/expected.json"
+    },
+    {
+      "fixture_id": "ttb_20014001001179_what-the-phoque",
+      "ttb_id": "20014001001179",
+      "brand_name": "WHAT THE PHOQUE",
+      "class_type": "TABLE RED WINE",
+      "product_type": "wine",
+      "asset_count": 3,
+      "record_dir": "records/20014001001179",
+      "expected_json": "records/20014001001179/expected.json"
+    },
+    {
+      "fixture_id": "ttb_20016001000598_monaco",
+      "ttb_id": "20016001000598",
+      "brand_name": "MONACO",
+      "class_type": "VODKA SPECIALTIES",
+      "product_type": "distilled_spirits",
+      "asset_count": 2,
+      "record_dir": "records/20016001000598",
+      "expected_json": "records/20016001000598/expected.json"
+    },
+    {
+      "fixture_id": "ttb_20041001000838_natural-light",
+      "ttb_id": "20041001000838",
+      "brand_name": "NATURAL LIGHT",
+      "class_type": "MALT BEVERAGES SPECIALITIES - FLAVORED",
+      "product_type": "malt_beverage",
+      "asset_count": 2,
+      "record_dir": "records/20041001000838",
+      "expected_json": "records/20041001000838/expected.json"
+    }
+  ]
+}

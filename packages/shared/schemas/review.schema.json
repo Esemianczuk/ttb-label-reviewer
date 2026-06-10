@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/ttb-label-reviewer/review.schema.json",
+  "title": "ReviewResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "packetId",
+    "mode",
+    "overallStatus",
+    "fields",
+    "files",
+    "timings",
+    "enginesUsed",
+    "workersUsed",
+    "createdAt"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "packetId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["browser", "backend", "distributed"]
+    },
+    "overallStatus": {
+      "$ref": "#/$defs/ReviewStatus"
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/FieldReview"
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/FileReview"
+      }
+    },
+    "timings": {
+      "$ref": "#/$defs/ReviewTimings"
+    },
+    "enginesUsed": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/EngineUse"
+      }
+    },
+    "workersUsed": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/WorkerUse"
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "ReviewStatus": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "WARNING", "NEEDS_REVIEW", "NOT_FOUND", "PASS_WITH_WARNINGS"]
+    },
+    "FieldReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fieldKey", "field", "expected", "status", "severity", "confidence", "reason", "evidence"],
+      "properties": {
+        "fieldKey": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "expected": {
+          "type": "string"
+        },
+        "extracted": {
+          "type": ["string", "null"]
+        },
+        "status": {
+          "$ref": "#/$defs/ReviewStatus"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["info", "warning", "critical"]
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "reason": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceCandidate"
+          }
+        },
+        "agentStatus": {
+          "$ref": "#/$defs/ReviewStatus"
+        },
+        "agentNote": {
+          "type": "string"
+        }
+      }
+    },
+    "EvidenceCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "method"],
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "normalizedText": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "imageId": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string"
+        },
+        "bbox": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y", "width", "height"],
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "width": { "type": "number", "minimum": 0 },
+            "height": { "type": "number", "minimum": 0 }
+          }
+        },
+        "cropAssetId": {
+          "type": "string"
+        },
+        "engine": {
+          "type": "string"
+        },
+        "workerId": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        }
+      }
+    },
+    "FileReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["imageId", "filename", "engine", "timingMs"],
+      "properties": {
+        "imageId": { "type": "string" },
+        "assetId": { "type": "string" },
+        "filename": { "type": "string" },
+        "engine": { "type": "string" },
+        "workerId": { "type": "string" },
+        "timingMs": { "type": "number", "minimum": 0 },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "ReviewTimings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["totalMs"],
+      "properties": {
+        "totalMs": { "type": "number", "minimum": 0 },
+        "queueMs": { "type": "number", "minimum": 0 },
+        "ocrMs": { "type": "number", "minimum": 0 },
+        "validationMs": { "type": "number", "minimum": 0 }
+      }
+    },
+    "EngineUse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engineId"],
+      "properties": {
+        "engineId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "version": { "type": "string" },
+        "timingMs": { "type": "number", "minimum": 0 }
+      }
+    },
+    "WorkerUse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workerId"],
+      "properties": {
+        "workerId": { "type": "string" },
+        "hostname": { "type": "string" },
+        "platform": { "type": "string" },
+        "mode": { "type": "string", "enum": ["browser", "backend", "distributed"] }
+      }
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=19344001000769",
+    "retrieved_at": "2026-06-10T19:38:52Z"
+  },
+  "ttb_id": "19344001000769",
+  "status": "APPROVED",
+  "approval_date": "01/14/2020",
+  "serial_number": "190038",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "BEER DRINKING IS NOT A CRIME",
+    "fanciful_name": null,
+    "class_type": "ALE",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=19344001000769",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16727,
+      "sha256": "b49ef05c55ff245ab1c2200fb13f4cd1576d192d39503b26f3f8379eaf86a935",
+      "downloaded_at": "2026-06-10T19:38:52Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Beer_Drinking_Not_A_Crime_16oz_Aslin_TTB_Submission_Version.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 233569,
+      "sha256": "9aebe87eebc039c2e7a2fbca4ece12261bbd50120da825636bcdabcc9380f7bf",
+      "downloaded_at": "2026-06-10T19:38:52Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "19344001000769"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "33421"
+    },
+    {
+      "label": "Serial #",
+      "value": "190038"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "ALE"
+    },
+    {
+      "label": "Origin Code",
+      "value": "VIRGINIA"
+    },
+    {
+      "label": "Brand Name",
+      "value": "BEER DRINKING IS NOT A CRIME"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "01/14/2020"
+    },
+    {
+      "label": "TTB ID: 19344001000769",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=19344001000769",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Beer_Drinking_Not_A_Crime_16oz_Aslin_TTB_Submission_Version.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

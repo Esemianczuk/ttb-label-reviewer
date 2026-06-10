@@ -1,0 +1,134 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20014001001179",
+    "retrieved_at": "2026-06-10T19:38:47Z"
+  },
+  "ttb_id": "20014001001179",
+  "status": "APPROVED",
+  "approval_date": "01/15/2020",
+  "serial_number": "20PQRE",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "WHAT THE PHOQUE",
+    "fanciful_name": "CABERNET SAUVIGNON",
+    "class_type": "TABLE RED WINE",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20014001001179",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16861,
+      "sha256": "80f37eef1a13b6f8d6b3ec2c4b97981d8012716a51bc6c8b1ed5dd527844d859",
+      "downloaded_at": "2026-06-10T19:38:47Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=CE What the Phoque - VDF Cabernet Sauvignon - 2018 - front.JPG&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 49068,
+      "sha256": "4a43eaf229cd60dad2539c5850aa44eea443cdfe873f06bc2202e255bc2a8bea",
+      "downloaded_at": "2026-06-10T19:38:47Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=ETQ What the Phoque - VDF Cabernet Sauvignon - 2018 - back.JPG&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 40208,
+      "sha256": "4b63410535c10f5521d65d43309747147d7814f73cc19fff2daf0a83dc8fb98a",
+      "downloaded_at": "2026-06-10T19:38:47Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20014001001179"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "36473"
+    },
+    {
+      "label": "Serial #",
+      "value": "20PQRE"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "TABLE RED WINE"
+    },
+    {
+      "label": "Origin Code",
+      "value": "FRANCE"
+    },
+    {
+      "label": "Brand Name",
+      "value": "WHAT THE PHOQUE"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "CABERNET SAUVIGNON"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Grape Varietal(s)",
+      "value": "100% CABERNET SAUVIGNON"
+    },
+    {
+      "label": "Approval Date",
+      "value": "01/15/2020"
+    },
+    {
+      "label": "TTB ID: 20014001001179",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20014001001179",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=CE What the Phoque - VDF Cabernet Sauvignon - 2018 - front.JPG&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=ETQ What the Phoque - VDF Cabernet Sauvignon - 2018 - back.JPG&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

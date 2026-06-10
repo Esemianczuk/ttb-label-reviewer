@@ -1,0 +1,11 @@
+requests
+beautifulsoup4
+lxml
+pydantic
+python-slugify
+tqdm
+pytest
+PyYAML
+
+# Optional only if static requests cannot parse public search pages:
+# playwright

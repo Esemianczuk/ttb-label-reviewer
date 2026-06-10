@@ -1,0 +1,119 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20041001000838",
+    "retrieved_at": "2026-06-10T19:38:54Z"
+  },
+  "ttb_id": "20041001000838",
+  "status": "APPROVED",
+  "approval_date": "02/26/2020",
+  "serial_number": "20NLS1",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "NATURAL LIGHT",
+    "fanciful_name": "SELTZER HOUSE RULES",
+    "class_type": "MALT BEVERAGES SPECIALITIES - FLAVORED",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": "1332069",
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20041001000838",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 18309,
+      "sha256": "c977c6d01948d363bbeca6a25167d0d33ce00aaa7257246317000af7298c0572",
+      "downloaded_at": "2026-06-10T19:38:54Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=NSK12oz6pCAN_TTB.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 446451,
+      "sha256": "8063522b6941c4c255f1c2d95ea3f89bd9308194c34f84c8caf05d08cf2ce07d",
+      "downloaded_at": "2026-06-10T19:38:54Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20041001000838"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "17931"
+    },
+    {
+      "label": "Serial #",
+      "value": "20NLS1"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "MALT BEVERAGES SPECIALITIES - FLAVORED"
+    },
+    {
+      "label": "Origin Code",
+      "value": "MISSOURI"
+    },
+    {
+      "label": "Brand Name",
+      "value": "NATURAL LIGHT"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "SELTZER HOUSE RULES"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Formula",
+      "value": "1332069"
+    },
+    {
+      "label": "Approval Date",
+      "value": "02/26/2020"
+    },
+    {
+      "label": "TTB ID: 20041001000838",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20041001000838",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=NSK12oz6pCAN_TTB.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

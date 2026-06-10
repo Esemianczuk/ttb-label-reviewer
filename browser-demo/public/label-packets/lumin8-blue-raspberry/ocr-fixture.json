@@ -1,0 +1,9 @@
+{
+  "images": {
+    "sheet": {
+      "engine": "browser-ocr-fixture",
+      "processingTimeMs": 25,
+      "rawText": "COLA ID 26158\nApplicant Name VibeCraft Beverages, LLC\nBrand Name LUMIN8\nClass/Type Ready-to-Drink Vodka Beverage\nType of Spirits Distilled Spirits\nAlcohol Content 7% ALC/VOL\nNet Contents 355 mL (12 FL. OZ.)\nNumber of Containers 4 (Four)\nLUMIN8 VODKA BEVERAGE SPARKLING BLUE RASPBERRY\n7% ALC/VOL 355 mL (12 FL. OZ.)\nBright berries. Crisp bubbles. Endless nights.\n100 CALORIES 0g SUGAR GLUTEN FREE\nBrewed and canned by VibeCraft Beverages, LLC, Los Angeles, CA\nGOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+    }
+  }
+}

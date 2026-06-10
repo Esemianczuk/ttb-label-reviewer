@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/ttb-label-reviewer/application.schema.json",
+  "title": "ApplicationPacket",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "source", "expectedFields", "images", "metadata"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "applicationId": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "enum": ["sample", "upload", "public_cola_registry", "manual"]
+    },
+    "expectedFields": {
+      "$ref": "#/$defs/ExpectedFields"
+    },
+    "images": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/ApplicationImage"
+      }
+    },
+    "metadata": {
+      "$ref": "#/$defs/ApplicationMetadata"
+    }
+  },
+  "$defs": {
+    "ExpectedFields": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["brandName", "classType", "alcoholContent", "netContents", "governmentWarningRequired"],
+      "properties": {
+        "productType": {
+          "type": "string",
+          "enum": ["distilled_spirits", "wine", "malt_beverage", "unknown"]
+        },
+        "brandName": {
+          "type": "string"
+        },
+        "fancifulName": {
+          "type": "string"
+        },
+        "classType": {
+          "type": "string"
+        },
+        "alcoholContent": {
+          "type": "string"
+        },
+        "netContents": {
+          "type": "string"
+        },
+        "governmentWarningRequired": {
+          "type": "boolean"
+        },
+        "producerName": {
+          "type": "string"
+        },
+        "countryOfOrigin": {
+          "type": "string"
+        },
+        "applicationId": {
+          "type": "string"
+        },
+        "labelId": {
+          "type": "string"
+        }
+      }
+    },
+    "ApplicationImage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "name", "mimeType"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "enum": ["front", "back", "neck", "carton", "cola_sheet", "unknown"]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mimeType": {
+          "type": "string",
+          "pattern": "^image/(png|jpe?g|webp)$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "localUrl": {
+          "type": "string"
+        },
+        "assetId": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$"
+        }
+      }
+    },
+    "ApplicationMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["createdAt"],
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sourceUrl": {
+          "type": "string"
+        },
+        "ttbId": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+retrieved_at: 2026-06-10T19:38:47Z
+system: TTB Public COLA Registry
+ttb_id: 20014001001179
+source_kind: public_registry
+detail_url: https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20014001001179
+final_url: https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20014001001179
+asset_urls:
+  - https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20014001001179
+  - https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=CE What the Phoque - VDF Cabernet Sauvignon - 2018 - front.JPG&filetype=l
+  - https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=ETQ What the Phoque - VDF Cabernet Sauvignon - 2018 - back.JPG&filetype=l

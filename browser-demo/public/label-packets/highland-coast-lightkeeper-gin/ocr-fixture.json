@@ -1,0 +1,9 @@
+{
+  "images": {
+    "sheet": {
+      "engine": "browser-ocr-fixture",
+      "processingTimeMs": 25,
+      "rawText": "Brand Name HIGHLAND COAST\nProduct Name LIGHTKEEPER GIN\nClass/Type Distilled Spirits Specialty\nType of Spirits Gin\nAlcohol Content 47% ALC/VOL (94 PROOF)\nNet Contents 750 mL\nDistilled and bottled by Highland Coast Distilling Co. Covington, Kentucky DSP-KY-51287 Product of USA\nGOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+    }
+  }
+}

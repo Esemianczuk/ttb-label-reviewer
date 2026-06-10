@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/ttb-label-reviewer/job.schema.json",
+  "title": "ReviewJob",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "sessionId", "jobType", "status", "priority", "payload", "createdAt"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "applicationId": {
+      "type": "string"
+    },
+    "reviewId": {
+      "type": "string"
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "jobType": {
+      "type": "string",
+      "enum": ["ocr", "evidence_crop", "validation", "report", "calibration"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["queued", "leased", "running", "completed", "failed", "cancelled"]
+    },
+    "priority": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "payload": {
+      "type": "object"
+    },
+    "result": {
+      "type": "object"
+    },
+    "requiredCapabilities": {
+      "type": "object"
+    },
+    "assignedWorkerId": {
+      "type": "string"
+    },
+    "leaseExpiresAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "attempts": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "error": {
+      "type": "string"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

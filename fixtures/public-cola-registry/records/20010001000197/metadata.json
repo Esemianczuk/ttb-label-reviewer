@@ -1,0 +1,134 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20010001000197",
+    "retrieved_at": "2026-06-10T19:38:49Z"
+  },
+  "ttb_id": "20010001000197",
+  "status": "APPROVED",
+  "approval_date": "01/13/2020",
+  "serial_number": "200000",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "SUNSTONE WINERY",
+    "fanciful_name": "CHARDONNAY RESERVE",
+    "class_type": "TABLE WHITE WINE",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20010001000197",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16847,
+      "sha256": "cb29bb70f421355c5aa51af73c3687841cfe5a9425b2b13d6f2bc02ee2f148dc",
+      "downloaded_at": "2026-06-10T19:38:49Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=18ChardResBack.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 36994,
+      "sha256": "37ccc34d2a9152c6ed8352e49458bcd0ad5509ca83dd050634c8cc7bcba934bf",
+      "downloaded_at": "2026-06-10T19:38:49Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=18ChardResFront.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 34230,
+      "sha256": "8f89e5fb7c4e454d62eabe3f5dd20e9d63a7d62a7a2fbb2d169b08d328b11d3b",
+      "downloaded_at": "2026-06-10T19:38:50Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20010001000197"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "27718"
+    },
+    {
+      "label": "Serial #",
+      "value": "200000"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "TABLE WHITE WINE"
+    },
+    {
+      "label": "Origin Code",
+      "value": "CALIFORNIA"
+    },
+    {
+      "label": "Brand Name",
+      "value": "SUNSTONE WINERY"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "CHARDONNAY RESERVE"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Grape Varietal(s)",
+      "value": "Chardonnay"
+    },
+    {
+      "label": "Approval Date",
+      "value": "01/13/2020"
+    },
+    {
+      "label": "TTB ID: 20010001000197",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20010001000197",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=18ChardResBack.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=18ChardResFront.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

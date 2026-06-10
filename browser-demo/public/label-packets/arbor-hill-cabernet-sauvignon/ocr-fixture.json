@@ -1,0 +1,9 @@
+{
+  "images": {
+    "sheet": {
+      "engine": "browser-ocr-fixture",
+      "processingTimeMs": 25,
+      "rawText": "COLA ID 24491\nApplicant Name Arbor Hill Wine Company, LLC\nBrand Name ARBOR HILL\nClass/Type Cabernet Sauvignon\nType of Wine Table Wine\nAlcohol Content 14.5% ALC/VOL\nNet Contents 750 mL\nNumber of Containers 12 (Twelve)\nARBOR HILL CABERNET SAUVIGNON ALEXANDER VALLEY SONOMA COUNTY Estate Grown 2021\nProduced and bottled by Arbor Hill Wine Company, LLC, Healdsburg, California\n14.5% ALC. BY VOL. 750 mL Contains Sulfites\nGOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems."
+    }
+  }
+}

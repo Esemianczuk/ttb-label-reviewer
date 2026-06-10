@@ -1,129 +1,121 @@
 # TTB Label Reviewer
 
-TTB Label Reviewer is a local-first prototype for comparing alcohol label images against expected COLA/application fields. It runs OCR locally, extracts label evidence, and applies deterministic validation rules for brand name, class/type, alcohol content, net contents, and the required government warning.
+TTB Label Reviewer is a local-first alcohol label review prototype for comparing TTB/COLA application data against label-image evidence. The current V1 browser demo lives in `browser-demo/` and remains runnable while the project grows toward optional backend and distributed worker modes.
 
-The prototype avoids cloud APIs: label images are not uploaded, and no cloud OCR or LLM service is used. OCR results are treated as evidence; final pass/fail/needs-review outcomes are produced by transparent validators so a human reviewer can understand why each field was flagged.
+This is an assessment prototype, not an official TTB or Treasury system, and it does not make final legal determinations.
 
-## Quick Start
+## Processing Modes
 
-Fast local OCR path:
+### Browser-Only Mode
+
+The browser app runs without a backend. It loads sample application packets, performs browser OCR for uploads, applies deterministic validators, lets reviewers override field decisions with notes, and exports reports.
 
 ```bash
-git clone https://github.com/Esemianczuk/ttb-label-reviewer.git
-cd ttb-label-reviewer
+cd browser-demo
 source ~/.nvm/nvm.sh && nvm use 20
 npm install
-python3 -m pip install --user -r server/requirements-easyocr.txt
-./open-demo.sh
-```
-
-This starts the Vite app and a localhost EasyOCR service. The service runs on CPU by default, so CUDA is not required. The first OCR request loads the model; later requests use the warm service.
-
-Open the local URL shown by Vite, load the sample packet or drag in a label image packet, enter expected application fields, and click **Review Label**.
-
-The launcher starts the EasyOCR service, starts the local Vite server, and opens the browser.
-
-The EasyOCR service can also be run manually in one terminal:
-
-```bash
-npm run easyocr-service
-```
-
-CUDA can be enabled explicitly on machines that have it, but the app does not depend on it:
-
-```bash
-EASYOCR_GPU=cuda npm run easyocr-service
-```
-
-Then run the app in another terminal:
-
-```bash
 npm run dev
 ```
 
-For a production-style frontend build check:
+Current browser mode includes a bounded dedicated Web Worker pool for uploaded image batches. The sample queue remains fixture-backed for deterministic evaluator demos.
+
+### Local Backend Mode
+
+The optional FastAPI coordinator in `apps/api` can serve the built frontend, persist applications and reviews, store uploaded assets locally, and assign review jobs to local worker agents. Browser-only mode remains available when the backend is not running.
 
 ```bash
-npm run build
+./scripts/dev-local-backend.sh
 ```
 
-## What It Validates
-
-- Brand name with OCR-aware fuzzy matching for case, quote, and minor OCR differences.
-- Class/type designation with targeted phrase and token coverage matching.
-- Alcohol content by normalizing ABV and proof values.
-- Net contents by normalizing mL and liter values, including common OCR substitutions.
-- Government warning by checking required legal text segments.
-- Visual evidence crops from the original label images for matched OCR evidence.
-
-Multiple images are reviewed together as one label packet, which lets a front image carry brand/class/ABV/net contents and a back image carry the government warning.
-
-## Sample Packet Library
-
-Sample labels are data-driven. The app loads `public/label-packets/manifest.json`, then reads each packet's images, expected fields, OCR fixture, and expected outcome from that folder.
-
-Current packets include passing labels, alcohol mismatch, missing warning, warning needs review, punctuation/case variance, and a synthetic packet based on text extracted from a local tequila front/back photo set. The public sample images are synthetic.
-
-New samples can be added without changing application logic. See `docs/sample-packets.md`.
-
-## Uploads and Custom Labels
-
-Users can click **Choose Images** or drag images into the label area. New selections are additive, so front/back images can be dropped in separate steps and reviewed as one packet.
-
-The **Create Custom Label Images** button renders a synthetic front/back packet from the expected-fields form. Those generated images stay in the browser session and can be reviewed with the same OCR and validation flow.
-
-## Local-only Privacy Model
-
-Version 1 processes label images locally and does not call a cloud OCR, LLM, or external inference API at runtime.
-
-The OCR path uses a CPU localhost EasyOCR service. Its `fast` mode uses native EasyOCR detection on CPU to stay under the time limit, and uses the higher-accuracy targeted crop preset when CUDA is explicitly enabled. CUDA is an opt-in acceleration mode, not a requirement. Uploaded images are sent only to the localhost service, not to a cloud OCR API. The bundled front/back sample is synthetic and has a local OCR fixture so the sample review is effectively instant.
-
-## Approach
-
-The app does not ask AI to decide whether a label passes. The pipeline is:
-
-1. Load one or more label images in the browser.
-2. Send selected images to the localhost EasyOCR service.
-3. Run local OCR with EasyOCR `fast` mode: native detection on CPU, targeted crop variants when CUDA is explicitly enabled.
-4. Merge OCR evidence from all variants and search for targeted evidence related to the expected application fields.
-5. Apply deterministic validators with conservative review states for noisy but relevant evidence.
-6. Crop matched evidence regions from the original label images in the browser.
-7. Show field, expected value, extracted evidence, visual crop, status, reason, and confidence hint.
-8. Export JSON or CSV summary.
-
-## Future COLA Integration
-
-Version 1 uses manual entry for expected application fields. The internal data shape mirrors a COLA/application record, so a future implementation can populate the same object from COLAs Online, a database view, CSV export, or internal service adapter without changing OCR or validation logic.
-
-## Future OCR / Model Path
-
-The OCR interface is isolated in `src/ocr/`. EasyOCR is currently the local service path. A future version could add PaddleOCR/ONNX Runtime Web or a tuned detector/recognizer while preserving the same validation layer.
-
-## Out of Scope for Version 1
-
-- PDF packet processing
-- Direct COLAs Online integration
-- Cloud OCR or hosted LLM calls
-- Final legal determination
-- Full regulatory coverage for every alcohol commodity
-- Login, database, document retention, or federal production deployment concerns
-
-## Testing
+By default this uses a local SQLite fallback at `data/api.sqlite3` so evaluators can run it without Docker. For a Postgres coordinator, set `TTB_API_DATABASE_URL`, for example:
 
 ```bash
-npm test
-npm run build
+export TTB_API_DATABASE_URL="postgresql+psycopg://user:password@localhost:5432/ttb_label_reviewer"
+./scripts/dev-local-backend.sh
 ```
 
-Unit tests cover normalization, extraction, validators, and overall status logic. Tests use hand-authored OCR fixtures so they do not depend on live OCR results.
+The backend serves `browser-demo/dist` from `/` when a production browser build exists.
 
-## Known Limitations
+### Distributed Cluster Mode
 
-- OCR can struggle with glare, curved bottles, small print, and skewed photos.
-- EasyOCR cold start includes model load time. The sub-five-second target applies to the warm local service path. CUDA can improve speed where available, but the default path is CPU with the faster native EasyOCR pass.
-- The government warning validator checks legal text segments but does not verify bold styling or font size.
-- EasyOCR mode requires the localhost service. Direct file double-click is not the supported runtime.
+The Python worker agent in `apps/worker` lets trusted local machines register with the coordinator from Linux, macOS, or Windows. It probes host capabilities, calibrates available OCR engines, heartbeats, claims leased jobs, downloads scoped assets, and completes OCR/evidence/validation tasks. Browser clients never process another browser client's uploaded images.
 
-## Assessment Scope and License
+```bash
+./scripts/dev-worker.sh --session-id local-dev-session
+```
 
-This repository is an assessment prototype and is not an official TTB or Treasury system. No license is granted for reuse unless one is added later.
+The worker always includes a deterministic null OCR engine for demos and tests. If local OCR tooling such as Tesseract is installed, the worker advertises and can use it without making those packages mandatory.
+
+## Current Repository Layout
+
+```text
+apps/api/                    Optional FastAPI coordinator
+apps/worker/                 Optional Python worker agent
+browser-demo/                 V1 Vite browser app
+docs/                         Architecture and evaluator notes
+fixtures/public-cola-registry Curated public COLA fixture manifest
+packages/shared/schemas       Canonical packet/review/job schemas
+tools/ttb_collector           Public COLA fixture collector tooling
+tests/                        Python collector and fixture tests
+scripts/check-all.sh          Local verification entrypoint
+```
+
+The requested future `apps/browser` and `apps/worker` structure will be introduced incrementally. Until then, `browser-demo` is the compatibility app and should keep passing its existing tests and build.
+
+## Quick Checks
+
+Run all currently configured checks from the repository root:
+
+```bash
+./scripts/check-all.sh
+```
+
+The script runs:
+
+- `npm test` in `browser-demo`
+- `npm run build` in `browser-demo`
+- `python -m pytest -q` for root Python, backend API, and worker tests
+
+You can also run the browser checks directly:
+
+```bash
+npm --prefix browser-demo test
+npm --prefix browser-demo run build
+```
+
+Run only the backend tests:
+
+```bash
+python -m pytest apps/api/app/tests -q
+```
+
+Run only the worker tests:
+
+```bash
+python -m pytest apps/worker/tests -q
+```
+
+## Validation Approach
+
+OCR/model output is treated as evidence only. Final field status comes from deterministic validators that compare expected application values against extracted evidence for brand, class/type, alcohol content, net contents, government warning text, and optional responsible-party or origin fields.
+
+Every review result should remain auditable: expected value, extracted evidence, status, reason, confidence, engine, worker, timing, and reviewer override fields all have explicit schema support.
+
+## Privacy And Local-First Boundaries
+
+- No cloud AI or external OCR API is required.
+- Browser-only mode keeps user images in that browser session.
+- Optional backend mode will store uploaded assets in a local content-addressed object store.
+- Distributed backend workers process backend queue jobs scoped to a session/application.
+- Browser local workers are not backend workers and must not receive other users' images.
+
+## Public COLA Fixtures
+
+`fixtures/public-cola-registry/manifest.json` currently contains curated public fixture metadata. Bulk downloads, caches, and generated datasets are intentionally ignored by git.
+
+## Migration Note
+
+The V1 app remains in `browser-demo/`. New shared contracts start in `packages/shared/schemas/`, the optional backend starts in `apps/api`, and the worker agent starts in `apps/worker`. Browser adapters can consume those contracts before the larger `apps/browser` migration happens. This keeps the demo submit-ready while making the architecture path explicit.
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/DISTRIBUTED_MODE.md](docs/DISTRIBUTED_MODE.md), and [docs/EVALUATOR_GUIDE.md](docs/EVALUATOR_GUIDE.md) for the coordinator and worker shape.
+The Phase 5 hardware-aware scheduler is documented in [docs/SCHEDULER.md](docs/SCHEDULER.md).

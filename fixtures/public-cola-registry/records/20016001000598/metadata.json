@@ -1,0 +1,119 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20016001000598",
+    "retrieved_at": "2026-06-10T19:38:44Z"
+  },
+  "ttb_id": "20016001000598",
+  "status": "APPROVED",
+  "approval_date": "01/28/2020",
+  "serial_number": "20012L",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "MONACO",
+    "fanciful_name": "TEQUILA LIME CRUSH",
+    "class_type": "VODKA SPECIALTIES",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": "1340316",
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20016001000598",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17056,
+      "sha256": "dc6a9f6e303a4253bccd6fa61016a7ef1408faad2f91a09e594af4389f4cabaf",
+      "downloaded_at": "2026-06-10T19:38:45Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=monaco_tequilalime FRONT.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 723359,
+      "sha256": "8d16e802159c6b7ce409e169a363b0070267c77eb148bd63bc5b48c7a0846e1d",
+      "downloaded_at": "2026-06-10T19:38:45Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20016001000598"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "14579"
+    },
+    {
+      "label": "Serial #",
+      "value": "20012L"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "VODKA SPECIALTIES"
+    },
+    {
+      "label": "Origin Code",
+      "value": "IDAHO"
+    },
+    {
+      "label": "Brand Name",
+      "value": "MONACO"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "TEQUILA LIME CRUSH"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Formula",
+      "value": "1340316"
+    },
+    {
+      "label": "Approval Date",
+      "value": "01/28/2020"
+    },
+    {
+      "label": "TTB ID: 20016001000598",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20016001000598",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=monaco_tequilalime FRONT.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

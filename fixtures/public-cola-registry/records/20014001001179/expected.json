@@ -1,0 +1,41 @@
+{
+  "fixture_id": "ttb_20014001001179_what-the-phoque",
+  "source_type": "official_public_registry",
+  "ttb_id": "20014001001179",
+  "expected_fields": {
+    "brandName": "WHAT THE PHOQUE",
+    "fancifulName": "CABERNET SAUVIGNON",
+    "classType": "TABLE RED WINE",
+    "productType": "wine",
+    "alcoholContent": null,
+    "netContents": null,
+    "governmentWarningRequired": true,
+    "isImported": null,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": null,
+      "address": null
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_02.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
+    "Collector note: Public registry search candidate: Cabernet Sauvignon."
+  ]
+}

@@ -1,0 +1,9 @@
+retrieved_at: 2026-06-10T19:38:54Z
+system: TTB Public COLA Registry
+ttb_id: 20041001000838
+source_kind: public_registry
+detail_url: https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20041001000838
+final_url: https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20041001000838
+asset_urls:
+  - https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20041001000838
+  - https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=NSK12oz6pCAN_TTB.jpg&filetype=l

@@ -1,0 +1,10 @@
+records:
+  - ttb_id: "XXXXXXXXXXXXXX"
+    expected_group: "distilled_spirits"
+    notes: "Known bourbon fixture; replace with a real public approved COLA ID."
+  - ttb_id: "YYYYYYYYYYYYYY"
+    expected_group: "wine"
+    notes: "Known wine fixture; replace with a real public approved COLA ID."
+  - ttb_id: "ZZZZZZZZZZZZZZ"
+    expected_group: "malt_beverage"
+    notes: "Known malt beverage or hard seltzer fixture; replace before live collection."
