@@ -1,7 +1,7 @@
 import { createOcrResult } from './ocr-types.js';
 
 const DEFAULT_SERVICE_URL = 'http://127.0.0.1:8765';
-const TARGET_VARIANT_SET = 'targeted';
+const TARGET_VARIANT_SET = 'fast';
 
 function serviceBaseUrl() {
   const configured = import.meta.env.VITE_EASYOCR_SERVICE_URL || DEFAULT_SERVICE_URL;
@@ -86,8 +86,9 @@ export async function recognizeImageWithEasyOcr(fileOrBlob, { onProgress } = {})
     processingTimeMs: elapsed,
     preprocessingNotes: [
       `EasyOCR service ${payload.variantSet || TARGET_VARIANT_SET} variant set`,
+      payload.requestedVariantSet ? `Requested variant set: ${payload.requestedVariantSet}` : '',
       ...(payload.preprocessingNotes || []),
-    ],
+    ].filter(Boolean),
     warnings: payload.warnings || (rawText.trim() ? [] : ['EasyOCR returned no text for this image.']),
     source: 'easyocr-service',
     variants: normalizeVariants(payload.variants),

@@ -68,6 +68,7 @@ fi
 
 echo "Open ${URL}"
 echo "EasyOCR health: ${OCR_URL}"
+echo "EasyOCR acceleration request: ${EASYOCR_GPU:-cpu}"
 echo "App output is in ${APP_LOG_FILE}; EasyOCR output is in ${OCR_LOG_FILE}."
 
 if [[ -n "${app_pid:-}" || -n "${ocr_pid:-}" ]]; then

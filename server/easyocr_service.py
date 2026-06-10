@@ -22,7 +22,8 @@ from ocr_lab.preprocess import make_variants  # noqa: E402
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
-DEFAULT_VARIANT_SET = "targeted"
+DEFAULT_VARIANT_SET = "fast"
+DEFAULT_GPU_MODE = "cpu"
 
 reader = None
 reader_lock = threading.Lock()
@@ -43,12 +44,25 @@ def response_headers(handler: BaseHTTPRequestHandler, status: int, content_type:
 
 
 def resolve_gpu() -> bool:
-    configured = os.environ.get("EASYOCR_GPU", "auto").strip().lower()
+    configured = os.environ.get("EASYOCR_GPU", DEFAULT_GPU_MODE).strip().lower()
     if configured in {"0", "false", "no", "cpu"}:
         return False
     if configured in {"1", "true", "yes", "cuda", "gpu"}:
         return torch.cuda.is_available()
-    return torch.cuda.is_available()
+    if configured == "auto":
+        return torch.cuda.is_available()
+    return False
+
+
+def gpu_mode() -> str:
+    return os.environ.get("EASYOCR_GPU", DEFAULT_GPU_MODE).strip().lower() or DEFAULT_GPU_MODE
+
+
+def effective_variant_set(requested_variant_set: str) -> str:
+    requested = (requested_variant_set or DEFAULT_VARIANT_SET).strip().lower()
+    if requested == "fast":
+        return "targeted" if reader_gpu else "native"
+    return requested
 
 
 def get_reader():
@@ -130,12 +144,13 @@ def merge_variant_texts(variant_results: list[dict[str, Any]]) -> str:
 
 def recognize_image(image_path: Path, variant_set: str) -> dict[str, Any]:
     engine = get_reader()
+    actual_variant_set = effective_variant_set(variant_set)
     started = time.perf_counter()
     variant_results = []
     blocks = []
 
     with reader_lock:
-        for variant in make_variants(image_path, variant_set):
+        for variant in make_variants(image_path, actual_variant_set):
             rows = engine.readtext(np.array(variant.image), detail=1, paragraph=False)
             lines = []
             for row in rows:
@@ -172,13 +187,15 @@ def recognize_image(image_path: Path, variant_set: str) -> dict[str, Any]:
     elapsed_ms = round((time.perf_counter() - started) * 1000)
     return {
         "engine": "easyocr-local",
-        "variantSet": variant_set,
+        "variantSet": actual_variant_set,
+        "requestedVariantSet": variant_set,
         "rawText": raw_text,
         "blocks": blocks,
         "processingTimeMs": elapsed_ms,
         "preprocessingNotes": [
-            f"EasyOCR local service used {variant_set} crop variants",
-            f"GPU enabled: {reader_gpu}",
+            f"EasyOCR local service used {actual_variant_set} crop variants",
+            f"Requested variant set: {variant_set}",
+            f"Acceleration: {'CUDA' if reader_gpu else 'CPU'}",
         ],
         "warnings": [] if raw_text.strip() else ["EasyOCR returned no text for this image."],
         "variants": variant_results,
@@ -203,6 +220,7 @@ class EasyOcrHandler(BaseHTTPRequestHandler):
                 "readerLoaded": reader is not None,
                 "gpuAvailable": torch.cuda.is_available(),
                 "gpuEnabled": reader_gpu,
+                "gpuMode": gpu_mode(),
                 "defaultVariantSet": os.environ.get("EASYOCR_VARIANT_SET", DEFAULT_VARIANT_SET),
             }
             self.wfile.write(json_bytes(payload))
@@ -259,6 +277,7 @@ def main() -> int:
     server = ThreadingHTTPServer((host, port), EasyOcrHandler)
     print(f"EasyOCR service listening on http://{host}:{port}")
     print(f"Variant set: {os.environ.get('EASYOCR_VARIANT_SET', DEFAULT_VARIANT_SET)}")
+    print(f"Acceleration request: {gpu_mode()}")
     print("Model loads on first OCR request.")
     try:
         server.serve_forever()

@@ -17,7 +17,7 @@ python3 -m pip install --user -r server/requirements-easyocr.txt
 ./open-easyocr-demo.sh
 ```
 
-This starts the Vite app and a localhost EasyOCR service. The first OCR request loads the model; later requests use the warm service.
+This starts the Vite app and a localhost EasyOCR service. The service runs on CPU by default, so CUDA is not required. The first OCR request loads the model; later requests use the warm service.
 
 Browser-only fallback:
 
@@ -43,6 +43,12 @@ The EasyOCR service can also be run manually in one terminal:
 
 ```bash
 npm run easyocr-service
+```
+
+CUDA can be enabled explicitly on machines that have it, but the app does not depend on it:
+
+```bash
+EASYOCR_GPU=cuda npm run easyocr-service
 ```
 
 Then run the app in another terminal:
@@ -86,7 +92,7 @@ The **Create Custom Label Images** button renders a synthetic front/back packet 
 
 Version 1 processes label images locally and does not call a cloud OCR, LLM, or external inference API at runtime.
 
-The default fast path uses a localhost EasyOCR service with the targeted crop preset selected from the OCR lab. The browser fallback vendors the Tesseract.js worker/core assets and English traineddata under `public/`. Uploaded images run through deterministic OCR variants, including full image, central label, detail band, inverted detail band, and warning/detail crops. The bundled front/back sample is synthetic and has a local OCR fixture so the sample review is effectively instant.
+The default fast path uses a CPU localhost EasyOCR service. Its `fast` mode uses native EasyOCR detection on CPU to stay under the time limit, and uses the higher-accuracy targeted crop preset when CUDA is explicitly enabled. CUDA is an opt-in acceleration mode, not a requirement. The browser fallback vendors the Tesseract.js worker/core assets and English traineddata under `public/`. Uploaded images run through deterministic OCR variants, including full image, central label, detail band, inverted detail band, and warning/detail crops. The bundled front/back sample is synthetic and has a local OCR fixture so the sample review is effectively instant.
 
 ## Approach
 
@@ -129,7 +135,7 @@ Unit tests cover normalization, extraction, validators, and overall status logic
 ## Known Limitations
 
 - Browser OCR can struggle with glare, curved bottles, small print, and skewed photos.
-- EasyOCR cold start includes model load time. The sub-five-second target applies to the warm local service path.
+- EasyOCR cold start includes model load time. The sub-five-second target applies to the warm local service path. CUDA can improve speed where available, but the default path is CPU with the faster native EasyOCR pass.
 - The government warning validator checks legal text segments but does not verify bold styling or font size.
 - Local OCR workers generally need the app to be served from `localhost`; direct file double-click can open static pages in some browsers, but OCR workers are more reliable through `npm run dev` or `npm run preview`.
 
