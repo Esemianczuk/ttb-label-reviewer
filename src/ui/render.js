@@ -77,12 +77,40 @@ function imageList(images, state) {
   `;
 }
 
+function evidenceCell(field) {
+  const crops = field.evidenceCrops || [];
+  return `
+    <div class="evidence-cell">
+      <p>${escapeHtml(field.extracted || 'No evidence found')}</p>
+      ${
+        crops.length
+          ? `<div class="evidence-crops">
+              ${crops
+                .map(
+                  (crop) => `
+                    <figure class="evidence-crop">
+                      <img src="${escapeHtml(crop.src)}" alt="${escapeHtml(`Evidence crop from ${crop.imageName}`)}" loading="lazy" />
+                      <figcaption>
+                        <span>${escapeHtml(crop.imageName)}</span>
+                        <small>${escapeHtml(crop.text)}</small>
+                      </figcaption>
+                    </figure>
+                  `,
+                )
+                .join('')}
+            </div>`
+          : ''
+      }
+    </div>
+  `;
+}
+
 function fieldRow(field) {
   return `
     <tr>
       <th scope="row">${escapeHtml(field.field)}</th>
       <td data-label="Expected">${escapeHtml(field.expected)}</td>
-      <td data-label="Evidence">${escapeHtml(field.extracted || 'No evidence found')}</td>
+      <td data-label="Evidence">${evidenceCell(field)}</td>
       <td data-label="Status"><span class="status ${statusClass(field.status)}">${displayStatus(field.status)}</span></td>
       <td data-label="Reason">
         <p>${escapeHtml(field.reason)}</p>

@@ -128,6 +128,23 @@ def bbox_from_easyocr(points: list[list[float]]) -> dict[str, float] | None:
     }
 
 
+def source_bbox_from_variant(variant, bbox: dict[str, float] | None) -> dict[str, float] | None:
+    if not bbox or not variant.source_box:
+        return bbox
+    left, top, right, bottom = variant.source_box
+    variant_width, variant_height = variant.image.size
+    if not variant_width or not variant_height:
+        return bbox
+    x_scale = (right - left) / variant_width
+    y_scale = (bottom - top) / variant_height
+    return {
+        "x": round(left + (bbox["x"] * x_scale), 2),
+        "y": round(top + (bbox["y"] * y_scale), 2),
+        "width": round(bbox["width"] * x_scale, 2),
+        "height": round(bbox["height"] * y_scale, 2),
+    }
+
+
 def merge_variant_texts(variant_results: list[dict[str, Any]]) -> str:
     seen = set()
     lines: list[str] = []
@@ -160,13 +177,15 @@ def recognize_image(image_path: Path, variant_set: str) -> dict[str, Any]:
                 if not text:
                     continue
                 confidence = float(row[2]) if len(row) >= 3 else None
-                bbox = bbox_from_easyocr(row[0] if row else [])
+                variant_bbox = bbox_from_easyocr(row[0] if row else [])
+                source_bbox = source_bbox_from_variant(variant, variant_bbox)
                 lines.append(text)
                 blocks.append(
                     {
                         "text": text,
                         "confidence": confidence,
-                        "bbox": bbox,
+                        "bbox": source_bbox,
+                        "variantBbox": variant_bbox,
                         "variantId": variant.variant_id,
                     }
                 )
@@ -180,6 +199,9 @@ def recognize_image(image_path: Path, variant_set: str) -> dict[str, Any]:
                     "score": score_text(raw_text),
                     "textLength": len(raw_text.strip()),
                     "lineCount": len(lines),
+                    "sourceBox": variant.source_box,
+                    "sourceSize": variant.source_size,
+                    "variantSize": variant.image.size,
                 }
             )
 
@@ -191,6 +213,7 @@ def recognize_image(image_path: Path, variant_set: str) -> dict[str, Any]:
         "requestedVariantSet": variant_set,
         "rawText": raw_text,
         "blocks": blocks,
+        "imageSize": variant.source_size if variant_results else None,
         "processingTimeMs": elapsed_ms,
         "preprocessingNotes": [
             f"EasyOCR local service used {actual_variant_set} crop variants",

@@ -19,6 +19,7 @@ export function createOcrResult({
   warnings = [],
   source = 'ocr',
   variants = [],
+  imageSize = null,
 }) {
   const normalizedBlocks = blocks.length ? blocks : blocksFromText(rawText, null);
   return {
@@ -30,6 +31,7 @@ export function createOcrResult({
     warnings,
     source,
     variants,
+    imageSize,
     appVersion: APP_VERSION,
   };
 }

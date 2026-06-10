@@ -14,6 +14,18 @@ function statusForField(review, fieldName) {
   return review.fields.find((field) => field.field === fieldName)?.status || '';
 }
 
+function exportableField(field) {
+  return {
+    ...field,
+    evidenceCrops: (field.evidenceCrops || []).map((crop) => ({
+      imageName: crop.imageName,
+      text: crop.text,
+      bbox: crop.bbox,
+      confidence: crop.confidence,
+    })),
+  };
+}
+
 export function buildJsonReport(review) {
   return {
     generatedAt: new Date().toISOString(),
@@ -28,7 +40,7 @@ export function buildJsonReport(review) {
       preprocessingNotes: file.ocrResult.preprocessingNotes,
       rawText: file.ocrResult.rawText,
     })),
-    fields: review.fields,
+    fields: review.fields.map(exportableField),
   };
 }
 

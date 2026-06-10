@@ -17,7 +17,18 @@ export function computeOverallStatus(fields) {
 }
 
 export function validateLabelPacket(expected, imageResults) {
-  const combinedOcr = combineOcrResults(imageResults.map((result) => result.ocrResult));
+  const combinedOcr = combineOcrResults(
+    imageResults.map((result, imageIndex) => ({
+      ...result.ocrResult,
+      blocks: (result.ocrResult?.blocks || []).map((block) => ({
+        ...block,
+        imageId: result.id,
+        imageName: result.name,
+        imageUrl: result.url,
+        imageIndex,
+      })),
+    })),
+  );
   const fields = [
     validateBrand(expected.brandName, combinedOcr),
     validateClassType(expected.classType, combinedOcr),

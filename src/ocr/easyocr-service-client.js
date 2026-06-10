@@ -15,6 +15,7 @@ function normalizeBlocks(blocks = []) {
       text: String(block.text || ''),
       confidence: typeof block.confidence === 'number' ? block.confidence : null,
       bbox: block.bbox || null,
+      variantBbox: block.variantBbox || null,
       variantId: block.variantId || '',
       index,
     }));
@@ -92,5 +93,6 @@ export async function recognizeImageWithEasyOcr(fileOrBlob, { onProgress } = {})
     warnings: payload.warnings || (rawText.trim() ? [] : ['EasyOCR returned no text for this image.']),
     source: 'easyocr-service',
     variants: normalizeVariants(payload.variants),
+    imageSize: payload.imageSize || null,
   });
 }

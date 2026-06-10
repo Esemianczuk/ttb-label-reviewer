@@ -21,6 +21,12 @@ export function flattenOcrBlocks(ocrResult = {}) {
         text,
         confidence: typeof node.confidence === 'number' ? node.confidence : null,
         bbox: node.bbox || null,
+        variantBbox: node.variantBbox || null,
+        variantId: node.variantId || '',
+        imageId: node.imageId || '',
+        imageName: node.imageName || '',
+        imageUrl: node.imageUrl || '',
+        imageIndex: Number.isFinite(node.imageIndex) ? node.imageIndex : null,
       });
     }
     for (const key of ['blocks', 'paragraphs', 'lines', 'words', 'symbols']) {
@@ -88,6 +94,12 @@ export function findBestTextCandidate(expectedValue, ocrResult, options = {}) {
             text: windowText,
             confidence: candidate.confidence,
             bbox: candidate.bbox,
+            variantBbox: candidate.variantBbox,
+            variantId: candidate.variantId,
+            imageId: candidate.imageId,
+            imageName: candidate.imageName,
+            imageUrl: candidate.imageUrl,
+            imageIndex: candidate.imageIndex,
           });
         }
       }
@@ -157,8 +169,8 @@ export function scoreExpectedTokenCoverage(expectedValue, ocrResult = {}) {
 
 export function findRegexCandidates(regex, ocrResult, options = {}) {
   const sources = [
-    { text: ocrResult?.rawText || '', confidence: null, bbox: null, source: 'rawText' },
     ...getCandidateTexts(ocrResult).map((candidate) => ({ ...candidate, source: 'block' })),
+    { text: ocrResult?.rawText || '', confidence: null, bbox: null, source: 'rawText' },
   ];
   const seen = new Set();
   const results = [];

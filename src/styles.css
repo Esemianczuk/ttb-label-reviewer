@@ -490,6 +490,53 @@ td p {
   margin-bottom: 0.3rem;
 }
 
+.evidence-cell {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.evidence-cell p {
+  margin-bottom: 0;
+}
+
+.evidence-crops {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.45rem;
+}
+
+.evidence-crop {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.evidence-crop img {
+  display: block;
+  width: 100%;
+  max-height: 92px;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #111815;
+}
+
+.evidence-crop figcaption {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.evidence-crop figcaption span,
+.evidence-crop figcaption small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ocr-details {
   margin-top: 1rem;
   border-top: 1px solid var(--line);

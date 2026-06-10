@@ -54,6 +54,7 @@ npm run build
 - Alcohol content by normalizing ABV and proof values.
 - Net contents by normalizing mL and liter values, including common OCR substitutions.
 - Government warning by checking required legal text segments.
+- Visual evidence crops from the original label images for matched OCR evidence.
 
 Multiple images are reviewed together as one label packet, which lets a front image carry brand/class/ABV/net contents and a back image carry the government warning.
 
@@ -86,8 +87,9 @@ The app does not ask AI to decide whether a label passes. The pipeline is:
 3. Run local OCR with EasyOCR `fast` mode: native detection on CPU, targeted crop variants when CUDA is explicitly enabled.
 4. Merge OCR evidence from all variants and search for targeted evidence related to the expected application fields.
 5. Apply deterministic validators with conservative review states for noisy but relevant evidence.
-6. Show field, expected value, extracted evidence, status, reason, and confidence hint.
-7. Export JSON or CSV summary.
+6. Crop matched evidence regions from the original label images in the browser.
+7. Show field, expected value, extracted evidence, visual crop, status, reason, and confidence hint.
+8. Export JSON or CSV summary.
 
 ## Future COLA Integration
 

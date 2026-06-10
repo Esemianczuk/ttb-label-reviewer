@@ -1,5 +1,6 @@
 import './styles.css';
 import { cloneExpectedFields, createInitialState, OLD_TOM_SAMPLE_EXPECTED } from './app-state.js';
+import { attachEvidenceCrops } from './evidence/evidence-crops.js';
 import { getRecommendedEasyOcrWorkerCount, recognizeImageWithEasyOcr } from './ocr/easyocr-service-client.js';
 import { createCustomLabelImageEntries } from './ui/custom-label.js';
 import { filesToImageEntries, revokeImageEntryUrls } from './ui/drag-drop.js';
@@ -143,7 +144,9 @@ async function runReview() {
     await Promise.all(workerLoops);
 
     appendProgress('Comparing fields...');
-    state.review = validateLabelPacket(state.expected, imageResults);
+    const review = validateLabelPacket(state.expected, imageResults);
+    appendProgress('Preparing evidence crops...');
+    state.review = await attachEvidenceCrops(review);
     appendProgress('Done.');
   } catch (error) {
     state.error = error?.message || 'Could not read text from this image. Try a clearer, higher-resolution image.';
