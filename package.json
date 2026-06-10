@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "easyocr-service": "python3 server/easyocr_service.py",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run"

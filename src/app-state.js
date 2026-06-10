@@ -43,6 +43,7 @@ export function createInitialState() {
     imageStatuses: {},
     samplePackets: [],
     selectedSampleId: '',
+    ocrEngine: 'easyocr',
     review: null,
     isProcessing: false,
     workerCount: 1,

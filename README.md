@@ -1,10 +1,25 @@
 # TTB Label Reviewer
 
-TTB Label Reviewer is a local-first prototype for comparing alcohol label images against expected COLA/application fields. It runs OCR in the browser, extracts label evidence, and applies deterministic validation rules for brand name, class/type, alcohol content, net contents, and the required government warning.
+TTB Label Reviewer is a local-first prototype for comparing alcohol label images against expected COLA/application fields. It runs OCR locally, extracts label evidence, and applies deterministic validation rules for brand name, class/type, alcohol content, net contents, and the required government warning.
 
-The prototype is intentionally zero-API: label images are not uploaded, and no cloud OCR or LLM service is used. OCR results are treated as evidence; final pass/fail/needs-review outcomes are produced by transparent validators so a human reviewer can understand why each field was flagged.
+The prototype avoids cloud APIs: label images are not uploaded, and no cloud OCR or LLM service is used. OCR results are treated as evidence; final pass/fail/needs-review outcomes are produced by transparent validators so a human reviewer can understand why each field was flagged.
 
 ## Quick Start
+
+Fast local OCR path:
+
+```bash
+git clone https://github.com/Esemianczuk/ttb-label-reviewer.git
+cd ttb-label-reviewer
+source ~/.nvm/nvm.sh && nvm use 20
+npm install
+python3 -m pip install --user -r server/requirements-easyocr.txt
+./open-easyocr-demo.sh
+```
+
+This starts the Vite app and a localhost EasyOCR service. The first OCR request loads the model; later requests use the warm service.
+
+Browser-only fallback:
 
 ```bash
 git clone https://github.com/Esemianczuk/ttb-label-reviewer.git
@@ -22,7 +37,19 @@ On Linux, you can also run:
 ./open-demo.sh
 ```
 
-The launcher starts the local Vite server and opens the browser so OCR runs from `localhost` instead of a brittle `file://` page.
+The launcher starts the local Vite server and opens the browser so browser OCR runs from `localhost` instead of a brittle `file://` page.
+
+The EasyOCR service can also be run manually in one terminal:
+
+```bash
+npm run easyocr-service
+```
+
+Then run the app in another terminal:
+
+```bash
+npm run dev
+```
 
 For a production-style static check:
 
@@ -57,9 +84,9 @@ The **Create Custom Label Images** button renders a synthetic front/back packet 
 
 ## Local-only Privacy Model
 
-Version 1 runs entirely in the browser. Label images are processed locally and are not uploaded to a server. No cloud OCR, LLM, or external inference API is used at runtime.
+Version 1 processes label images locally and does not call a cloud OCR, LLM, or external inference API at runtime.
 
-The app vendors the Tesseract.js worker/core assets and English traineddata under `public/`. Uploaded images run through several browser-generated OCR variants, including full image, central label, detail band, inverted detail band, and warning/detail crops with targeted page segmentation modes. The bundled front/back sample is synthetic and has a local OCR fixture so the sample review is effectively instant.
+The default fast path uses a localhost EasyOCR service with the targeted crop preset selected from the OCR lab. The browser fallback vendors the Tesseract.js worker/core assets and English traineddata under `public/`. Uploaded images run through deterministic OCR variants, including full image, central label, detail band, inverted detail band, and warning/detail crops. The bundled front/back sample is synthetic and has a local OCR fixture so the sample review is effectively instant.
 
 ## Approach
 
@@ -67,7 +94,7 @@ The app does not ask AI to decide whether a label passes. The pipeline is:
 
 1. Load one or more label images in the browser.
 2. Preprocess images with deterministic resizing, crops, grayscale conversion, contrast enhancement, and detail sharpening.
-3. Run browser-local OCR using Tesseract.js with a small worker pool and multiple page segmentation modes.
+3. Run local OCR using EasyOCR through the localhost service, or Tesseract.js in the browser fallback.
 4. Merge OCR evidence from all variants and search for targeted evidence related to the expected application fields.
 5. Apply deterministic validators with conservative review states for noisy but relevant evidence.
 6. Show field, expected value, extracted evidence, status, reason, and confidence hint.
@@ -79,7 +106,7 @@ Version 1 uses manual entry for expected application fields. The internal data s
 
 ## Future OCR / Model Path
 
-The OCR interface is isolated in `src/ocr/`. A future Version 2 could add a PaddleOCR/ONNX Runtime Web engine for stronger document OCR while preserving the same validation layer.
+The OCR interface is isolated in `src/ocr/`. EasyOCR is currently the fast local service path, while the browser fallback remains available for static demos. A future version could add PaddleOCR/ONNX Runtime Web or a tuned detector/recognizer while preserving the same validation layer.
 
 ## Out of Scope for Version 1
 
@@ -102,6 +129,7 @@ Unit tests cover normalization, extraction, validators, and overall status logic
 ## Known Limitations
 
 - Browser OCR can struggle with glare, curved bottles, small print, and skewed photos.
+- EasyOCR cold start includes model load time. The sub-five-second target applies to the warm local service path.
 - The government warning validator checks legal text segments but does not verify bold styling or font size.
 - Local OCR workers generally need the app to be served from `localhost`; direct file double-click can open static pages in some browsers, but OCR workers are more reliable through `npm run dev` or `npm run preview`.
 

@@ -1,6 +1,7 @@
 import './styles.css';
 import { cloneExpectedFields, createInitialState, OLD_TOM_SAMPLE_EXPECTED } from './app-state.js';
-import { getRecommendedWorkerCount, recognizeImage } from './ocr/tesseract-engine.js';
+import { getRecommendedEasyOcrWorkerCount, recognizeImageWithEasyOcr } from './ocr/easyocr-service-client.js';
+import { getRecommendedWorkerCount, recognizeImage as recognizeImageWithTesseract } from './ocr/tesseract-engine.js';
 import { createCustomLabelImageEntries } from './ui/custom-label.js';
 import { filesToImageEntries, revokeImageEntryUrls } from './ui/drag-drop.js';
 import { exportCsvSummary, exportJsonReport } from './ui/export.js';
@@ -88,6 +89,24 @@ async function blobForImageEntry(image) {
   return response.blob();
 }
 
+function selectedOcrEngine() {
+  if (state.ocrEngine === 'tesseract') {
+    return {
+      id: 'tesseract',
+      label: 'Browser Tesseract.js',
+      recognize: recognizeImageWithTesseract,
+      workerCount: getRecommendedWorkerCount(state.images.length),
+    };
+  }
+
+  return {
+    id: 'easyocr',
+    label: 'EasyOCR local service',
+    recognize: recognizeImageWithEasyOcr,
+    workerCount: getRecommendedEasyOcrWorkerCount(state.images.length),
+  };
+}
+
 async function processImage(image, workerSlot) {
   setImageStatus(image.id, 'processing', 'Processing');
   appendProgress(`Checking ${image.name}...`);
@@ -100,7 +119,8 @@ async function processImage(image, workerSlot) {
   }
 
   const imageBlob = await blobForImageEntry(image);
-  const ocrResult = await recognizeImage(imageBlob, {
+  const engine = selectedOcrEngine();
+  const ocrResult = await engine.recognize(imageBlob, {
     workerSlot,
     onProgress: (line) => {
       setImageStatus(image.id, 'processing', line);
@@ -121,11 +141,12 @@ async function runReview() {
   state.progress = ['Starting local review...'];
   state.review = null;
   state.imageStatuses = Object.fromEntries(state.images.map((entry) => [entry.id, { status: 'queued', message: 'Queued' }]));
-  state.workerCount = getRecommendedWorkerCount(state.images.length);
+  const engine = selectedOcrEngine();
+  state.workerCount = engine.workerCount;
   render();
 
   try {
-    appendProgress(`Using up to ${state.workerCount} local OCR worker${state.workerCount === 1 ? '' : 's'}.`);
+    appendProgress(`Using ${engine.label}.`);
     const imageResults = new Array(state.images.length);
     let nextIndex = 0;
     const workerLoops = Array.from({ length: state.workerCount }, async (_, workerSlot) => {
@@ -237,6 +258,12 @@ function bindEvents() {
 
   document.querySelector('#sample-select')?.addEventListener('change', (event) => {
     state.selectedSampleId = event.target.value;
+  });
+
+  document.querySelector('#ocr-engine-select')?.addEventListener('change', (event) => {
+    state.ocrEngine = event.target.value;
+    state.review = null;
+    render();
   });
 
   const dropZone = document.querySelector('#drop-zone');

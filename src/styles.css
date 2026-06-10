@@ -380,11 +380,17 @@ label {
 }
 
 .review-actions {
+  display: grid;
+  gap: 0.8rem;
   padding: 1rem;
 }
 
+.engine-picker {
+  gap: 0.4rem;
+}
+
 .worker-note {
-  margin: 0.65rem 0 0;
+  margin: 0;
   color: var(--muted);
   font-size: 0.9rem;
   text-align: center;
