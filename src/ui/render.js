@@ -138,6 +138,19 @@ function reviewPanel(review) {
               <article class="ocr-card">
                 <h3>${escapeHtml(file.name)}</h3>
                 <p><strong>Engine:</strong> ${escapeHtml(file.ocrResult.engine)} · <strong>Time:</strong> ${escapeHtml(file.ocrResult.processingTimeMs)} ms</p>
+                ${
+                  file.ocrResult.variants?.length
+                    ? `<div class="variant-list">
+                        ${file.ocrResult.variants
+                          .map(
+                            (variant) => `
+                              <span>${escapeHtml(variant.label)}: ${escapeHtml(variant.textLength)} chars</span>
+                            `,
+                          )
+                          .join('')}
+                      </div>`
+                    : ''
+                }
                 <pre>${escapeHtml(file.ocrResult.rawText || 'No OCR text returned.')}</pre>
               </article>
             `,

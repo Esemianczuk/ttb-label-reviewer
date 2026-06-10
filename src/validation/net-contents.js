@@ -2,7 +2,8 @@ import { findRegexCandidates } from '../extraction/candidate-search.js';
 import { netContentsEquivalent, parseNetContents } from '../normalization/units-normalize.js';
 import { makeReview, SEVERITY, STATUS } from './status.js';
 
-const NET_CONTENTS_PATTERN = /(?:\d{1,5}(?:\.\d+)?\s*M\s*L\b|\d{1,4}(?:\.\d+)?\s*(?:L|LITER|LITRE|LITERS|LITRES)\b)/gi;
+const NET_CONTENTS_PATTERN = /(?:\d{1,5}(?:\.\d+)?\s*M\s*L\b|(?:7\s*\/?\s*[5S]\s*[0O]|\/\s*[5S]\s*[0O]|T\s*[5S]\s*[0O])\s*M?\s*L\b|\d{1,4}(?:\.\d+)?\s*(?:L|LITER|LITRE|LITERS|LITRES)\b)/gi;
+const AMBIGUOUS_ML_PATTERN = /\bM\s*L\b/i;
 
 export function validateNetContents(expected, ocrResult) {
   const field = 'Net Contents';
@@ -24,6 +25,23 @@ export function validateNetContents(expected, ocrResult) {
     .filter((candidate) => candidate.parsed);
 
   if (!candidates.length) {
+    const ambiguousMlEvidence = findRegexCandidates(AMBIGUOUS_ML_PATTERN, ocrResult, {
+      method: 'ambiguous-net-contents-candidate',
+    })[0];
+
+    if (ambiguousMlEvidence) {
+      return makeReview({
+        field,
+        expected,
+        extracted: ambiguousMlEvidence.evidence,
+        status: STATUS.NEEDS_REVIEW,
+        severity: SEVERITY.WARNING,
+        confidence: ambiguousMlEvidence.confidence,
+        reason: 'OCR found milliliter evidence, but the amount could not be read confidently.',
+        evidence: ambiguousMlEvidence,
+      });
+    }
+
     return makeReview({
       field,
       expected,

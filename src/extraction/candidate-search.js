@@ -111,6 +111,50 @@ export function findBestTextCandidate(expectedValue, ocrResult, options = {}) {
   return best;
 }
 
+function minimumTokenScore(token) {
+  if (token.length <= 3) return 0.85;
+  if (token.length <= 5) return 0.72;
+  return 0.68;
+}
+
+function significantTokens(text = '') {
+  const ignored = new Set(['A', 'AN', 'AND', 'BY', 'FOR', 'OF', 'THE', 'WITH']);
+  return tokenizeForMatch(text).filter((token) => token.length > 1 && !ignored.has(token));
+}
+
+export function scoreExpectedTokenCoverage(expectedValue, ocrResult = {}) {
+  const expectedTokens = significantTokens(expectedValue);
+  const ocrTokens = significantTokens(ocrResult.rawText || '');
+  if (!expectedTokens.length || !ocrTokens.length) return null;
+
+  const matches = expectedTokens.map((expectedToken) => {
+    let best = { expected: expectedToken, detected: '', score: 0 };
+    for (const ocrToken of ocrTokens) {
+      const score = similarityScore(expectedToken, ocrToken);
+      if (score > best.score) {
+        best = { expected: expectedToken, detected: ocrToken, score };
+      }
+    }
+    return best;
+  });
+
+  const matched = matches.filter((match) => match.score >= minimumTokenScore(match.expected));
+  const score = matches.reduce((sum, match) => sum + match.score, 0) / matches.length;
+  const coverage = matched.length / expectedTokens.length;
+  if (!coverage) return null;
+
+  return {
+    value: matched.map((match) => match.detected).join(' '),
+    evidence: matches.map((match) => `${match.expected}:${match.detected || 'missing'}`).join(', '),
+    score: Math.min(1, (score * 0.7) + (coverage * 0.3)),
+    coverage,
+    confidence: null,
+    block: null,
+    method: 'expected-token-coverage',
+    matches,
+  };
+}
+
 export function findRegexCandidates(regex, ocrResult, options = {}) {
   const sources = [
     { text: ocrResult?.rawText || '', confidence: null, bbox: null, source: 'rawText' },

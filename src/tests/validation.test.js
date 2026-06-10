@@ -5,6 +5,7 @@ import cleanOldTom from './fixtures/ocr-clean-old-tom.json' with { type: 'json' 
 import missingWarning from './fixtures/ocr-missing-warning.json' with { type: 'json' };
 import { validateAlcohol } from '../validation/alcohol.js';
 import { validateBrand } from '../validation/brand.js';
+import { validateClassType } from '../validation/class-type.js';
 import { validateGovernmentWarning } from '../validation/government-warning.js';
 import { validateNetContents } from '../validation/net-contents.js';
 import { computeOverallStatus } from '../validation/overall.js';
@@ -13,6 +14,14 @@ import { STATUS } from '../validation/status.js';
 describe('brand validator', () => {
   it('passes obvious case and quote variants', () => {
     expect(validateBrand("Stone's Throw", caseDifference).status).toBe(STATUS.PASS);
+  });
+
+  it('needs review when brand tokens are present but split by noisy OCR', () => {
+    const noisy = {
+      rawText: 'ESPECIAL\nJOSE CUERVO Disrillery\nPRODUCT OF MEXICO',
+      blocks: [],
+    };
+    expect(validateBrand('Jose Cuervo Especial', noisy).status).toBe(STATUS.NEEDS_REVIEW);
   });
 
   it('flags different brands', () => {
@@ -31,10 +40,26 @@ describe('alcohol validator', () => {
   });
 });
 
+describe('class/type validator', () => {
+  it('passes strong token coverage with OCR character substitutions', () => {
+    const noisy = {
+      rawText: 'BLUE AGAVER\nGOLD TEQUIPA',
+      blocks: [],
+    };
+    expect(validateClassType('Blue Agave Gold Tequila', noisy).status).toBe(STATUS.PASS);
+  });
+});
+
 describe('net contents validator', () => {
   it('passes equivalent milliliter and liter values', () => {
     expect(validateNetContents('750 mL', { rawText: '750 ml', blocks: [] }).status).toBe(STATUS.PASS);
     expect(validateNetContents('1 L', { rawText: '1000 mL', blocks: [] }).status).toBe(STATUS.PASS);
+    expect(validateNetContents('750 mL', { rawText: '7/50ML 40% ALC BY VOL', blocks: [] }).status).toBe(STATUS.PASS);
+  });
+
+  it('needs review when OCR sees mL but not the amount', () => {
+    const result = validateNetContents('750 mL', { rawText: 'ML 40% ALC BY VOL (80 PROOF)', blocks: [] });
+    expect(result.status).toBe(STATUS.NEEDS_REVIEW);
   });
 
   it('fails clear net contents mismatches', () => {

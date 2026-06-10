@@ -503,6 +503,23 @@ summary {
   margin-top: 0.8rem;
 }
 
+.variant-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.4rem 0 0.7rem;
+}
+
+.variant-list span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+  background: #f6f4ee;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 pre {
   max-height: 280px;
   overflow: auto;

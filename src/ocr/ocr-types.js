@@ -18,6 +18,7 @@ export function createOcrResult({
   preprocessingNotes = [],
   warnings = [],
   source = 'ocr',
+  variants = [],
 }) {
   const normalizedBlocks = blocks.length ? blocks : blocksFromText(rawText, null);
   return {
@@ -28,6 +29,7 @@ export function createOcrResult({
     preprocessingNotes,
     warnings,
     source,
+    variants,
     appVersion: APP_VERSION,
   };
 }

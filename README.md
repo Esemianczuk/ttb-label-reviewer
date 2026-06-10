@@ -34,9 +34,9 @@ npm run preview
 ## What It Validates
 
 - Brand name with OCR-aware fuzzy matching for case, quote, and minor OCR differences.
-- Class/type designation with a stricter targeted phrase match.
+- Class/type designation with targeted phrase and token coverage matching.
 - Alcohol content by normalizing ABV and proof values.
-- Net contents by normalizing mL and liter values.
+- Net contents by normalizing mL and liter values, including common OCR substitutions.
 - Government warning by checking required legal text segments.
 
 Multiple images are reviewed together as one label packet, which lets a front image carry brand/class/ABV/net contents and a back image carry the government warning.
@@ -59,17 +59,17 @@ The **Create Custom Label Images** button renders a synthetic front/back packet 
 
 Version 1 runs entirely in the browser. Label images are processed locally and are not uploaded to a server. No cloud OCR, LLM, or external inference API is used at runtime.
 
-The app vendors the Tesseract.js worker/core assets and English traineddata under `public/`. The bundled front/back sample is synthetic and has a local OCR fixture so the sample review is effectively instant while arbitrary uploads still go through Tesseract.js.
+The app vendors the Tesseract.js worker/core assets and English traineddata under `public/`. Uploaded images run through several browser-generated OCR variants, including full image, central label, detail band, inverted detail band, and warning/detail crops with targeted page segmentation modes. The bundled front/back sample is synthetic and has a local OCR fixture so the sample review is effectively instant.
 
 ## Approach
 
 The app does not ask AI to decide whether a label passes. The pipeline is:
 
 1. Load one or more label images in the browser.
-2. Preprocess images with deterministic resizing, grayscale conversion, and contrast enhancement.
-3. Run browser-local OCR using Tesseract.js with a small worker pool.
-4. Search OCR output for targeted evidence related to the expected application fields.
-5. Apply deterministic validators.
+2. Preprocess images with deterministic resizing, crops, grayscale conversion, contrast enhancement, and detail sharpening.
+3. Run browser-local OCR using Tesseract.js with a small worker pool and multiple page segmentation modes.
+4. Merge OCR evidence from all variants and search for targeted evidence related to the expected application fields.
+5. Apply deterministic validators with conservative review states for noisy but relevant evidence.
 6. Show field, expected value, extracted evidence, status, reason, and confidence hint.
 7. Export JSON or CSV summary.
 

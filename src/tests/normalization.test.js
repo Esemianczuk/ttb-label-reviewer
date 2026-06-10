@@ -24,4 +24,11 @@ describe('unit normalization', () => {
     expect(parseNetContents('750ML')).toMatchObject({ amountMl: 750 });
     expect(parseNetContents('1.0 liter')).toMatchObject({ amountMl: 1000 });
   });
+
+  it('normalizes common OCR substitutions for 750 mL', () => {
+    expect(parseNetContents('75O ML')).toMatchObject({ amountMl: 750 });
+    expect(parseNetContents('7/50ML')).toMatchObject({ amountMl: 750 });
+    expect(parseNetContents('/50ML')).toMatchObject({ amountMl: 750 });
+    expect(parseNetContents('T50 ML')).toMatchObject({ amountMl: 750 });
+  });
 });
