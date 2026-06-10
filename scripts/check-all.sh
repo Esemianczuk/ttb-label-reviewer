@@ -11,5 +11,6 @@ if [[ -s "$HOME/.nvm/nvm.sh" ]]; then
 fi
 
 npm --prefix browser-demo test
+npm --prefix browser-demo run test:e2e
 npm --prefix browser-demo run build
 python -m pytest -q

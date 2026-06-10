@@ -45,8 +45,135 @@ function currentPacket(state) {
 }
 
 function currentApplicationTitle(state) {
-  if (state.currentMode === 'upload') return 'Uploaded application';
+  if (state.currentMode === 'upload') return currentUploadRow(state)?.title || 'Uploaded application';
   return currentPacket(state)?.title || 'Sample application';
+}
+
+function currentUploadRow(state) {
+  return state.uploadBatchRows[state.currentUploadBatchIndex] || null;
+}
+
+function effectiveStatus(field = {}) {
+  return field.agentStatus || field.status || '';
+}
+
+function fieldStatus(review, label) {
+  return (review?.fields || []).find((field) => field.field === label || field.fieldKey === label)?.status || '';
+}
+
+function reviewHasLowConfidence(review) {
+  return (review?.fields || []).some((field) => Number.isFinite(field.confidence) && field.confidence < 0.65);
+}
+
+function criticalIssues(review) {
+  return (review?.fields || [])
+    .filter((field) => field.severity === 'critical' && ![STATUS.PASS].includes(effectiveStatus(field)))
+    .map((field) => field.field)
+    .join(', ');
+}
+
+function engineSummary(review) {
+  return (
+    review?.enginesUsed?.map((engine) => engine.displayName || engine.id).join(', ') ||
+    review?.files?.map((file) => file.ocrResult?.engine).filter(Boolean).join(', ') ||
+    ''
+  );
+}
+
+function durationText(ms) {
+  if (!Number.isFinite(ms)) return '-';
+  if (ms < 1000) return `${Math.round(ms)} ms`;
+  return `${(ms / 1000).toFixed(1)} s`;
+}
+
+function batchRows(state) {
+  if (state.currentMode === 'upload' || state.uploadBatchRows.length) {
+    return state.uploadBatchRows.map((row, index) => {
+      const isCurrent = state.currentMode === 'upload' && row.id === currentUploadRow(state)?.id;
+      const review = isCurrent ? state.review : row.review || row.applicationState?.review;
+      const expected = isCurrent ? state.expected : row.expected || row.applicationState?.expected || {};
+      const stats = isCurrent ? state.batchStats : row.applicationState?.batchStats;
+      return {
+        id: row.id,
+        index,
+        source: 'upload',
+        title: row.title,
+        applicationId: expected.applicationId || row.id,
+        brand: expected.brandName || '-',
+        classType: expected.classType || '-',
+        overall: review?.overallStatus || row.status || 'ready',
+        criticalIssues: criticalIssues(review) || row.criticalIssues || '-',
+        processingMode: stats?.mode || row.processingMode || '-',
+        workerEngine: engineSummary(review) || row.workerEngine || '-',
+        durationMs: stats?.totalMs ?? row.durationMs,
+        reviewerDecision: review?.overallStatus || row.reviewerDecision || '-',
+        review,
+        isCurrent,
+        action: 'select-batch-row',
+      };
+    });
+  }
+
+  return state.samplePackets.map((packet, index) => {
+    const isCurrent = state.currentMode === 'samples' && index === state.currentSampleIndex;
+    const cached = isCurrent ? null : state.applicationStates[packet.id];
+    const review = isCurrent ? state.review : cached?.review;
+    const expected = isCurrent ? state.expected : cached?.expected || {};
+    const stats = isCurrent ? state.batchStats : cached?.batchStats;
+    return {
+      id: packet.id,
+      index,
+      source: 'sample',
+      title: packet.title,
+      applicationId: expected.applicationId || packet.id,
+      brand: expected.brandName || packet.title,
+      classType: expected.classType || '-',
+      overall: review?.overallStatus || (isCurrent || cached ? 'ready' : 'queued'),
+      criticalIssues: criticalIssues(review) || '-',
+      processingMode: stats?.mode || '-',
+      workerEngine: engineSummary(review) || '-',
+      durationMs: stats?.totalMs,
+      reviewerDecision: review?.overallStatus || '-',
+      review,
+      isCurrent,
+      action: 'select-sample-row',
+    };
+  });
+}
+
+function rowPriority(row) {
+  const status = String(row.overall || '').toUpperCase();
+  if (status === STATUS.FAIL || row.criticalIssues !== '-') return 0;
+  if (status === STATUS.NEEDS_REVIEW || row.overall === 'needs_image') return 1;
+  if ([STATUS.WARNING, STATUS.PASS_WITH_WARNINGS].includes(status)) return 2;
+  if (reviewHasLowConfidence(row.review)) return 3;
+  if (status === STATUS.PASS) return 4;
+  return 5;
+}
+
+function rowMatchesFilter(row, filters) {
+  const status = String(row.overall || '').toUpperCase();
+  const matches = [];
+  if (filters.fail) matches.push(status === STATUS.FAIL || row.criticalIssues !== '-');
+  if (filters.needsReview) matches.push(status === STATUS.NEEDS_REVIEW || row.overall === 'needs_image');
+  if (filters.warning) matches.push([STATUS.WARNING, STATUS.PASS_WITH_WARNINGS].includes(status));
+  if (filters.pass) matches.push(status === STATUS.PASS);
+  if (filters.missingWarning) matches.push([STATUS.FAIL, STATUS.NOT_FOUND, STATUS.NEEDS_REVIEW].includes(fieldStatus(row.review, 'Government Warning')));
+  if (filters.abvMismatch) matches.push([STATUS.FAIL, STATUS.NOT_FOUND, STATUS.NEEDS_REVIEW].includes(fieldStatus(row.review, 'Alcohol Content')));
+  if (filters.lowOcrConfidence) matches.push(reviewHasLowConfidence(row.review));
+  return matches.some(Boolean) || (!row.review && ['ready', 'queued', 'needs_image'].includes(row.overall));
+}
+
+function filteredBatchRows(state) {
+  const search = String(state.batchSearch || '').trim().toLowerCase();
+  return batchRows(state)
+    .filter((row) => rowMatchesFilter(row, state.batchFilters || {}))
+    .filter((row) =>
+      search
+        ? [row.applicationId, row.brand, row.classType, row.title, row.overall].some((value) => String(value || '').toLowerCase().includes(search))
+        : true,
+    )
+    .sort((left, right) => rowPriority(left) - rowPriority(right) || left.index - right.index);
 }
 
 function imageList(images, state) {
@@ -254,7 +381,9 @@ function progressPanel(state) {
 
 function sampleQueueBar(state) {
   const packet = currentPacket(state);
-  const count = state.samplePackets.length;
+  const uploadRow = currentUploadRow(state);
+  const isUpload = state.currentMode === 'upload';
+  const count = isUpload ? state.uploadBatchRows.length : state.samplePackets.length;
   const sampleOptions = state.samplePackets
     .map(
       (item, index) => `
@@ -268,16 +397,25 @@ function sampleQueueBar(state) {
   return `
     <section class="queue-bar">
       <div>
-        <p class="eyebrow">${state.currentMode === 'samples' ? `Application ${Math.min(state.currentSampleIndex + 1, count || 1)} of ${count || 1}` : 'Custom application'}</p>
+        <p class="eyebrow">${
+          isUpload
+            ? `Uploaded application ${Math.min(state.currentUploadBatchIndex + 1, count || 1)} of ${count || 1}`
+            : `Application ${Math.min(state.currentSampleIndex + 1, count || 1)} of ${count || 1}`
+        }</p>
         <h2>${escapeHtml(currentApplicationTitle(state))}</h2>
-        ${packet?.description && state.currentMode === 'samples' ? `<p>${escapeHtml(packet.description)}</p>` : ''}
+        ${packet?.description && !isUpload ? `<p>${escapeHtml(packet.description)}</p>` : ''}
+        ${uploadRow && isUpload ? `<p>${escapeHtml(uploadRow.images?.[0]?.name || uploadRow.criticalIssues || 'Uploaded manifest row')}</p>` : ''}
       </div>
       <div class="queue-controls">
-        <select id="sample-select" ${count ? '' : 'disabled'} aria-label="Sample application">
+        <select id="sample-select" ${state.samplePackets.length ? '' : 'disabled'} aria-label="Sample application">
           ${sampleOptions || '<option>Loading samples...</option>'}
         </select>
-        <button class="secondary" data-action="previous-sample" type="button" ${state.currentMode === 'samples' && state.currentSampleIndex > 0 ? '' : 'disabled'}>Previous</button>
-        <button class="primary queue-next" data-action="next-sample" type="button" ${state.currentMode === 'samples' && state.currentSampleIndex < count - 1 ? '' : 'disabled'}>Next Application</button>
+        <button class="secondary" data-action="previous-sample" type="button" ${
+          (isUpload && state.currentUploadBatchIndex > 0) || (!isUpload && state.currentSampleIndex > 0) ? '' : 'disabled'
+        }>Previous</button>
+        <button class="primary queue-next" data-action="next-sample" type="button" ${
+          (isUpload && state.currentUploadBatchIndex < count - 1) || (!isUpload && state.currentSampleIndex < count - 1) ? '' : 'disabled'
+        }>Next Application</button>
       </div>
     </section>
   `;
@@ -328,6 +466,277 @@ function expectedFieldsForm(state) {
   `;
 }
 
+function backendStatusText(state) {
+  if (state.processingMode === 'browser') return 'Browser only';
+  if (state.backendStatus === 'online') return state.streamConnected ? 'Backend online, stream connected' : 'Backend online';
+  if (state.backendStatus === 'checking') return 'Checking backend';
+  return 'Backend offline, browser fallback ready';
+}
+
+function processingModePanel(state) {
+  return `
+    <section class="processing-panel" aria-label="Processing controls">
+      <div class="mode-line">
+        <label>
+          Processing Mode
+          <select id="processing-mode-select" ${state.isProcessing ? 'disabled' : ''}>
+            <option value="browser" ${state.processingMode === 'browser' ? 'selected' : ''}>Browser Only</option>
+            <option value="backend" ${state.processingMode === 'backend' ? 'selected' : ''}>Local Backend</option>
+            <option value="cluster" ${state.processingMode === 'cluster' ? 'selected' : ''}>Cluster</option>
+          </select>
+        </label>
+        <label>
+          Backend URL
+          <input id="backend-url-input" value="${escapeHtml(state.backendUrl)}" ${state.isProcessing ? 'disabled' : ''} />
+        </label>
+        <button class="secondary" data-action="refresh-backend" type="button">Refresh</button>
+      </div>
+      <div class="mode-status">
+        <span class="connection-dot ${escapeHtml(state.backendStatus)}"></span>
+        <strong>${escapeHtml(backendStatusText(state))}</strong>
+        <span>${escapeHtml(state.backendMessage || '')}</span>
+      </div>
+      <div class="mode-metrics">
+        <span>${escapeHtml(state.workerCount)} browser worker${state.workerCount === 1 ? '' : 's'} ready</span>
+        <span>${escapeHtml(state.clusterWorkers.length)} backend worker${state.clusterWorkers.length === 1 ? '' : 's'} seen</span>
+        <span>Session ${escapeHtml(state.backendSessionId || 'browser-local')}</span>
+      </div>
+    </section>
+  `;
+}
+
+function batchFilter(label, name, checked) {
+  return `
+    <label class="filter-pill">
+      <input class="batch-filter" name="${escapeHtml(name)}" type="checkbox" ${checked ? 'checked' : ''} />
+      ${escapeHtml(label)}
+    </label>
+  `;
+}
+
+function batchQueuePanel(state) {
+  const rows = filteredBatchRows(state);
+  const filters = state.batchFilters || {};
+  return `
+    <section class="panel queue-table-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Severity-first queue</p>
+          <h2>Application Packets</h2>
+        </div>
+        <label class="queue-search">
+          Search
+          <input id="batch-search" value="${escapeHtml(state.batchSearch)}" placeholder="Application, brand, class/type" />
+        </label>
+      </div>
+      <div class="filter-row">
+        ${batchFilter('Fail', 'fail', filters.fail)}
+        ${batchFilter('Needs Review', 'needsReview', filters.needsReview)}
+        ${batchFilter('Warning', 'warning', filters.warning)}
+        ${batchFilter('Pass', 'pass', filters.pass)}
+        ${batchFilter('Missing warning', 'missingWarning', filters.missingWarning)}
+        ${batchFilter('ABV mismatch', 'abvMismatch', filters.abvMismatch)}
+        ${batchFilter('Low OCR confidence', 'lowOcrConfidence', filters.lowOcrConfidence)}
+      </div>
+      <div class="table-wrap batch-table-wrap">
+        <table class="batch-table">
+          <thead>
+            <tr>
+              <th>Application ID</th>
+              <th>Brand</th>
+              <th>Class/Type</th>
+              <th>Overall</th>
+              <th>Critical Issues</th>
+              <th>Processing Mode</th>
+              <th>Worker/Engine</th>
+              <th>Time</th>
+              <th>Reviewer Decision</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${
+              rows.length
+                ? rows
+                    .slice(0, 120)
+                    .map(
+                      (row) => `
+                        <tr class="${row.isCurrent ? 'is-current-row' : ''}">
+                          <th scope="row" data-label="Application ID">
+                            <button class="row-link" data-action="${escapeHtml(row.action)}" ${
+                              row.source === 'upload'
+                                ? `data-batch-row-id="${escapeHtml(row.id)}"`
+                                : `data-sample-index="${escapeHtml(row.index)}"`
+                            } type="button">${escapeHtml(row.applicationId)}</button>
+                          </th>
+                          <td data-label="Brand">${escapeHtml(row.brand)}</td>
+                          <td data-label="Class/Type">${escapeHtml(row.classType)}</td>
+                          <td data-label="Overall"><span class="status ${statusClass(row.overall)}">${escapeHtml(displayStatus(row.overall))}</span></td>
+                          <td data-label="Critical Issues">${escapeHtml(row.criticalIssues)}</td>
+                          <td data-label="Processing Mode">${escapeHtml(row.processingMode)}</td>
+                          <td data-label="Worker/Engine">${escapeHtml(row.workerEngine)}</td>
+                          <td data-label="Time">${escapeHtml(durationText(row.durationMs))}</td>
+                          <td data-label="Reviewer Decision">${escapeHtml(displayStatus(row.reviewerDecision))}</td>
+                        </tr>
+                      `,
+                    )
+                    .join('')
+                : '<tr><td colspan="9">No applications match the active filters.</td></tr>'
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  `;
+}
+
+function acceleratorText(worker) {
+  const accelerators = worker.capabilities?.accelerators || {};
+  const parts = [];
+  if (accelerators.cuda?.available) parts.push('CUDA');
+  if (accelerators.appleMps?.available) parts.push('MPS');
+  return parts.join(', ') || 'CPU';
+}
+
+function enginesText(worker) {
+  const engines = worker.capabilities?.engines || {};
+  const available = Object.entries(engines)
+    .filter(([, value]) => value?.available)
+    .map(([key]) => key);
+  return available.join(', ') || worker.capabilities?.warmEngines?.join(', ') || 'null';
+}
+
+function relativeTime(value) {
+  if (!value) return '-';
+  const ms = Date.now() - new Date(value).getTime();
+  if (!Number.isFinite(ms)) return '-';
+  if (ms < 60000) return `${Math.max(1, Math.round(ms / 1000))}s ago`;
+  if (ms < 3600000) return `${Math.round(ms / 60000)}m ago`;
+  return `${Math.round(ms / 3600000)}h ago`;
+}
+
+function throughputStats(state) {
+  const rows = batchRows(state).filter((row) => row.review);
+  const durations = rows.map((row) => row.durationMs).filter(Number.isFinite).sort((a, b) => a - b);
+  const counts = rows.reduce(
+    (accumulator, row) => {
+      const status = String(row.overall || '').toUpperCase();
+      if (status === STATUS.PASS) accumulator.pass += 1;
+      else if (status === STATUS.NEEDS_REVIEW) accumulator.needsReview += 1;
+      else if (status === STATUS.FAIL) accumulator.fail += 1;
+      return accumulator;
+    },
+    { pass: 0, needsReview: 0, fail: 0 },
+  );
+  const totalMs = durations.reduce((sum, value) => sum + value, 0);
+  return {
+    imagesPerMinute: totalMs ? Math.round((rows.length / totalMs) * 60000 * 10) / 10 : 0,
+    p50: percentile(durations, 0.5),
+    p95: percentile(durations, 0.95),
+    counts,
+  };
+}
+
+function percentile(values, fraction) {
+  if (!values.length) return null;
+  const index = Math.min(values.length - 1, Math.floor((values.length - 1) * fraction));
+  return values[index];
+}
+
+function schedulerReason(event) {
+  const assignment = event.payload?.assignment || {};
+  const reasons = assignment.reason_codes || assignment.reasonCodes || [];
+  return reasons.length ? reasons.join(', ') : event.eventType.replaceAll('_', ' ');
+}
+
+function clusterDashboard(state) {
+  const stats = throughputStats(state);
+  return `
+    <section class="cluster-dashboard">
+      <div class="panel cluster-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Cluster dashboard</p>
+            <h2>Worker Agents</h2>
+          </div>
+          <span class="status ${state.backendStatus === 'online' ? 'pass' : 'needs-review'}">${escapeHtml(state.backendStatus)}</span>
+        </div>
+        <div class="worker-card-grid">
+          ${
+            state.clusterWorkers.length
+              ? state.clusterWorkers
+                  .map(
+                    (worker) => `
+                      <article class="worker-card">
+                        <div>
+                          <strong>${escapeHtml(worker.hostname || worker.id)}</strong>
+                          <span>${escapeHtml(worker.platform)} ${escapeHtml(worker.arch)}</span>
+                        </div>
+                        <dl>
+                          <div><dt>CPU</dt><dd>${escapeHtml(worker.capabilities?.cpuCount || '-')} cores</dd></div>
+                          <div><dt>GPU</dt><dd>${escapeHtml(acceleratorText(worker))}</dd></div>
+                          <div><dt>Engines</dt><dd>${escapeHtml(enginesText(worker))}</dd></div>
+                          <div><dt>Active</dt><dd>${escapeHtml(worker.activeJobs || 0)} / ${escapeHtml(worker.maxConcurrency || 1)}</dd></div>
+                          <div><dt>Queue depth</dt><dd>${escapeHtml(worker.capabilities?.queueDepth ?? '-')}</dd></div>
+                          <div><dt>Avg ms/image</dt><dd>${escapeHtml(Math.round(worker.calibration?.engines?.null?.ocrMs || worker.calibration?.ocrMs || 0) || '-')}</dd></div>
+                          <div><dt>Heartbeat</dt><dd>${escapeHtml(relativeTime(worker.lastSeenAt))}</dd></div>
+                          <div><dt>Status</dt><dd>${escapeHtml(worker.status)}</dd></div>
+                        </dl>
+                      </article>
+                    `,
+                  )
+                  .join('')
+              : '<p class="empty-note">No backend workers have registered yet.</p>'
+          }
+        </div>
+      </div>
+
+      <div class="panel throughput-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Throughput</p>
+            <h2>Review Flow</h2>
+          </div>
+        </div>
+        <div class="throughput-grid">
+          <span><strong>${escapeHtml(stats.imagesPerMinute)}</strong> images/min</span>
+          <span><strong>${escapeHtml(durationText(stats.p50))}</strong> p50</span>
+          <span><strong>${escapeHtml(durationText(stats.p95))}</strong> p95</span>
+          <span><strong>${escapeHtml(stats.counts.fail)}</strong> fail</span>
+          <span><strong>${escapeHtml(stats.counts.needsReview)}</strong> needs review</span>
+          <span><strong>${escapeHtml(stats.counts.pass)}</strong> pass</span>
+        </div>
+        <div class="scheduler-log">
+          <h3>Scheduler Explanation</h3>
+          ${
+            state.clusterEvents.length
+              ? state.clusterEvents
+                  .slice(0, 8)
+                  .map(
+                    (event) => `
+                      <p>
+                        <strong>${escapeHtml(event.workerId)}</strong>
+                        <span>${escapeHtml(schedulerReason(event))}</span>
+                      </p>
+                    `,
+                  )
+                  .join('')
+              : '<p class="empty-note">Assignments will appear after workers claim jobs.</p>'
+          }
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function operationsDashboard(state) {
+  return `
+    <section class="operations-dashboard">
+      ${batchQueuePanel(state)}
+      ${clusterDashboard(state)}
+    </section>
+  `;
+}
+
 function floatingViewer(state) {
   if (!state.viewer.open) return '';
   const image = state.images.find((entry) => entry.id === state.viewer.imageId) || state.images[0];
@@ -363,18 +772,20 @@ export function renderApp(state) {
     <main class="app-shell">
       <section class="top-band">
         <div class="title-block">
-          <p class="eyebrow">Browser-only TTB prototype</p>
+          <p class="eyebrow">Hybrid TTB review workspace</p>
           <h1>Alcohol Label Reviewer</h1>
-          <p>Agent queue and browser batch reviewer for matching application images against expected COLA fields, evidence, and reviewer decisions.</p>
+          <p>Agent queue for matching one application image against expected COLA fields, evidence, and reviewer decisions across browser, local backend, and cluster modes.</p>
         </div>
         <aside class="privacy-note">
-          <strong>Static browser demo</strong>
-          <span>Images stay in the browser. No backend service is required.</span>
+          <strong>Demo controls</strong>
+          <span>Browser mode is always available. Backend modes use the configured coordinator when it is online.</span>
           <button class="secondary reset-demo" data-action="reset-demo" type="button">Reset Demo</button>
         </aside>
       </section>
 
       ${sampleQueueBar(state)}
+      ${processingModePanel(state)}
+      ${operationsDashboard(state)}
 
       <section class="workflow-grid">
         <div class="left-stack">
@@ -383,12 +794,12 @@ export function renderApp(state) {
               <h2>Application Image${state.images.length > 1 ? 's' : ''}</h2>
             </div>
             <label class="drop-zone" for="image-input" id="drop-zone">
-              <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp" multiple />
-              <span class="drop-title">Drop application image${state.currentMode === 'upload' ? 's' : ''}</span>
-              <span class="drop-subtitle">PNG, JPG/JPEG, or WebP. The expected fields apply to the uploaded batch.</span>
+              <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp,text/csv,.csv" multiple />
+              <span class="drop-title">Drop images or a CSV manifest</span>
+              <span class="drop-subtitle">Each row becomes one application. Image filenames are matched to manifest filename, labelId, or file columns.</span>
             </label>
             <div class="inline-actions">
-              <button class="secondary" data-action="trigger-upload" type="button">Choose Images</button>
+              <button class="secondary" data-action="trigger-upload" type="button">Choose Files</button>
               <button class="secondary" data-action="clear-images" type="button" ${state.images.length && state.currentMode === 'upload' ? '' : 'disabled'}>Clear Images</button>
               <button class="secondary" data-action="return-samples" type="button" ${state.currentMode === 'upload' && state.samplePackets.length ? '' : 'disabled'}>Sample Queue</button>
             </div>
@@ -423,12 +834,22 @@ export function renderApp(state) {
             </div>
             ${
               state.isProcessing
-                ? `<p class="worker-note">Using ${escapeHtml(state.workerCount)} browser OCR worker${state.workerCount === 1 ? '' : 's'} for this run.</p>`
+                ? `<p class="worker-note">Requested mode: ${escapeHtml(state.processingMode)}. Effective worker count updates as results arrive.</p>`
                 : ''
             }
             <div class="review-nav">
-              <button class="secondary" data-action="previous-sample" type="button" ${state.currentMode === 'samples' && state.currentSampleIndex > 0 ? '' : 'disabled'}>Previous</button>
-              <button class="secondary" data-action="next-sample" type="button" ${state.currentMode === 'samples' && state.currentSampleIndex < state.samplePackets.length - 1 ? '' : 'disabled'}>Next Application</button>
+              <button class="secondary" data-action="previous-sample" type="button" ${
+                (state.currentMode === 'upload' && state.currentUploadBatchIndex > 0) ||
+                (state.currentMode === 'samples' && state.currentSampleIndex > 0)
+                  ? ''
+                  : 'disabled'
+              }>Previous</button>
+              <button class="secondary" data-action="next-sample" type="button" ${
+                (state.currentMode === 'upload' && state.currentUploadBatchIndex < state.uploadBatchRows.length - 1) ||
+                (state.currentMode === 'samples' && state.currentSampleIndex < state.samplePackets.length - 1)
+                  ? ''
+                  : 'disabled'
+              }>Next Application</button>
             </div>
           </section>
           ${progressPanel(state)}

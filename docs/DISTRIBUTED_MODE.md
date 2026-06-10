@@ -6,6 +6,8 @@ Phase 5 adds hardware-aware assignment scoring. Workers still pull jobs from the
 
 Phase 6 adds secure worker discovery and join. Manual join is the reliable default; mDNS is optional.
 
+Phase 7 exposes those workers in the browser operations dashboard. Browser clients can switch between Browser Only, Local Backend, and Cluster modes without losing the local-only fallback.
+
 ## Start
 
 Terminal 1:
@@ -75,6 +77,7 @@ The worker does not download model weights or require cloud services.
 11. Evidence jobs return auditable field candidates.
 12. Validation jobs rerun OCR over application assets and return a final deterministic `ReviewResult`.
 13. Heartbeats keep leases alive; failures are reported with structured errors and retryable jobs return to the queue.
+14. Browser dashboards read `/api/workers`, `/api/workers/events`, `/api/cluster/status`, and `WS /api/ws/sessions/{session_id}` for worker cards, scheduler reasons, and live session snapshots.
 
 See [SCHEDULER.md](SCHEDULER.md) for the assignment score model.
 
@@ -109,3 +112,21 @@ Use [scripts/register-lab-hosts.example.sh](../scripts/register-lab-hosts.exampl
 - `ssh mac`
 
 It does not SSH or install anything automatically.
+
+## Frontend Cluster Smoke
+
+The browser e2e suite includes an optional live backend test. Start a coordinator and a worker for session `phase7-ui`, then run:
+
+```bash
+cd browser-demo
+TTB_E2E_BACKEND_URL=http://127.0.0.1:8000 npm run test:e2e -- -g "backend mode completes"
+```
+
+For LAN validation, bind the coordinator to a trusted interface and pass the LAN URL to workers and Playwright:
+
+```bash
+TTB_API_HOST=0.0.0.0 \
+TTB_API_PORT=8010 \
+TTB_COORDINATOR_URL=http://<coordinator-lan-ip>:8010 \
+./scripts/dev-local-backend.sh
+```

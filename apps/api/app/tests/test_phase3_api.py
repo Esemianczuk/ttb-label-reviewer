@@ -205,6 +205,11 @@ def test_review_queue_fake_worker_and_report_flow(client: TestClient):
     assert review_after["status"] == "pass"
     assert review_after["result"]["overallStatus"] == "PASS"
 
+    events = client.get("/api/workers/events?limit=10").json()
+    assert events[0]["eventType"] == "job_completed"
+    assert any(event["eventType"] == "job_claimed" for event in events)
+    assert events[0]["payload"]["job_id"] == validation_job["id"]
+
     report = client.get(f"/api/reports/{review['id']}.json", headers=headers())
     assert report.status_code == 200
     assert report.json()["result"]["fields"][0]["status"] == "PASS"

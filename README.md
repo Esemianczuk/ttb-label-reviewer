@@ -17,7 +17,7 @@ npm install
 npm run dev
 ```
 
-Current browser mode includes a bounded dedicated Web Worker pool for uploaded image batches. The sample queue remains fixture-backed for deterministic evaluator demos.
+Current browser mode includes a bounded dedicated Web Worker pool for uploaded image batches. The sample queue remains fixture-backed for deterministic evaluator demos. Phase 7 adds the operations dashboard: Processing Mode, backend URL detection, severity-first application table, filters, reviewer shortcuts, and the expandable image viewer.
 
 ### Local Backend Mode
 
@@ -36,6 +36,8 @@ export TTB_API_DATABASE_URL="postgresql+psycopg://user:password@localhost:5432/t
 
 The backend serves `browser-demo/dist` from `/` when a production browser build exists.
 
+In the browser, choose **Local Backend** from Processing Mode. The app probes the configured URL, uploads the one-image application packet, starts a backend review, listens to the session WebSocket, and polls the review until the worker result is available. If the backend is unavailable, the same Auto Review button falls back to Browser Only.
+
 ### Distributed Cluster Mode
 
 The Python worker agent in `apps/worker` lets trusted local machines register with the coordinator from Linux, macOS, or Windows. It probes host capabilities, calibrates available OCR engines, heartbeats, claims leased jobs, downloads scoped assets, and completes OCR/evidence/validation tasks. Browser clients never process another browser client's uploaded images.
@@ -49,6 +51,7 @@ JOIN_TOKEN="$(curl -sS -X POST http://127.0.0.1:8000/api/cluster/join-token \
 
 The worker always includes a deterministic null OCR engine for demos and tests. If local OCR tooling such as Tesseract is installed, the worker advertises and can use it without making those packages mandatory.
 Manual join tokens are short-lived; the worker receives and stores a persistent secret after registration.
+Cluster mode uses the same backend review API while the browser shows worker cards, throughput counters, and recent scheduler assignment reasons from `/api/workers/events`.
 
 ## Current Repository Layout
 
@@ -77,6 +80,7 @@ Run all currently configured checks from the repository root:
 The script runs:
 
 - `npm test` in `browser-demo`
+- `npm run test:e2e` in `browser-demo`
 - `npm run build` in `browser-demo`
 - `python -m pytest -q` for root Python, backend API, and worker tests
 
@@ -84,7 +88,14 @@ You can also run the browser checks directly:
 
 ```bash
 npm --prefix browser-demo test
+npm --prefix browser-demo run test:e2e
 npm --prefix browser-demo run build
+```
+
+The optional live backend Playwright smoke is skipped by default. To exercise the browser against a running coordinator and worker, set:
+
+```bash
+TTB_E2E_BACKEND_URL=http://127.0.0.1:8000 npm --prefix browser-demo run test:e2e -- -g "backend mode completes"
 ```
 
 Run only the backend tests:
@@ -124,3 +135,4 @@ The V1 app remains in `browser-demo/`. New shared contracts start in `packages/s
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/DISTRIBUTED_MODE.md](docs/DISTRIBUTED_MODE.md), and [docs/EVALUATOR_GUIDE.md](docs/EVALUATOR_GUIDE.md) for the coordinator and worker shape.
 The Phase 5 hardware-aware scheduler is documented in [docs/SCHEDULER.md](docs/SCHEDULER.md).
 Phase 6 worker join/discovery is documented in [docs/DISTRIBUTED_MODE.md](docs/DISTRIBUTED_MODE.md).
+Phase 7 frontend backend/cluster mode is documented in [docs/EVALUATOR_GUIDE.md](docs/EVALUATOR_GUIDE.md).

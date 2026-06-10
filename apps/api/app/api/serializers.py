@@ -83,3 +83,12 @@ def worker_to_read(worker: models.Worker):
         "createdAt": worker.created_at,
     }
 
+
+def worker_event_to_read(event: models.WorkerEvent):
+    return {
+        "id": event.id,
+        "workerId": event.worker_id,
+        "eventType": event.event_type,
+        "payload": event.payload_json,
+        "createdAt": event.created_at,
+    }

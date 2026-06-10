@@ -137,6 +137,14 @@ class WorkerRead(BaseModel):
     createdAt: datetime
 
 
+class WorkerEventRead(BaseModel):
+    id: str
+    workerId: str
+    eventType: str
+    payload: dict[str, Any]
+    createdAt: datetime
+
+
 class WorkerRegisterResponse(WorkerRead):
     workerSecret: str | None = None
 

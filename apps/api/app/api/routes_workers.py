@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .. import models
-from ..api.serializers import job_to_read, worker_to_read
+from ..api.serializers import job_to_read, worker_event_to_read, worker_to_read
 from ..core.auth import generate_secret, hash_secret, verify_secret
 from ..core.join_tokens import consume_join_token, token_expired
 from ..core.scheduler import claim_next_job
@@ -18,6 +18,7 @@ from ..schemas import (
     JobCompleteRequest,
     JobFailRequest,
     JobRead,
+    WorkerEventRead,
     WorkerHeartbeat,
     WorkerRead,
     WorkerRegister,
@@ -38,6 +39,13 @@ def require_worker(session: Session, worker_id: str) -> models.Worker:
 def list_workers(session: Session = Depends(get_session)):
     workers = session.scalars(select(models.Worker).order_by(models.Worker.last_seen_at.desc())).all()
     return [worker_to_read(worker) for worker in workers]
+
+
+@router.get("/events", response_model=list[WorkerEventRead])
+def list_worker_events(limit: int = 25, session: Session = Depends(get_session)):
+    safe_limit = max(1, min(limit, 100))
+    events = session.scalars(select(models.WorkerEvent).order_by(models.WorkerEvent.created_at.desc()).limit(safe_limit)).all()
+    return [worker_event_to_read(event) for event in events]
 
 
 @router.get("/{worker_id}", response_model=WorkerRead)

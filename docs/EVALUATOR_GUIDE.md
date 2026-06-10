@@ -10,6 +10,26 @@ npm run dev
 
 The browser app remains fully usable without the backend.
 
+The top-right Processing Mode control has three modes:
+
+- **Browser Only** uses the browser worker pool and never requires a backend.
+- **Local Backend** uploads the current one-image application packet to FastAPI and waits for a local worker/coordinator result.
+- **Cluster** uses the same backend review API while showing worker cards, throughput, and scheduler assignment reasons.
+
+If the configured backend URL is offline, Auto Review falls back to Browser Only.
+
+The queue table accepts the bundled sample packet queue or uploaded images with an optional CSV manifest. CSV rows are matched to image files by `filename`, `image`, `file`, `labelId`, or row order. Filters cover fail, needs review, warning, pass, missing warning, ABV mismatch, and low OCR confidence.
+
+Keyboard shortcuts:
+
+- `N` next application
+- `P` previous application
+- `A` mark visible review fields pass
+- `R` mark visible review fields needs review
+- `F` mark visible review fields fail
+- `E` expand the current image
+- `/` focus queue search
+
 ## Local Backend Coordinator
 
 From the repository root:
@@ -43,6 +63,10 @@ Core API routes:
 - `POST /api/workers/{worker_id}/complete`
 - `GET /api/reviews/{review_id}`
 - `GET /api/reports/{review_id}.json`
+- `GET /api/workers`
+- `GET /api/workers/events`
+- `GET /api/cluster/status`
+- `WS /api/ws/sessions/{session_id}`
 
 Use the same `X-Session-Id` header for application, asset, job, review, and report calls.
 
@@ -106,4 +130,19 @@ Run only worker tests:
 
 ```bash
 python -m pytest apps/worker/tests -q
+```
+
+Run only browser unit and e2e tests:
+
+```bash
+cd browser-demo
+npm test
+npm run test:e2e
+```
+
+Run the optional live browser/backend smoke after starting a coordinator and at least one worker for session `phase7-ui`:
+
+```bash
+cd browser-demo
+TTB_E2E_BACKEND_URL=http://127.0.0.1:8000 npm run test:e2e -- -g "backend mode completes"
 ```
