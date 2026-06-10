@@ -385,10 +385,6 @@ label {
   padding: 1rem;
 }
 
-.engine-picker {
-  gap: 0.4rem;
-}
-
 .worker-note {
   margin: 0;
   color: var(--muted);

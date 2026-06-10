@@ -14,30 +14,14 @@ cd ttb-label-reviewer
 source ~/.nvm/nvm.sh && nvm use 20
 npm install
 python3 -m pip install --user -r server/requirements-easyocr.txt
-./open-easyocr-demo.sh
+./open-demo.sh
 ```
 
 This starts the Vite app and a localhost EasyOCR service. The service runs on CPU by default, so CUDA is not required. The first OCR request loads the model; later requests use the warm service.
 
-Browser-only fallback:
-
-```bash
-git clone https://github.com/Esemianczuk/ttb-label-reviewer.git
-cd ttb-label-reviewer
-source ~/.nvm/nvm.sh && nvm use 20
-npm install
-npm run dev
-```
-
 Open the local URL shown by Vite, load the sample packet or drag in a label image packet, enter expected application fields, and click **Review Label**.
 
-On Linux, you can also run:
-
-```bash
-./open-demo.sh
-```
-
-The launcher starts the local Vite server and opens the browser so browser OCR runs from `localhost` instead of a brittle `file://` page.
+The launcher starts the EasyOCR service, starts the local Vite server, and opens the browser.
 
 The EasyOCR service can also be run manually in one terminal:
 
@@ -57,11 +41,10 @@ Then run the app in another terminal:
 npm run dev
 ```
 
-For a production-style static check:
+For a production-style frontend build check:
 
 ```bash
 npm run build
-npm run preview
 ```
 
 ## What It Validates
@@ -92,15 +75,15 @@ The **Create Custom Label Images** button renders a synthetic front/back packet 
 
 Version 1 processes label images locally and does not call a cloud OCR, LLM, or external inference API at runtime.
 
-The default fast path uses a CPU localhost EasyOCR service. Its `fast` mode uses native EasyOCR detection on CPU to stay under the time limit, and uses the higher-accuracy targeted crop preset when CUDA is explicitly enabled. CUDA is an opt-in acceleration mode, not a requirement. The browser fallback vendors the Tesseract.js worker/core assets and English traineddata under `public/`. Uploaded images run through deterministic OCR variants, including full image, central label, detail band, inverted detail band, and warning/detail crops. The bundled front/back sample is synthetic and has a local OCR fixture so the sample review is effectively instant.
+The OCR path uses a CPU localhost EasyOCR service. Its `fast` mode uses native EasyOCR detection on CPU to stay under the time limit, and uses the higher-accuracy targeted crop preset when CUDA is explicitly enabled. CUDA is an opt-in acceleration mode, not a requirement. Uploaded images are sent only to the localhost service, not to a cloud OCR API. The bundled front/back sample is synthetic and has a local OCR fixture so the sample review is effectively instant.
 
 ## Approach
 
 The app does not ask AI to decide whether a label passes. The pipeline is:
 
 1. Load one or more label images in the browser.
-2. Preprocess images with deterministic resizing, crops, grayscale conversion, contrast enhancement, and detail sharpening.
-3. Run local OCR using EasyOCR through the localhost service, or Tesseract.js in the browser fallback.
+2. Send selected images to the localhost EasyOCR service.
+3. Run local OCR with EasyOCR `fast` mode: native detection on CPU, targeted crop variants when CUDA is explicitly enabled.
 4. Merge OCR evidence from all variants and search for targeted evidence related to the expected application fields.
 5. Apply deterministic validators with conservative review states for noisy but relevant evidence.
 6. Show field, expected value, extracted evidence, status, reason, and confidence hint.
@@ -112,7 +95,7 @@ Version 1 uses manual entry for expected application fields. The internal data s
 
 ## Future OCR / Model Path
 
-The OCR interface is isolated in `src/ocr/`. EasyOCR is currently the fast local service path, while the browser fallback remains available for static demos. A future version could add PaddleOCR/ONNX Runtime Web or a tuned detector/recognizer while preserving the same validation layer.
+The OCR interface is isolated in `src/ocr/`. EasyOCR is currently the local service path. A future version could add PaddleOCR/ONNX Runtime Web or a tuned detector/recognizer while preserving the same validation layer.
 
 ## Out of Scope for Version 1
 
@@ -134,10 +117,10 @@ Unit tests cover normalization, extraction, validators, and overall status logic
 
 ## Known Limitations
 
-- Browser OCR can struggle with glare, curved bottles, small print, and skewed photos.
+- OCR can struggle with glare, curved bottles, small print, and skewed photos.
 - EasyOCR cold start includes model load time. The sub-five-second target applies to the warm local service path. CUDA can improve speed where available, but the default path is CPU with the faster native EasyOCR pass.
 - The government warning validator checks legal text segments but does not verify bold styling or font size.
-- Local OCR workers generally need the app to be served from `localhost`; direct file double-click can open static pages in some browsers, but OCR workers are more reliable through `npm run dev` or `npm run preview`.
+- EasyOCR mode requires the localhost service. Direct file double-click is not the supported runtime.
 
 ## Assessment Scope and License
 

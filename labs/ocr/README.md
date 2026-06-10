@@ -6,12 +6,12 @@ This lab is for stage one of the label-review pipeline: OCR quality. The product
 2. Normalization: normalize units, alcohol statements, warning text, punctuation, and OCR substitutions.
 3. Fuzzy matching: compare normalized evidence against expected COLA/application fields.
 
-The goal here is to cast a wide net on OCR engines, benchmark them against the same image packets, and narrow toward the best local-first option before touching the browser app.
+The goal here is to cast a wide net on OCR engines, benchmark them against the same image packets, and narrow toward the best local-first option before changing the app runtime.
 
 ## Current Candidate Set
 
-- Browser baseline: Tesseract.js in the current app.
-- PyTorch local: EasyOCR, docTR, and TrOCR.
+- Current app runtime: localhost EasyOCR service.
+- Lab candidates: EasyOCR, docTR, TrOCR, and Tesseract CLI.
 - Browser deployment path: PyTorch-trained models exported to ONNX, then run with ONNX Runtime Web or Transformers.js/WebGPU.
 
 PyTorch itself is not the practical browser runtime. The realistic browser path is train or tune locally with PyTorch, export to ONNX, and run the exported model in the browser.

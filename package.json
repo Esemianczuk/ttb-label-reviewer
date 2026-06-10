@@ -18,7 +18,6 @@
   },
   "dependencies": {
     "fast-levenshtein": "^3.0.0",
-    "papaparse": "^5.5.3",
-    "tesseract.js": "^7.0.0"
+    "papaparse": "^5.5.3"
   }
 }

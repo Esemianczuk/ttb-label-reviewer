@@ -15,17 +15,44 @@ fi
 
 HOST="${HOST:-127.0.0.1}"
 PORT="${PORT:-5173}"
+OCR_HOST="${EASYOCR_HOST:-127.0.0.1}"
+OCR_PORT="${EASYOCR_PORT:-8765}"
 URL="http://${HOST}:${PORT}/"
-LOG_FILE=".demo-server.log"
-PID_FILE=".demo-server.pid"
+OCR_URL="http://${OCR_HOST}:${OCR_PORT}/health"
+APP_LOG_FILE=".demo-server.log"
+OCR_LOG_FILE=".easyocr-service.log"
+
+cleanup() {
+  if [[ -n "${app_pid:-}" ]]; then
+    kill "$app_pid" 2>/dev/null || true
+  fi
+  if [[ -n "${ocr_pid:-}" ]]; then
+    kill "$ocr_pid" 2>/dev/null || true
+  fi
+}
+trap cleanup INT TERM EXIT
+
+if curl --silent --fail --max-time 1 "$OCR_URL" >/dev/null 2>&1; then
+  echo "EasyOCR service is already running at http://${OCR_HOST}:${OCR_PORT}"
+else
+  echo "Starting EasyOCR service at http://${OCR_HOST}:${OCR_PORT}"
+  npm run easyocr-service >"$OCR_LOG_FILE" 2>&1 &
+  ocr_pid=$!
+
+  for _ in {1..80}; do
+    if curl --silent --fail --max-time 1 "$OCR_URL" >/dev/null 2>&1; then
+      break
+    fi
+    sleep 0.25
+  done
+fi
 
 if curl --silent --fail --max-time 1 "$URL" >/dev/null 2>&1; then
   echo "TTB Label Reviewer is already running at ${URL}"
 else
   echo "Starting TTB Label Reviewer at ${URL}"
-  npm run dev -- --host "$HOST" --port "$PORT" >"$LOG_FILE" 2>&1 &
-  server_pid=$!
-  echo "$server_pid" >"$PID_FILE"
+  npm run dev -- --host "$HOST" --port "$PORT" >"$APP_LOG_FILE" 2>&1 &
+  app_pid=$!
 
   for _ in {1..40}; do
     if curl --silent --fail --max-time 1 "$URL" >/dev/null 2>&1; then
@@ -40,11 +67,12 @@ if command -v xdg-open >/dev/null 2>&1; then
 fi
 
 echo "Open ${URL}"
-echo "Press Ctrl+C to stop this launcher. Server output is in ${LOG_FILE}."
+echo "EasyOCR health: ${OCR_URL}"
+echo "EasyOCR acceleration request: ${EASYOCR_GPU:-cpu}"
+echo "App output is in ${APP_LOG_FILE}; EasyOCR output is in ${OCR_LOG_FILE}."
 
-if [[ -n "${server_pid:-}" ]]; then
-  trap 'kill "$server_pid" 2>/dev/null || true' INT TERM EXIT
-  wait "$server_pid"
+if [[ -n "${app_pid:-}" || -n "${ocr_pid:-}" ]]; then
+  wait ${app_pid:-} ${ocr_pid:-}
 else
   read -r -p "Press Enter to close this launcher." _
 fi

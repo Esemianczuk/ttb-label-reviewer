@@ -11,7 +11,7 @@ export function blocksFromText(rawText, confidence = 0.98) {
 }
 
 export function createOcrResult({
-  engine = 'tesseract-js',
+  engine = 'easyocr-local',
   rawText = '',
   blocks = [],
   processingTimeMs = 0,

@@ -18,7 +18,7 @@ public/label-packets/<packet-id>/
   ocr-fixture.json
 ```
 
-`expected.json` uses the same field shape as the manual expected-fields form. `ocr-fixture.json` gives deterministic OCR text for demos and regression tests, while uploaded or generated images still run through Tesseract.js.
+`expected.json` uses the same field shape as the manual expected-fields form. `ocr-fixture.json` gives deterministic OCR text for demos and regression tests, while uploaded or generated images run through the localhost EasyOCR service.
 
 To add a packet:
 

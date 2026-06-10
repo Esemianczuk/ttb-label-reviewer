@@ -171,19 +171,6 @@ function progressPanel(state) {
   `;
 }
 
-function ocrEngineOptions(state) {
-  const selected = state.ocrEngine || 'easyocr';
-  return `
-    <label class="engine-picker">
-      OCR Engine
-      <select id="ocr-engine-select" ${state.isProcessing ? 'disabled' : ''}>
-        <option value="easyocr" ${selected === 'easyocr' ? 'selected' : ''}>EasyOCR local service</option>
-        <option value="tesseract" ${selected === 'tesseract' ? 'selected' : ''}>Browser Tesseract.js</option>
-      </select>
-    </label>
-  `;
-}
-
 export function renderApp(state) {
   const sampleOptions = state.samplePackets
     .map(
@@ -199,13 +186,13 @@ export function renderApp(state) {
     <main class="app-shell">
       <section class="top-band">
         <div class="title-block">
-          <p class="eyebrow">Browser-local TTB prototype</p>
+          <p class="eyebrow">Local EasyOCR TTB prototype</p>
           <h1>Alcohol Label Reviewer</h1>
-          <p>Compare label image evidence against expected COLA/application fields using local OCR and deterministic review rules.</p>
+          <p>Compare label image evidence against expected COLA/application fields using local EasyOCR and deterministic review rules.</p>
         </div>
         <aside class="privacy-note">
-          <strong>Local OCR demo</strong>
-          <span>Images stay on this machine. EasyOCR runs through localhost; Tesseract runs in the browser.</span>
+          <strong>Local EasyOCR demo</strong>
+          <span>Images stay on this machine. OCR runs through the localhost service.</span>
         </aside>
       </section>
 
@@ -289,7 +276,6 @@ export function renderApp(state) {
 
         <div class="right-stack">
           <section class="review-actions">
-            ${ocrEngineOptions(state)}
             <button class="primary" data-action="run-review" type="button" ${state.images.length && !state.isProcessing ? '' : 'disabled'}>
               ${state.isProcessing ? 'Reviewing...' : 'Review Label'}
             </button>
