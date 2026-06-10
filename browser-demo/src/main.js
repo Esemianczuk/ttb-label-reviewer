@@ -327,6 +327,14 @@ function initializeReviewerFields(review) {
     ...field,
     agentStatus: reviewerDecisionStatus(field),
     agentNote: field.agentNote || '',
+    history: field.history || [
+      {
+        at: new Date().toISOString(),
+        actor: 'Auto review',
+        status: field.status,
+        note: field.reason,
+      },
+    ],
   }));
   return {
     ...review,
@@ -691,6 +699,15 @@ function updateFieldDecision(index, status) {
   state.review.fields[index] = {
     ...state.review.fields[index],
     agentStatus: status,
+    history: [
+      ...(state.review.fields[index].history || []),
+      {
+        at: new Date().toISOString(),
+        actor: 'Agent',
+        status,
+        note: 'Reviewer decision updated.',
+      },
+    ],
   };
   refreshReviewOverall();
   persistCurrentApplicationState({ syncForm: false });
@@ -711,7 +728,19 @@ function updateAllFieldDecisions(status) {
   if (!state.review?.fields?.length) return;
   state.review = {
     ...state.review,
-    fields: state.review.fields.map((field) => ({ ...field, agentStatus: status })),
+    fields: state.review.fields.map((field) => ({
+      ...field,
+      agentStatus: status,
+      history: [
+        ...(field.history || []),
+        {
+          at: new Date().toISOString(),
+          actor: 'Agent',
+          status,
+          note: 'Bulk reviewer decision updated.',
+        },
+      ],
+    })),
   };
   refreshReviewOverall();
   persistCurrentApplicationState({ syncForm: false });

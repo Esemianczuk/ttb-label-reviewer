@@ -922,6 +922,30 @@ td p {
   background: #fbf8ec;
 }
 
+.field-history {
+  margin-top: 0.45rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.45rem;
+}
+
+.field-history summary {
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+}
+
+.field-history p {
+  display: grid;
+  gap: 0.12rem;
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.field-history strong {
+  color: var(--ink);
+}
+
 .ocr-details {
   margin-top: 1rem;
   border-top: 1px solid var(--line);

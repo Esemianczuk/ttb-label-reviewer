@@ -263,6 +263,7 @@ function decisionOptions(selected) {
 function fieldRow(field, index) {
   const agentStatus = field.agentStatus || field.status;
   const wasChanged = agentStatus !== field.status || field.agentNote;
+  const history = field.history || [];
   return `
     <tr class="${wasChanged ? 'has-agent-edit' : ''}">
       <th scope="row">${escapeHtml(field.field)}</th>
@@ -284,6 +285,24 @@ function fieldRow(field, index) {
           <span>Notes / reasoning</span>
           <textarea class="agent-note" data-review-field-index="${index}" rows="4" placeholder="Add reviewer notes">${escapeHtml(field.agentNote || '')}</textarea>
         </label>
+        <details class="field-history">
+          <summary>Field history</summary>
+          ${
+            history.length
+              ? history
+                  .map(
+                    (item) => `
+                      <p>
+                        <strong>${escapeHtml(item.actor || 'Review')}</strong>
+                        <span>${escapeHtml(displayStatus(item.status))}</span>
+                        <small>${escapeHtml(item.note || '')}</small>
+                      </p>
+                    `,
+                  )
+                  .join('')
+              : '<p><small>No field history yet.</small></p>'
+          }
+        </details>
       </td>
     </tr>
   `;

@@ -133,12 +133,14 @@ async def upload_image(
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
 
-    existing = session.scalars(select(models.Asset).where(models.Asset.sha256 == stored["sha256"])).first()
+    existing = session.scalars(
+        select(models.Asset).where(models.Asset.sha256 == stored["sha256"], models.Asset.application_id == application.id)
+    ).first()
     if existing:
-        if existing.application_id is None:
-            existing.application_id = application.id
-        elif existing.application_id != application.id:
-            raise HTTPException(status_code=409, detail="Image already belongs to another application.")
+        existing.original_filename = stored["original_filename"]
+        existing.mime_type = stored["mime_type"]
+        existing.size_bytes = stored["size_bytes"]
+        existing.storage_path = stored["storage_path"]
         existing.role = role
         asset = existing
     else:

@@ -42,6 +42,7 @@ function exportableField(field) {
     agentNote: field.agentNote || '',
     confidence: field.confidence,
     severity: field.severity,
+    history: field.history || [],
     evidenceCrops: (field.evidenceCrops || []).map((crop) => ({
       imageName: crop.imageName,
       text: crop.text,
@@ -55,10 +56,13 @@ export function buildJsonReport(review) {
   return {
     generatedAt: new Date().toISOString(),
     appVersion: APP_VERSION,
-    mode: 'browser-local',
+    mode: review.mode || review.application?.mode || 'browser-local',
     application: review.application || null,
     expectedApplication: review.expectedApplication || null,
     overallStatus: review.overallStatus,
+    timings: review.timings || null,
+    enginesUsed: review.enginesUsed || [],
+    workersUsed: review.workersUsed || [],
     files: review.files.map((file) => ({
       filename: file.name,
       processingTimeMs: file.ocrResult.processingTimeMs,

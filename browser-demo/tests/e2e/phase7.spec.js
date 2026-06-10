@@ -1,4 +1,16 @@
 import { expect, test } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const browserRoot = new URL('../..', import.meta.url).pathname;
+
+function fixtureImage(relativePath, name) {
+  return {
+    name,
+    mimeType: 'image/png',
+    buffer: readFileSync(join(browserRoot, 'public', relativePath)),
+  };
+}
 
 test('Phase 7 dashboard stays usable without a backend', async ({ page }) => {
   await page.route('http://localhost:8000/api/health', (route) => route.abort());
@@ -33,6 +45,54 @@ test('Processing mode can select backend and gracefully fall back', async ({ pag
   await page.getByRole('button', { name: 'Auto Review' }).click();
   await expect(page.getByText('Backend is unavailable. Falling back to Browser Only.')).toBeVisible();
   await expect(page.getByText('Final Decision')).toBeVisible();
+});
+
+test('CSV manifest upload creates one application row per image', async ({ page }) => {
+  await page.route('http://localhost:8000/api/health', (route) => route.abort());
+  await page.goto('/');
+
+  const manifest = [
+    'filename,applicationId,brandName,classType,alcoholContent,netContents,governmentWarningRequired,producerName',
+    'hollow.png,CSV-1,HOLLOW RIDGE,Kentucky Straight Bourbon Whiskey,45% ALC/VOL (90 PROOF),750 mL,true,Sunset Ridge Spirits',
+    'gin.png,CSV-2,HIGHLAND COAST,Distilled Spirits Specialty,47% ALC/VOL (94 PROOF),750 mL,true,Highland Coast Distilling',
+  ].join('\n');
+
+  await page.locator('#image-input').setInputFiles([
+    fixtureImage('label-packets/hollow-ridge-bourbon/cola-sheet.png', 'hollow.png'),
+    fixtureImage('label-packets/highland-coast-lightkeeper-gin/cola-sheet.png', 'gin.png'),
+    { name: 'manifest.csv', mimeType: 'text/csv', buffer: Buffer.from(manifest) },
+  ]);
+
+  await expect(page.getByText('Uploaded application 1 of 2')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'HOLLOW RIDGE' })).toBeVisible();
+  await expect(page.locator('.batch-table')).toContainText('CSV-1');
+  await expect(page.locator('.batch-table')).toContainText('CSV-2');
+
+  await page.getByRole('button', { name: 'Next Application' }).first().click();
+  await expect(page.getByText('Uploaded application 2 of 2')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'HIGHLAND COAST' })).toBeVisible();
+  await expect(page.locator('input[name="applicationId"]')).toHaveValue('CSV-2');
+
+  await page.getByRole('button', { name: 'Previous' }).first().click();
+  await expect(page.locator('input[name="applicationId"]')).toHaveValue('CSV-1');
+});
+
+test('agent override flow recalculates and exports reviewer notes', async ({ page }) => {
+  await page.route('http://localhost:8000/api/health', (route) => route.abort());
+  await page.goto('/');
+
+  await expect(page.getByText('Final Decision')).toBeVisible();
+  await page.keyboard.press('F');
+  await expect(page.locator('.result-panel')).toContainText('Fail');
+  await page.locator('.agent-note').first().fill('Audit note: label evidence is insufficient.');
+
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export JSON' }).click();
+  const download = await downloadPromise;
+  const report = JSON.parse(readFileSync(await download.path(), 'utf8'));
+
+  expect(report.fields[0].finalStatus).toBe('FAIL');
+  expect(report.fields[0].agentNote).toBe('Audit note: label evidence is insufficient.');
 });
 
 test('backend mode completes against a live coordinator', async ({ page }) => {

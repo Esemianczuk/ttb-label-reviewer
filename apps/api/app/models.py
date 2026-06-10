@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.types import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -42,7 +42,6 @@ class Application(Base):
 
 class Asset(Base):
     __tablename__ = "assets"
-    __table_args__ = (UniqueConstraint("sha256", name="uq_assets_sha256"),)
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
     application_id: Mapped[str | None] = mapped_column(ForeignKey("applications.id"), nullable=True, index=True)

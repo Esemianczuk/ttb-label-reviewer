@@ -145,13 +145,10 @@ def test_asset_upload_is_sanitized_and_session_scoped(client: TestClient):
     assert content.content == PNG_BYTES
 
     other_application = create_application(client, name="Other Label")
-    duplicate = client.post(
-        f"/api/applications/{other_application['id']}/images",
-        headers=headers("session-a"),
-        data={"role": "front"},
-        files={"file": ("front.png", PNG_BYTES, "image/png")},
-    )
-    assert duplicate.status_code == 409
+    duplicate = upload_image(client, other_application["id"], data=PNG_BYTES)
+    assert duplicate["id"] != asset["id"]
+    assert duplicate["sha256"] == asset["sha256"]
+    assert duplicate["applicationId"] == other_application["id"]
 
     invalid = client.post(
         f"/api/applications/{application['id']}/images",
