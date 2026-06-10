@@ -12,6 +12,11 @@ node_modules
 dist
 dist-ssr
 *.local
+__pycache__
+*.py[cod]
+.venv-ocr-lab
+labs/ocr/runs
+labs/ocr/model-cache
 
 # Editor directories and files
 .vscode/*
