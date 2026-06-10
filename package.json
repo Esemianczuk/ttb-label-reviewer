@@ -1,0 +1,23 @@
+{
+  "name": "ttb-label-reviewer",
+  "version": "1.0.0",
+  "description": "Local-first TTB/COLA-style alcohol label reviewer prototype.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "vite": "^8.0.12",
+    "vitest": "^4.1.8"
+  },
+  "dependencies": {
+    "fast-levenshtein": "^3.0.0",
+    "papaparse": "^5.5.3",
+    "tesseract.js": "^7.0.0"
+  }
+}

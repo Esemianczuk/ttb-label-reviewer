@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Synthetic Label Generator</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 2rem;
+      }
+      canvas {
+        display: block;
+        border: 1px solid #999;
+        margin-bottom: 1rem;
+      }
+      button {
+        font: inherit;
+        padding: 0.6rem 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="label" width="900" height="1200"></canvas>
+    <button id="download">Download synthetic label</button>
+    <script>
+      const canvas = document.querySelector('#label');
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#f8f0c8';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = '#402818';
+      ctx.lineWidth = 12;
+      ctx.strokeRect(45, 45, canvas.width - 90, canvas.height - 90);
+      ctx.fillStyle = '#1c1712';
+      ctx.textAlign = 'center';
+      ctx.font = '900 72px Georgia';
+      ctx.fillText('OLD TOM DISTILLERY', 450, 180);
+      ctx.font = '700 44px Georgia';
+      ctx.fillText('KENTUCKY STRAIGHT', 450, 310);
+      ctx.fillText('BOURBON WHISKEY', 450, 370);
+      ctx.font = '700 42px system-ui';
+      ctx.fillText('45% ALC./VOL. (90 PROOF)', 450, 520);
+      ctx.fillText('750 mL', 450, 590);
+      ctx.font = '600 30px system-ui';
+      const warning =
+        'GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.';
+      const words = warning.split(' ');
+      let line = '';
+      let y = 760;
+      for (const word of words) {
+        const test = `${line} ${word}`.trim();
+        if (ctx.measureText(test).width > 760) {
+          ctx.fillText(line, 450, y);
+          line = word;
+          y += 42;
+        } else {
+          line = test;
+        }
+      }
+      ctx.fillText(line, 450, y);
+      document.querySelector('#download').addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.download = 'old_tom_pass.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    </script>
+  </body>
+</html>
