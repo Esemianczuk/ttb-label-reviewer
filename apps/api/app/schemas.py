@@ -48,11 +48,15 @@ class ApplicationRead(BaseModel):
     source: str
     status: str
     canonicalStatus: str
+    ownerUserId: str | None = None
+    organizationId: str | None = None
     expectedFields: dict[str, Any]
     metadata: dict[str, Any]
     createdAt: datetime
     updatedAt: datetime
     assetCount: int = 0
+    versionCount: int = 0
+    currentVersionNumber: int | None = None
 
 
 class AssetRead(BaseModel):
@@ -198,3 +202,77 @@ class HealthRead(BaseModel):
     ok: bool
     database: str
     assetRoot: str
+
+
+class OrganizationRead(BaseModel):
+    id: str
+    name: str
+    type: str
+    createdAt: datetime
+
+
+class UserRead(BaseModel):
+    id: str
+    email: str
+    displayName: str
+    role: str
+    status: str
+    organizationId: str | None = None
+    createdAt: datetime
+    updatedAt: datetime
+
+
+class ApplicationVersionRead(BaseModel):
+    id: str
+    applicationId: str
+    versionNumber: int
+    expectedFields: dict[str, Any]
+    metadata: dict[str, Any]
+    createdByUserId: str | None = None
+    createdAt: datetime
+    submittedAt: datetime | None = None
+
+
+class ReviewDecisionRead(BaseModel):
+    id: str
+    reviewId: str
+    fieldKey: str
+    autoStatus: str
+    reviewerStatus: str | None = None
+    effectiveStatus: str
+    reviewerNote: str | None = None
+    reviewerUserId: str | None = None
+    createdAt: datetime
+    updatedAt: datetime
+
+
+class CorrectionRequestRead(BaseModel):
+    id: str
+    applicationId: str
+    reviewId: str | None = None
+    requestedByUserId: str | None = None
+    status: str
+    message: str
+    fieldKeys: list[str]
+    createdAt: datetime
+    resolvedAt: datetime | None = None
+
+
+class AuditEventRead(BaseModel):
+    id: str
+    actorUserId: str | None = None
+    actorRole: str
+    eventType: str
+    entityType: str
+    entityId: str
+    summary: str
+    before: dict[str, Any] | None = None
+    after: dict[str, Any] | None = None
+    metadata: dict[str, Any]
+    createdAt: datetime
+
+
+class SettingRead(BaseModel):
+    key: str
+    value: dict[str, Any]
+    updatedAt: datetime

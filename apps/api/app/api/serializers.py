@@ -11,11 +11,15 @@ def application_to_read(application: models.Application):
         "source": application.source,
         "status": application.status,
         "canonicalStatus": canonical_application_status(application.status),
+        "ownerUserId": application.owner_user_id,
+        "organizationId": application.organization_id,
         "expectedFields": application.expected_fields,
         "metadata": application.metadata_json,
         "createdAt": application.created_at,
         "updatedAt": application.updated_at,
         "assetCount": len(application.assets or []),
+        "versionCount": len(application.versions or []),
+        "currentVersionNumber": application.versions[-1].version_number if application.versions else None,
     }
 
 
@@ -94,4 +98,92 @@ def worker_event_to_read(event: models.WorkerEvent):
         "eventType": event.event_type,
         "payload": event.payload_json,
         "createdAt": event.created_at,
+    }
+
+
+def organization_to_read(organization: models.Organization):
+    return {
+        "id": organization.id,
+        "name": organization.name,
+        "type": organization.type,
+        "createdAt": organization.created_at,
+    }
+
+
+def user_to_read(user: models.User):
+    return {
+        "id": user.id,
+        "email": user.email,
+        "displayName": user.display_name,
+        "role": user.role,
+        "status": user.status,
+        "organizationId": user.organization_id,
+        "createdAt": user.created_at,
+        "updatedAt": user.updated_at,
+    }
+
+
+def application_version_to_read(version: models.ApplicationVersion):
+    return {
+        "id": version.id,
+        "applicationId": version.application_id,
+        "versionNumber": version.version_number,
+        "expectedFields": version.expected_fields,
+        "metadata": version.metadata_json,
+        "createdByUserId": version.created_by_user_id,
+        "createdAt": version.created_at,
+        "submittedAt": version.submitted_at,
+    }
+
+
+def review_decision_to_read(decision: models.ReviewDecision):
+    return {
+        "id": decision.id,
+        "reviewId": decision.review_id,
+        "fieldKey": decision.field_key,
+        "autoStatus": decision.auto_status,
+        "reviewerStatus": decision.reviewer_status,
+        "effectiveStatus": decision.effective_status,
+        "reviewerNote": decision.reviewer_note,
+        "reviewerUserId": decision.reviewer_user_id,
+        "createdAt": decision.created_at,
+        "updatedAt": decision.updated_at,
+    }
+
+
+def correction_request_to_read(correction_request: models.CorrectionRequest):
+    return {
+        "id": correction_request.id,
+        "applicationId": correction_request.application_id,
+        "reviewId": correction_request.review_id,
+        "requestedByUserId": correction_request.requested_by_user_id,
+        "status": correction_request.status,
+        "message": correction_request.message,
+        "fieldKeys": correction_request.field_keys,
+        "createdAt": correction_request.created_at,
+        "resolvedAt": correction_request.resolved_at,
+    }
+
+
+def audit_event_to_read(event: models.AuditEvent):
+    return {
+        "id": event.id,
+        "actorUserId": event.actor_user_id,
+        "actorRole": event.actor_role,
+        "eventType": event.event_type,
+        "entityType": event.entity_type,
+        "entityId": event.entity_id,
+        "summary": event.summary,
+        "before": event.before_json,
+        "after": event.after_json,
+        "metadata": event.metadata_json,
+        "createdAt": event.created_at,
+    }
+
+
+def setting_to_read(setting: models.Setting):
+    return {
+        "key": setting.key,
+        "value": setting.value_json,
+        "updatedAt": setting.updated_at,
     }

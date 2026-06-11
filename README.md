@@ -173,6 +173,7 @@ Every review result should remain auditable: expected value, extracted evidence,
 The V1 app remains in `browser-demo/`. New shared contracts start in `packages/shared/schemas/`, the optional backend starts in `apps/api`, and the worker agent starts in `apps/worker`. Browser adapters can consume those contracts before the larger `apps/browser` migration happens. This keeps the demo submit-ready while making the architecture path explicit.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/DISTRIBUTED_MODE.md](docs/DISTRIBUTED_MODE.md), and [docs/EVALUATOR_GUIDE.md](docs/EVALUATOR_GUIDE.md) for the coordinator and worker shape.
+The Phase 4 enterprise backend tables are documented in [docs/BACKEND_ENTERPRISE_MODEL.md](docs/BACKEND_ENTERPRISE_MODEL.md).
 The Phase 5 hardware-aware scheduler is documented in [docs/SCHEDULER.md](docs/SCHEDULER.md).
 Phase 6 worker join/discovery is documented in [docs/DISTRIBUTED_MODE.md](docs/DISTRIBUTED_MODE.md).
 Phase 7 frontend backend/cluster mode is documented in [docs/EVALUATOR_GUIDE.md](docs/EVALUATOR_GUIDE.md).

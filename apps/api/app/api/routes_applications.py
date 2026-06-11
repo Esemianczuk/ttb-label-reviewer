@@ -90,13 +90,21 @@ def create_application(
     metadata = payload.metadata.model_dump(mode="json", exclude_none=True)
     if payload.applicationId:
         metadata.setdefault("applicationId", payload.applicationId)
+    expected_fields = payload.expectedFields.model_dump(mode="json", exclude_none=True)
     application = models.Application(
         id=payload.id or models.new_uuid(),
         session_id=session_id,
         source=payload.source,
         status="created",
-        expected_fields=payload.expectedFields.model_dump(mode="json", exclude_none=True),
+        expected_fields=expected_fields,
         metadata_json=metadata,
+    )
+    application.versions.append(
+        models.ApplicationVersion(
+            version_number=1,
+            expected_fields=expected_fields,
+            metadata_json=metadata,
+        )
     )
     session.add(application)
     session.commit()

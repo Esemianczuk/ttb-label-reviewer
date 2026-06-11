@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.types import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -28,6 +28,8 @@ class Application(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
     session_id: Mapped[str] = mapped_column(String(120), index=True)
+    owner_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    organization_id: Mapped[str | None] = mapped_column(ForeignKey("organizations.id"), nullable=True, index=True)
     source: Mapped[str] = mapped_column(String(40), index=True)
     status: Mapped[str] = mapped_column(String(40), default="created", index=True)
     expected_fields: Mapped[dict] = mapped_column(json_column_type(), default=dict)
@@ -38,6 +40,14 @@ class Application(Base):
     assets: Mapped[list["Asset"]] = relationship(back_populates="application")
     reviews: Mapped[list["Review"]] = relationship(back_populates="application")
     jobs: Mapped[list["Job"]] = relationship(back_populates="application")
+    correction_requests: Mapped[list["CorrectionRequest"]] = relationship(back_populates="application")
+    versions: Mapped[list["ApplicationVersion"]] = relationship(
+        back_populates="application",
+        cascade="all, delete-orphan",
+        order_by="ApplicationVersion.version_number",
+    )
+    owner: Mapped["User | None"] = relationship(back_populates="applications")
+    organization: Mapped["Organization | None"] = relationship(back_populates="applications")
 
 
 class Asset(Base):
@@ -71,6 +81,8 @@ class Review(Base):
 
     application: Mapped[Application] = relationship(back_populates="reviews")
     jobs: Mapped[list["Job"]] = relationship(back_populates="review")
+    decisions: Mapped[list["ReviewDecision"]] = relationship(back_populates="review", cascade="all, delete-orphan")
+    correction_requests: Mapped[list["CorrectionRequest"]] = relationship(back_populates="review")
 
 
 class Job(Base):
@@ -136,3 +148,115 @@ class WorkerEvent(Base):
     event_type: Mapped[str] = mapped_column(String(80), index=True)
     payload_json: Mapped[dict] = mapped_column(json_column_type(), default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
+
+
+class Organization(Base):
+    __tablename__ = "organizations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    name: Mapped[str] = mapped_column(String(255), index=True)
+    type: Mapped[str] = mapped_column(String(80), default="producer", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+    users: Mapped[list["User"]] = relationship(back_populates="organization")
+    applications: Mapped[list["Application"]] = relationship(back_populates="organization")
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    display_name: Mapped[str] = mapped_column(String(255))
+    role: Mapped[str] = mapped_column(String(40), index=True)
+    status: Mapped[str] = mapped_column(String(40), default="active", index=True)
+    organization_id: Mapped[str | None] = mapped_column(ForeignKey("organizations.id"), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
+
+    organization: Mapped[Organization | None] = relationship(back_populates="users")
+    applications: Mapped[list["Application"]] = relationship(back_populates="owner")
+    application_versions: Mapped[list["ApplicationVersion"]] = relationship(back_populates="created_by")
+    review_decisions: Mapped[list["ReviewDecision"]] = relationship(back_populates="reviewer")
+    correction_requests: Mapped[list["CorrectionRequest"]] = relationship(back_populates="requested_by")
+    audit_events: Mapped[list["AuditEvent"]] = relationship(back_populates="actor")
+
+
+class ApplicationVersion(Base):
+    __tablename__ = "application_versions"
+    __table_args__ = (UniqueConstraint("application_id", "version_number", name="uq_application_versions_application_version"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    application_id: Mapped[str] = mapped_column(ForeignKey("applications.id"), index=True)
+    version_number: Mapped[int] = mapped_column(Integer)
+    expected_fields: Mapped[dict] = mapped_column(json_column_type(), default=dict)
+    metadata_json: Mapped[dict] = mapped_column(json_column_type(), default=dict)
+    created_by_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    application: Mapped[Application] = relationship(back_populates="versions")
+    created_by: Mapped[User | None] = relationship(back_populates="application_versions")
+
+
+class ReviewDecision(Base):
+    __tablename__ = "review_decisions"
+    __table_args__ = (UniqueConstraint("review_id", "field_key", name="uq_review_decisions_review_field"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    review_id: Mapped[str] = mapped_column(ForeignKey("reviews.id"), index=True)
+    field_key: Mapped[str] = mapped_column(String(120), index=True)
+    auto_status: Mapped[str] = mapped_column(String(40))
+    reviewer_status: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    effective_status: Mapped[str] = mapped_column(String(40), index=True)
+    reviewer_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reviewer_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
+
+    review: Mapped[Review] = relationship(back_populates="decisions")
+    reviewer: Mapped[User | None] = relationship(back_populates="review_decisions")
+
+
+class CorrectionRequest(Base):
+    __tablename__ = "correction_requests"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    application_id: Mapped[str] = mapped_column(ForeignKey("applications.id"), index=True)
+    review_id: Mapped[str | None] = mapped_column(ForeignKey("reviews.id"), nullable=True, index=True)
+    requested_by_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    status: Mapped[str] = mapped_column(String(40), default="open", index=True)
+    message: Mapped[str] = mapped_column(Text)
+    field_keys: Mapped[list[str]] = mapped_column(json_column_type(), default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    application: Mapped[Application] = relationship(back_populates="correction_requests")
+    review: Mapped[Review | None] = relationship(back_populates="correction_requests")
+    requested_by: Mapped[User | None] = relationship(back_populates="correction_requests")
+
+
+class AuditEvent(Base):
+    __tablename__ = "audit_events"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_uuid)
+    actor_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    actor_role: Mapped[str] = mapped_column(String(40), index=True)
+    event_type: Mapped[str] = mapped_column(String(120), index=True)
+    entity_type: Mapped[str] = mapped_column(String(120), index=True)
+    entity_id: Mapped[str] = mapped_column(String(120), index=True)
+    summary: Mapped[str] = mapped_column(Text)
+    before_json: Mapped[dict | None] = mapped_column(json_column_type(), nullable=True)
+    after_json: Mapped[dict | None] = mapped_column(json_column_type(), nullable=True)
+    metadata_json: Mapped[dict] = mapped_column(json_column_type(), default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
+
+    actor: Mapped[User | None] = relationship(back_populates="audit_events")
+
+
+class Setting(Base):
+    __tablename__ = "settings"
+
+    key: Mapped[str] = mapped_column(String(120), primary_key=True)
+    value_json: Mapped[dict] = mapped_column(json_column_type(), default=dict)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
