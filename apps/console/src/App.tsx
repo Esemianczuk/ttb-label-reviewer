@@ -79,6 +79,7 @@ function ConsoleRefineShell() {
       notificationProvider={createNotificationProvider(notification)}
       resources={consoleResources}
       options={{
+        liveMode: "auto",
         syncWithLocation: true,
         warnWhenUnsavedChanges: false,
         projectId: "ttb-label-reviewer-console"

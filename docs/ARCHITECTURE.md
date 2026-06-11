@@ -116,6 +116,14 @@ Browser-only operations state includes worker hardware/engine metadata, schedule
 
 Admin actions create audit events for settings updates, worker operations, job operations, benchmark runs, raw-image purges, old-job purges, packet deletion, and full demo-data purge where the active provider supports the operation.
 
+## Phase 12 Live Updates
+
+The backend exposes `/api/ws/sessions/{sessionId}` for session-scoped application, review, job, worker, and audit updates, plus `/api/ws/workers/{workerId}` for worker-focused heartbeat/job diagnostics. The session socket still emits `session_snapshot` messages for the V1 browser dashboard, and now also emits `live_events` with Refine channels such as `resources/applications`, `resources/reviews`, `resources/jobs`, `resources/workers`, and `resources/auditEvents`.
+
+Backend live events derive from database diffs and use stable domain names: `application.created`, `application.updated`, `review.started`, `review.progress`, `review.completed`, `job.queued`, `job.assigned`, `job.progress`, `job.completed`, `job.failed`, `worker.registered`, `worker.heartbeat`, `worker.lost`, and `audit.created`. Browser Only mode diffs the local console snapshot and emits the same channel/event interface without opening a backend connection.
+
+The console enables Refine `liveMode: "auto"` so resource list hooks refetch when a matching live event arrives. The admin operations adapter and backend-mode reviewer queue also subscribe directly so dashboard metrics, worker heartbeat state, job status, audit rows, and queue applications update without a manual refresh.
+
 ## Phase 4 Worker Agent
 
 `apps/worker` contains a Python worker package runnable with:

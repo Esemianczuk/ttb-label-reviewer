@@ -507,6 +507,10 @@ export type ListJobsApiJobsGetParams = {
 limit?: number;
 };
 
+export type ListReviewsApiReviewsGetParams = {
+limit?: number;
+};
+
 export type ListWorkerEventsApiWorkersEventsGetParams = {
 limit?: number;
 };
@@ -1563,6 +1567,56 @@ export const getGetReviewReportJsonApiReportsReviewIdJsonGetUrl = (reviewId: str
 export const getReviewReportJsonApiReportsReviewIdJsonGet = async (reviewId: string, options?: RequestInit): Promise<getReviewReportJsonApiReportsReviewIdJsonGetResponse> => {
 
   return apiFetch<getReviewReportJsonApiReportsReviewIdJsonGetResponse>(getGetReviewReportJsonApiReportsReviewIdJsonGetUrl(reviewId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+/**
+ * @summary List Reviews
+ */
+export type listReviewsApiReviewsGetResponse200 = {
+  data: ReviewRead[]
+  status: 200
+}
+
+export type listReviewsApiReviewsGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type listReviewsApiReviewsGetResponseSuccess = (listReviewsApiReviewsGetResponse200) & {
+  headers: Headers;
+};
+export type listReviewsApiReviewsGetResponseError = (listReviewsApiReviewsGetResponse422) & {
+  headers: Headers;
+};
+
+export type listReviewsApiReviewsGetResponse = (listReviewsApiReviewsGetResponseSuccess | listReviewsApiReviewsGetResponseError)
+
+export const getListReviewsApiReviewsGetUrl = (params?: ListReviewsApiReviewsGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/reviews?${stringifiedParams}` : `/api/reviews`
+}
+
+export const listReviewsApiReviewsGet = async (params?: ListReviewsApiReviewsGetParams, options?: RequestInit): Promise<listReviewsApiReviewsGetResponse> => {
+
+  return apiFetch<listReviewsApiReviewsGetResponse>(getListReviewsApiReviewsGetUrl(params),
   {
     ...options,
     method: 'GET'

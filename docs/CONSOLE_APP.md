@@ -73,6 +73,12 @@ If Backend or Cluster mode cannot reach the coordinator, the console shows a war
 
 `Reset Demo` clears reviewer decisions, notes, generated uploads, and active queue position back to the first bundled sample.
 
+## Live Updates
+
+Browser Only mode emits local snapshot changes through the same Refine live-provider channels as backend mode. Backend and Cluster modes subscribe to `GET` resources through `/api/ws/sessions/{sessionId}` and worker-specific diagnostics through `/api/ws/workers/{workerId}`.
+
+Refine `liveMode` is enabled for `resources/applications`, `resources/reviews`, `resources/jobs`, `resources/workers`, and `resources/auditEvents`. Live events carry a Refine type (`created` or `updated`) plus the domain event name in `payload.event`, including `application.created`, `application.updated`, `review.started`, `review.progress`, `review.completed`, `job.queued`, `job.assigned`, `job.progress`, `job.completed`, `job.failed`, `worker.registered`, `worker.heartbeat`, `worker.lost`, and `audit.created`.
+
 ## Provider Architecture
 
 - `resources`: registers `applications`, `applicationVersions`, `labelAssets`, `reviews`, `reviewDecisions`, `correctionRequests`, `users`, `workers`, `jobs`, `auditEvents`, `settings`, `reports`, `fixtures`, and `benchmarks` for Refine.
@@ -81,7 +87,7 @@ If Backend or Cluster mode cannot reach the coordinator, the console shows a war
 - `providers/access`: explicit applicant/reviewer/admin permission matrix.
 - `providers/data`: `browserDataProvider`, `apiDataProvider`, `mockDataProvider`, and the provider registry that maps Browser Only to browser-local data and Backend/Cluster to FastAPI data.
 - `providers/audit`: append-only local audit provider for reviewer changes.
-- `providers/live`: browser snapshot live provider plus backend WebSocket live provider.
+- `providers/live`: browser snapshot live provider plus backend WebSocket live provider with channel-aware resource events.
 - `providers/notification`: Ant Design notification adapter for Refine.
 
 OpenAPI client generation is configured with Orval. The default command first exports the local FastAPI OpenAPI schema to `openapi.generated.json`, then generates `src/api/generated/ttbApi.ts`:

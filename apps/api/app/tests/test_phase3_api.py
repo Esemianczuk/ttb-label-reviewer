@@ -298,8 +298,54 @@ def test_admin_operations_endpoints_manage_backend_jobs_settings_and_workers(cli
 def test_websocket_progress_smoke(client: TestClient):
     with client.websocket_connect("/api/ws/sessions/session-a") as websocket:
         assert websocket.receive_json() == {"type": "connected", "scope": "session", "sessionId": "session-a"}
+        assert websocket.receive_json()["type"] == "session_snapshot"
         websocket.send_text("ping")
-        assert websocket.receive_json()["message"] == "ping"
+        assert receive_message_type(websocket, "echo")["message"] == "ping"
+
+
+def test_phase12_session_websocket_emits_live_resource_events(client: TestClient):
+    with client.websocket_connect("/api/ws/sessions/session-a") as websocket:
+        assert websocket.receive_json()["type"] == "connected"
+        assert websocket.receive_json()["type"] == "session_snapshot"
+
+        application = create_application(client)
+        assert "application.created" in collect_live_events(websocket, {"application.created"})
+
+        upload_image(client, application["id"], data=b"\x89PNG\r\n\x1a\nphase12-live")
+        review_response = client.post(f"/api/applications/{application['id']}/review", json={}, headers=auth_headers(client, "reviewer"))
+        assert review_response.status_code == 201, review_response.text
+        assert {"review.started", "job.queued"}.issubset(collect_live_events(websocket, {"review.started", "job.queued"}))
+
+        worker = register_worker(client)
+        secret = worker["workerSecret"]
+        heartbeat = client.post("/api/workers/worker-test-1/heartbeat", headers=worker_auth(secret), json={"activeJobs": 1, "status": "online"})
+        assert heartbeat.status_code == 200, heartbeat.text
+        assert "worker.registered" in collect_live_events(websocket, {"worker.registered"})
+
+        heartbeat = client.post("/api/workers/worker-test-1/heartbeat", headers=worker_auth(secret), json={"activeJobs": 0, "status": "online"})
+        assert heartbeat.status_code == 200, heartbeat.text
+        assert "worker.heartbeat" in collect_live_events(websocket, {"worker.heartbeat"})
+
+        job = claim_job(client, "ocr", secret)
+        assert "job.assigned" in collect_live_events(websocket, {"job.assigned"})
+
+        complete_job(client, job["id"], {"text": "live", "status": "OCR_DONE"}, secret)
+        assert "job.completed" in collect_live_events(websocket, {"job.completed"})
+
+        settings = client.patch("/api/settings/admin.operations", json={"value": {"maxConcurrency": 5}}, headers=auth_headers(client, "admin"))
+        assert settings.status_code == 200, settings.text
+        assert "audit.created" in collect_live_events(websocket, {"audit.created"})
+
+
+def test_phase12_worker_websocket_emits_worker_heartbeat(client: TestClient):
+    worker = register_worker(client)
+    secret = worker["workerSecret"]
+    with client.websocket_connect(f"/api/ws/workers/{worker['id']}") as websocket:
+        assert websocket.receive_json() == {"type": "connected", "scope": "worker", "workerId": worker["id"]}
+        assert websocket.receive_json()["type"] == "worker_snapshot"
+        heartbeat = client.post(f"/api/workers/{worker['id']}/heartbeat", headers=worker_auth(secret), json={"activeJobs": 1, "status": "online"})
+        assert heartbeat.status_code == 200, heartbeat.text
+        assert "worker.heartbeat" in collect_live_events(websocket, {"worker.heartbeat"})
 
 
 def test_alembic_migration_runs_against_sqlite_fallback(tmp_path, monkeypatch):
@@ -310,3 +356,22 @@ def test_alembic_migration_runs_against_sqlite_fallback(tmp_path, monkeypatch):
     command.upgrade(config, "head")
 
     assert (tmp_path / "migrated.sqlite3").exists()
+
+
+def receive_message_type(websocket, message_type: str, attempts: int = 8) -> dict:
+    for _ in range(attempts):
+        message = websocket.receive_json()
+        if message.get("type") == message_type:
+            return message
+    raise AssertionError(f"Did not receive WebSocket message type {message_type}.")
+
+
+def collect_live_events(websocket, expected: set[str], attempts: int = 10) -> set[str]:
+    seen: set[str] = set()
+    for _ in range(attempts):
+        message = websocket.receive_json()
+        if message.get("type") == "live_events":
+            seen.update(event["event"] for event in message.get("events", []))
+            if expected.issubset(seen):
+                return seen
+    raise AssertionError(f"Did not receive expected live events {expected}; saw {seen}.")

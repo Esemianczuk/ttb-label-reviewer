@@ -29,6 +29,7 @@ This audit reconciles the take-home prompt, the project phase plan, and the impl
 | 9 applicant portal expansion | Complete | Guarded applicant routes, five-step intake wizard, multi-image upload roles/warnings, readiness/pre-check flow, correction response/resubmission, timeline, export actions, and applicant access tests. |
 | 10 reviewer portal full implementation | Complete | Reviewer dashboard, routed queue/workbench/batches/reports, queue filters, image/evidence/OCR panels, note-required overrides, correction drawer, approve/reject/conditional/escalate decisions, audit timeline, keyboard shortcuts, and Playwright coverage. |
 | 11 admin operations full implementation | Complete | Routed admin dashboard/users/roles/workers/jobs/engines/benchmarks/audit/retention/fixtures/settings pages, provider-backed Browser/Backend admin data, FastAPI admin operations endpoints, persisted settings, worker/job actions, benchmark runs, retention confirmations, audit CSV surface, unit/API/Playwright coverage. |
+| 12 live updates | Complete | Backend session and worker WebSockets emit named resource live events, Refine liveMode auto-refreshes subscribed resources, admin metrics and backend-mode reviewer queue refresh on live events, Browser mode uses a matching local event bus, and API/unit tests cover the event flow. |
 
 ## Audit Fixes Applied
 
@@ -44,6 +45,7 @@ This audit reconciles the take-home prompt, the project phase plan, and the impl
 - Replaced the console applicant one-image intake with a browser-snapshot applicant workflow: dashboard, onboarding, five-step new-application wizard, up to 10 image uploads with roles/warnings, readiness/pre-check, submit/withdraw, correction response, resubmission, timeline, and applicant route guards.
 - Expanded the reviewer portal to a routed Phase 10 workflow: filterable queue, workbench, batch review, reports, evidence/OCR panels, decision panel, correction drawer, approve blocking on unresolved critical failures, note-required pass/fail overrides, keyboard shortcuts, and audit-visible reviewer actions.
 - Expanded the admin portal to a routed Phase 11 operations surface: dashboard metrics, users/roles, worker controls, job queue controls, engine/settings persistence, benchmark runs, filtered audit/export surface, confirmation-gated retention actions, fixture registry, backend admin endpoints, and admin-specific tests.
+- Added phase 12 live updates: backend session/worker WebSockets emit named application/review/job/worker/audit events, the console live provider filters Refine resource channels, Browser mode emits the same local event interface, and backend-mode admin/reviewer views refresh from live events.
 
 ## Verification Commands
 
@@ -79,7 +81,7 @@ TTB_E2E_BACKEND_URL=http://127.0.0.1:8011 \
 - Fresh evaluator databases include the duplicate-image upload fix. If reusing an older SQLite database, recreate it or run the Alembic migrations before testing repeat uploads.
 - The phase 9 applicant workflow is implemented for the console Browser provider. Backend/Cluster modes still need matching backend endpoints for the applicant wizard's draft, pre-check, correction response, and packet export actions.
 - The phase 10 reviewer workflow is implemented for the console Browser provider. Backend/Cluster modes still need matching API endpoints for reviewer field decisions, correction requests, final dispositions, batch review, and report listing.
-- The phase 11 admin workflow is implemented for the console Browser provider. Backend/Cluster modes still need matching API endpoints for durable server-side settings, worker control, job control, retention actions, and benchmark execution.
-- Phase 12+ items are not fully implemented: live backend event subscriptions, browser OCR parity, backend static-console serving, security hardening polish, full testing matrix expansion, benchmarking scripts, and final documentation polish remain future work.
-- Backend WebSocket currently streams session snapshots rather than per-event push notifications. It is sufficient for dashboard progress but can be made more granular later.
+- The phase 11 admin workflow has backend endpoints for settings, worker control, job control, audit, and retention. Benchmark runs are still simulated client-side instead of executing a durable server benchmark job.
+- Remaining future items after phase 12 include browser OCR parity polish, backend static-console serving, security hardening polish, full testing matrix expansion, benchmarking scripts, and final documentation polish.
+- Backend WebSocket live updates are polling-derived database diffs rather than database-triggered push notifications. The emitted event interface is granular and resource-scoped, but the transport still polls once per second.
 - The cluster dashboard uses compact throughput counters rather than a full charting library.

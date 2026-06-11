@@ -1,9 +1,11 @@
 import { Button, Card, Input, Select, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSubscription } from "@refinedev/core";
 import { useNavigate } from "react-router";
 import type { ReviewApplication } from "../../domain/application/types";
 import { useConsoleStore } from "../../hooks/useConsoleStore";
+import { useProcessingModeContext } from "../../providers/processing/ProcessingModeProvider";
 import { autoReviewApplication, setActiveApplication } from "../../providers/data/browserStore";
 import { ModeTag, StatusTag } from "../common/StatusTag";
 import {
@@ -18,17 +20,37 @@ import {
 
 export function ReviewQueue({ title = "Review Queue", compact = false }: { title?: string; compact?: boolean }) {
   const { snapshot } = useConsoleStore();
+  const { mode, backendUnavailable, dataProvider } = useProcessingModeContext();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<ReviewerQueueFilter>("all");
+  const [remoteApplications, setRemoteApplications] = useState<ReviewApplication[] | null>(null);
+  const backendQueueEnabled = mode !== "browser" && !backendUnavailable;
+  const refreshRemoteQueue = useCallback(async () => {
+    if (!backendQueueEnabled) {
+      setRemoteApplications(null);
+      return;
+    }
+    const response = await dataProvider.getList({ resource: "applications", pagination: { mode: "off" } });
+    setRemoteApplications(response.data.map(normalizeBackendApplication));
+  }, [backendQueueEnabled, dataProvider]);
+
+  useEffect(() => {
+    void refreshRemoteQueue();
+  }, [refreshRemoteQueue]);
+
+  useSubscription({ channel: "resources/applications", types: ["*"], enabled: backendQueueEnabled, onLiveEvent: () => void refreshRemoteQueue() });
+  useSubscription({ channel: "resources/reviews", types: ["*"], enabled: backendQueueEnabled, onLiveEvent: () => void refreshRemoteQueue() });
+
+  const queueApplications = backendQueueEnabled && remoteApplications ? remoteApplications : snapshot.applications;
   const data = useMemo(
     () =>
-      reviewerQueueApplications(snapshot.applications).filter((application) => {
+      reviewerQueueApplications(queueApplications).filter((application) => {
         const haystack =
           `${application.title} ${application.expectedFields.brandName} ${application.expectedFields.classType} ${application.submitter} ${application.status}`.toLowerCase();
         return haystack.includes(search.toLowerCase()) && matchesReviewerFilter(application, filter);
       }),
-    [filter, search, snapshot.applications]
+    [filter, queueApplications, search]
   );
 
   const columns: ColumnsType<ReviewApplication> = [
@@ -145,4 +167,34 @@ export function ReviewQueue({ title = "Review Queue", compact = false }: { title
       <Table rowKey="id" dataSource={data} columns={columns} pagination={{ pageSize: compact ? 5 : 8 }} scroll={{ x: compact ? 1180 : 1620 }} />
     </Card>
   );
+}
+
+function normalizeBackendApplication(row: any): ReviewApplication {
+  const expectedFields = row.expectedFields || {};
+  const metadata = row.metadata || {};
+  return {
+    id: row.id,
+    title: expectedFields.brandName || metadata.applicationId || row.id,
+    source: row.source || "manual",
+    status: row.canonicalStatus || row.status || "SUBMITTED",
+    expectedOutcome: "NEEDS_REVIEW",
+    expectedFields: {
+      productType: expectedFields.productType || "unknown",
+      brandName: expectedFields.brandName || "Unknown Brand",
+      fancifulName: expectedFields.fancifulName,
+      classType: expectedFields.classType || "Unknown Class",
+      alcoholContent: expectedFields.alcoholContent || "unknown",
+      netContents: expectedFields.netContents || "unknown",
+      governmentWarningRequired: Boolean(expectedFields.governmentWarningRequired),
+      producerName: expectedFields.producerName,
+      countryOfOrigin: expectedFields.countryOfOrigin,
+      applicationId: expectedFields.applicationId || metadata.applicationId || row.id,
+      labelId: expectedFields.labelId
+    },
+    images: [],
+    submitter: row.ownerUserId || "Backend applicant",
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    metadata
+  } as ReviewApplication;
 }

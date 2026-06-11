@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSubscription } from "@refinedev/core";
 import type { DataProvider } from "@refinedev/core";
 import type { AdminJob, AdminSettings, AuditEvent, BenchmarkRun, ConsoleSnapshot, ProcessingMode, ReviewApplication, WorkerSnapshot } from "../../domain/application/types";
 import { createDefaultAdminSettings } from "../../domain/application/demoData";
@@ -47,6 +48,16 @@ export function useAdminOperations() {
     },
     [dataProvider, refresh]
   );
+  const liveEnabled = mode !== "browser" && !backendUnavailable;
+  const onLiveEvent = useCallback(() => {
+    void refresh();
+  }, [refresh]);
+
+  useSubscription({ channel: "resources/applications", types: ["*"], enabled: liveEnabled, onLiveEvent });
+  useSubscription({ channel: "resources/reviews", types: ["*"], enabled: liveEnabled, onLiveEvent });
+  useSubscription({ channel: "resources/jobs", types: ["*"], enabled: liveEnabled, onLiveEvent });
+  useSubscription({ channel: "resources/workers", types: ["*"], enabled: liveEnabled, onLiveEvent });
+  useSubscription({ channel: "resources/auditEvents", types: ["*"], enabled: liveEnabled, onLiveEvent });
 
   const snapshot = useMemo(
     () => ({

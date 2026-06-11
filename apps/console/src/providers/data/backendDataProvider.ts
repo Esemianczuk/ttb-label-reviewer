@@ -63,6 +63,8 @@ async function listResource(resource: string): Promise<any[]> {
   switch (resource as ConsoleResourceName) {
     case "applications":
       return request("/api/applications");
+    case "reviews":
+      return request("/api/reviews?limit=100");
     case "workers":
       return request("/api/workers");
     case "auditEvents":
@@ -75,7 +77,6 @@ async function listResource(resource: string): Promise<any[]> {
       return loadBackendBenchmarks();
     case "applicationVersions":
     case "labelAssets":
-    case "reviews":
     case "reviewDecisions":
     case "correctionRequests":
     case "users":

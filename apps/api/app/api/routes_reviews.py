@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .. import models
@@ -39,3 +40,21 @@ def get_review(
     current_user: models.User = Depends(get_current_user),
 ):
     return review_to_read(require_review(session, review_id, session_id, current_user))
+
+
+@router.get("", response_model=list[ReviewRead])
+def list_reviews(
+    limit: int = 100,
+    session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
+    current_user: models.User = Depends(get_current_user),
+):
+    require_permission(session, current_user, resource="reviews", action="read")
+    safe_limit = max(1, min(limit, 250))
+    query = select(models.Review).join(models.Application).order_by(models.Review.created_at.desc()).limit(safe_limit)
+    if current_user.role == "applicant":
+        query = query.where(models.Application.owner_user_id == current_user.id)
+    elif current_user.role != "admin":
+        query = query.where(models.Application.session_id == session_id)
+    reviews = session.scalars(query).all()
+    return [review_to_read(review) for review in reviews]
