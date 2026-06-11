@@ -1,193 +1,110 @@
-import { ApiOutlined, ClusterOutlined, DatabaseOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
-import { Card, Col, Descriptions, Progress, Row, Space, Statistic, Table, Tabs, Tag, Typography } from "antd";
-import type { ColumnsType } from "antd/es/table";
-import { useConsoleStore } from "../../hooks/useConsoleStore";
-import { useBackendHealth } from "../../hooks/useBackendHealth";
-import type { AuditEvent, ReviewApplication, WorkerSnapshot } from "../../domain/application/types";
-import { permissionMatrix } from "../../providers/access/permissionMatrix";
-import { PdfExportButton } from "../../components/common/PdfExportButton";
+import {
+  AuditOutlined,
+  BarChartOutlined,
+  ClusterOutlined,
+  DatabaseOutlined,
+  DeleteOutlined,
+  FileSearchOutlined,
+  FolderOpenOutlined,
+  SafetyCertificateOutlined,
+  SettingOutlined,
+  TeamOutlined,
+  ToolOutlined
+} from "@ant-design/icons";
+import { Button, Card, Col, Descriptions, Row, Space, Statistic, Typography } from "antd";
+import type { ReactNode } from "react";
+import { Link } from "react-router";
 import { StatusTag } from "../../components/common/StatusTag";
-import { consoleResourceNames, resourceLabels } from "../../resources";
-import { NavLink } from "react-router";
+import { useBackendHealth } from "../../hooks/useBackendHealth";
+import { useConsoleStore } from "../../hooks/useConsoleStore";
+import { adminMetrics } from "./adminUtils";
+
+const adminRoutes = [
+  { to: "/admin/users", label: "Users", icon: <TeamOutlined /> },
+  { to: "/admin/roles", label: "Roles", icon: <SafetyCertificateOutlined /> },
+  { to: "/admin/workers", label: "Workers", icon: <ClusterOutlined /> },
+  { to: "/admin/jobs", label: "Jobs", icon: <FileSearchOutlined /> },
+  { to: "/admin/engines", label: "Engines", icon: <ToolOutlined /> },
+  { to: "/admin/benchmarks", label: "Benchmarks", icon: <BarChartOutlined /> },
+  { to: "/admin/audit", label: "Audit", icon: <AuditOutlined /> },
+  { to: "/admin/retention", label: "Retention", icon: <DeleteOutlined /> },
+  { to: "/admin/fixtures", label: "Fixtures", icon: <FolderOpenOutlined /> },
+  { to: "/admin/settings", label: "Settings", icon: <SettingOutlined /> }
+];
 
 export function AdminPortal() {
   const { snapshot, activeApplication } = useConsoleStore();
   const { health } = useBackendHealth();
-  const completed = snapshot.applications.filter((application) => application.review).length;
-  const failures = snapshot.applications.filter((application) => application.status === "REJECTED").length;
+  const metrics = adminMetrics(snapshot);
 
   return (
     <Space orientation="vertical" className="full-width" size={16}>
       <Row gutter={[16, 16]}>
-        <Col xs={24} md={6}>
-          <Card size="small">
-            <Statistic title="Applications" value={snapshot.applications.length} prefix={<DatabaseOutlined />} />
-          </Card>
-        </Col>
-        <Col xs={24} md={6}>
-          <Card size="small">
-            <Statistic title="Processed" value={completed} prefix={<SafetyCertificateOutlined />} />
-          </Card>
-        </Col>
-        <Col xs={24} md={6}>
-          <Card size="small">
-            <Statistic title="Failures" value={failures} valueStyle={{ color: failures ? "#b42318" : undefined }} />
-          </Card>
-        </Col>
-        <Col xs={24} md={6}>
-          <Card size="small">
-            <Statistic title="Workers" value={snapshot.workers.length} prefix={<ClusterOutlined />} />
-          </Card>
-        </Col>
+        <MetricCard title="Applications Today" value={metrics.applicationsToday} icon={<DatabaseOutlined />} />
+        <MetricCard title="Submitted" value={metrics.submitted} icon={<FileSearchOutlined />} />
+        <MetricCard title="Needs Review" value={metrics.needsReview} icon={<AuditOutlined />} />
+        <MetricCard title="Approved" value={metrics.approved} icon={<SafetyCertificateOutlined />} />
+        <MetricCard title="Rejected" value={metrics.rejected} icon={<DeleteOutlined />} danger={metrics.rejected > 0} />
+        <MetricCard title="Active Workers" value={metrics.activeWorkers} icon={<ClusterOutlined />} />
+        <MetricCard title="Queue Depth" value={metrics.queueDepth} icon={<FileSearchOutlined />} />
+        <MetricCard title="Images / Min" value={metrics.imagesPerMinute} icon={<BarChartOutlined />} />
+        <MetricCard title="p50 OCR Time" value={metrics.p50OcrMs} suffix="ms" icon={<BarChartOutlined />} />
+        <MetricCard title="p95 OCR Time" value={metrics.p95OcrMs} suffix="ms" icon={<BarChartOutlined />} />
+        <MetricCard title="Failed Jobs" value={metrics.failedJobs} icon={<DeleteOutlined />} danger={metrics.failedJobs > 0} />
+        <MetricCard title="Storage Used" value={metrics.storageUsedMb} suffix="MB" icon={<DatabaseOutlined />} />
       </Row>
 
-      <Tabs
-        items={[
-          {
-            key: "ops",
-            label: "Operations",
-            children: <OperationsTab healthStatus={health.status} healthMessage={health.message} activeApplication={activeApplication} />
-          },
-          {
-            key: "workers",
-            label: "Workers",
-            children: <WorkerDashboard workers={snapshot.workers} />
-          },
-          {
-            key: "fixtures",
-            label: "Fixtures",
-            children: <FixtureRegistry applications={snapshot.applications} />
-          },
-          {
-            key: "resources",
-            label: "Resources",
-            children: <ResourceRegistry />
-          },
-          {
-            key: "audit",
-            label: "Audit",
-            children: <AuditLogTable events={snapshot.auditEvents} />
-          },
-          {
-            key: "access",
-            label: "Access",
-            children: <AccessMatrix />
-          }
-        ]}
-      />
+      <Card size="small" title="Operations Dashboard">
+        <Row gutter={[12, 12]}>
+          {adminRoutes.map((route) => (
+            <Col xs={12} md={8} xl={6} key={route.to}>
+              <Button className="admin-route-button" icon={route.icon}>
+                <Link to={route.to}>{route.label}</Link>
+              </Button>
+            </Col>
+          ))}
+        </Row>
+      </Card>
+
+      <Card size="small" title="Coordinator Health">
+        <Descriptions column={{ xs: 1, md: 2 }} bordered size="small">
+          <Descriptions.Item label="Backend">{health.status}</Descriptions.Item>
+          <Descriptions.Item label="Message">{health.message}</Descriptions.Item>
+          <Descriptions.Item label="Processing Mode">{snapshot.processingMode}</Descriptions.Item>
+          <Descriptions.Item label="Active Packet">
+            {activeApplication ? (
+              <Space>
+                <StatusTag status={activeApplication.status} />
+                <Typography.Text>{activeApplication.title}</Typography.Text>
+              </Space>
+            ) : (
+              "None"
+            )}
+          </Descriptions.Item>
+        </Descriptions>
+      </Card>
     </Space>
   );
 }
 
-function OperationsTab({
-  healthStatus,
-  healthMessage,
-  activeApplication
+function MetricCard({
+  title,
+  value,
+  suffix,
+  icon,
+  danger = false
 }: {
-  healthStatus: string;
-  healthMessage: string;
-  activeApplication?: ReviewApplication;
+  title: string;
+  value: number;
+  suffix?: string;
+  icon: ReactNode;
+  danger?: boolean;
 }) {
   return (
-    <Card size="small" title="Coordinator Health" extra={<ApiOutlined />}>
-      <Descriptions column={{ xs: 1, md: 2 }} bordered size="small">
-        <Descriptions.Item label="Backend">{healthStatus}</Descriptions.Item>
-        <Descriptions.Item label="Message">{healthMessage}</Descriptions.Item>
-        <Descriptions.Item label="Active Packet">{activeApplication?.title || "None"}</Descriptions.Item>
-        <Descriptions.Item label="Export">
-          <PdfExportButton application={activeApplication} pageName="Admin Operations" />
-        </Descriptions.Item>
-      </Descriptions>
-    </Card>
-  );
-}
-
-function WorkerDashboard({ workers }: { workers: WorkerSnapshot[] }) {
-  const columns: ColumnsType<WorkerSnapshot> = [
-    { title: "Worker", dataIndex: "hostname" },
-    { title: "Platform", dataIndex: "platform" },
-    {
-      title: "Status",
-      render: (_, worker) => <Tag color={worker.status === "online" ? "green" : worker.status === "busy" ? "blue" : "orange"}>{worker.status}</Tag>
-    },
-    {
-      title: "Load",
-      render: (_, worker) => <Progress percent={Math.round((worker.activeJobs / Math.max(worker.maxConcurrency, 1)) * 100)} size="small" />
-    },
-    { title: "Latency", render: (_, worker) => `${worker.latencyMs} ms` },
-    { title: "Capabilities", render: (_, worker) => worker.capabilities.map((capability) => <Tag key={capability}>{capability}</Tag>) }
-  ];
-
-  return <Table rowKey="id" dataSource={workers} columns={columns} pagination={false} />;
-}
-
-function FixtureRegistry({ applications }: { applications: ReviewApplication[] }) {
-  return (
-    <Table
-      rowKey="id"
-      dataSource={applications}
-      pagination={{ pageSize: 7 }}
-      columns={[
-        { title: "Fixture", render: (_, application) => application.metadata.fixtureId || application.id },
-        { title: "Brand", render: (_, application) => application.expectedFields.brandName },
-        { title: "One Image", render: (_, application) => application.images.length === 1 ? "Yes" : application.images.length },
-        { title: "Expected", render: (_, application) => application.expectedOutcome },
-        { title: "Status", render: (_, application) => <StatusTag status={application.status} /> }
-      ]}
-    />
-  );
-}
-
-function AuditLogTable({ events }: { events: AuditEvent[] }) {
-  return (
-    <Table
-      rowKey="id"
-      dataSource={events}
-      pagination={{ pageSize: 8 }}
-      columns={[
-        { title: "Time", dataIndex: "createdAt", width: 220 },
-        { title: "Actor", dataIndex: "actor" },
-        { title: "Action", dataIndex: "action" },
-        { title: "Resource", dataIndex: "resource" },
-        { title: "Summary", dataIndex: "summary" }
-      ]}
-    />
-  );
-}
-
-function AccessMatrix() {
-  return (
-    <Row gutter={[16, 16]}>
-      {Object.entries(permissionMatrix).map(([role, rules]) => (
-        <Col xs={24} md={8} key={role}>
-          <Card size="small" title={role}>
-            {rules.map((rule) => (
-              <div key={`${role}-${rule.resource}`} className="permission-row">
-                <Typography.Text strong>{rule.resource}</Typography.Text>
-                <div>{rule.actions.map((action) => <Tag key={action}>{action}</Tag>)}</div>
-              </div>
-            ))}
-          </Card>
-        </Col>
-      ))}
-    </Row>
-  );
-}
-
-function ResourceRegistry() {
-  return (
-    <Table
-      rowKey="name"
-      dataSource={consoleResourceNames.map((name) => ({ name, label: resourceLabels[name] }))}
-      pagination={false}
-      columns={[
-        { title: "Resource", dataIndex: "label" },
-        { title: "Key", dataIndex: "name" },
-        {
-          title: "Route",
-          render: (_, resource) => <NavLink to={`/resources/${resource.name}`}>Open resource</NavLink>
-        }
-      ]}
-    />
+    <Col xs={24} sm={12} lg={8} xl={6}>
+      <Card size="small">
+        <Statistic title={title} value={value} suffix={suffix} prefix={icon} valueStyle={{ color: danger ? "#b42318" : undefined }} />
+      </Card>
+    </Col>
   );
 }

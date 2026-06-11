@@ -4,18 +4,26 @@ import {
   acceptAutoReview,
   autoReviewApplication,
   createApplicantDraft,
+  deleteApplicationPacket,
   finalizeReviewerDecision,
   getSnapshot,
+  purgeAllDemoData,
+  purgeOldJobs,
+  purgeRawImages,
   processReviewerBatch,
   requestApplicantCorrection,
   respondToApplicantCorrection,
   resetSnapshot,
+  runAdminBenchmark,
   runApplicantPrecheck,
   setActiveApplication,
   setProcessingMode,
   submitApplicantApplication,
+  updateAdminSettings,
   updateFieldDecision,
+  updateJobOperation,
   updateReviewNotes,
+  updateWorkerOperation,
   withdrawApplicantApplication,
   upsertApplication
 } from "./browserStore";
@@ -73,6 +81,14 @@ export const browserDataProvider: DataProvider = {
     if (action === "applications/withdraw") return { data: withdrawApplicantApplication((payload as any).applicationId) as any };
     if (action === "corrections/request") return { data: requestApplicantCorrection(payload as any) as any };
     if (action === "corrections/respond") return { data: respondToApplicantCorrection(payload as any) as any };
+    if (action === "admin/settings") return { data: updateAdminSettings(payload as any) as any };
+    if (action === "admin/worker") return { data: updateWorkerOperation(payload as any) as any };
+    if (action === "admin/job") return { data: updateJobOperation(payload as any) as any };
+    if (action === "admin/benchmark") return { data: runAdminBenchmark(payload as any) as any };
+    if (action === "admin/purge-raw-images") return { data: purgeRawImages() as any };
+    if (action === "admin/purge-old-jobs") return { data: purgeOldJobs() as any };
+    if (action === "admin/delete-packet") return { data: deleteApplicationPacket((payload as any).applicationId) as any };
+    if (action === "admin/purge-all") return { data: purgeAllDemoData() as any };
     throw new Error(`Browser data action ${action} is not implemented.`);
   }
 };

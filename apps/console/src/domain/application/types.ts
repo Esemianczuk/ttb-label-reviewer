@@ -132,13 +132,65 @@ export type WorkerSnapshot = {
   id: string;
   hostname: string;
   platform: string;
+  os?: string;
+  arch?: string;
+  cpu?: string;
+  ramGb?: number;
+  gpu?: string;
   status: "online" | "offline" | "busy" | "calibrating";
   activeJobs: number;
   maxConcurrency: number;
   capabilities: string[];
+  engines?: string[];
   latencyMs: number;
   throughput: string;
+  avgMsPerImage?: number;
+  drainMode?: boolean;
+  disabled?: boolean;
   lastSeenAt: string;
+};
+
+export type AdminJob = {
+  id: string;
+  applicationId: string;
+  type: "ocr" | "evidence_crop" | "validation" | "review_result";
+  status: "queued" | "running" | "completed" | "failed" | "cancelled" | "retrying";
+  priority: number;
+  workerId?: string;
+  engine: string;
+  attempts: number;
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
+  durationMs?: number;
+  schedulerReason: string;
+};
+
+export type AdminSettings = {
+  preferredOcrEngine: string;
+  browserOcrAllowed: boolean;
+  backendCpuOcrAllowed: boolean;
+  gpuOcrAllowed: boolean;
+  distributedWorkersAllowed: boolean;
+  maxConcurrency: number;
+  validatorThreshold: number;
+  warningStrictness: "lenient" | "standard" | "strict";
+  retentionRawImagesDays: number;
+  retentionJobsDays: number;
+  keepReportsOnly: boolean;
+};
+
+export type BenchmarkRun = {
+  id: string;
+  label: string;
+  imageCount: number;
+  mode: ProcessingMode;
+  workerId: string;
+  averageMsPerImage: number;
+  p50OcrMs: number;
+  p95OcrMs: number;
+  imagesPerMinute: number;
+  createdAt: string;
 };
 
 export type AuditEvent = {
@@ -155,6 +207,9 @@ export type AuditEvent = {
 export type ConsoleSnapshot = {
   applications: ReviewApplication[];
   workers: WorkerSnapshot[];
+  jobs: AdminJob[];
+  adminSettings: AdminSettings;
+  benchmarkRuns: BenchmarkRun[];
   auditEvents: AuditEvent[];
   activeApplicationId: string;
   processingMode: ProcessingMode;

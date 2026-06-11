@@ -55,32 +55,16 @@ export function snapshotResourceData(resource: string, snapshot: ConsoleSnapshot
     case "workers":
       return snapshot.workers;
     case "jobs":
-      return snapshot.applications
-        .filter((application) => application.review)
-        .map((application) => ({
-          id: `job-${application.review?.id}`,
-          applicationId: application.id,
-          reviewId: application.review?.id,
-          jobType: "validation",
-          status: "completed",
-          priority: 100,
-          assignedWorkerId: application.review?.mode === "browser" ? "worker-local-browser" : "worker-fastapi-01",
-          updatedAt: application.updatedAt
-        }));
+      return snapshot.jobs;
     case "auditEvents":
       return snapshot.auditEvents;
     case "settings":
-      return [
-        {
-          id: "processing-mode",
-          key: "processing-mode",
-          value: {
-            mode: snapshot.processingMode,
-            activeApplicationId: snapshot.activeApplicationId
-          },
-          updatedAt: new Date().toISOString()
-        }
-      ];
+      return Object.entries(snapshot.adminSettings).map(([key, value]) => ({
+        id: key,
+        key,
+        value,
+        updatedAt: new Date().toISOString()
+      }));
     case "reports":
       return snapshot.applications.filter(hasReview).map((application) => ({
         id: `report-${application.review.id}`,
@@ -102,15 +86,7 @@ export function snapshotResourceData(resource: string, snapshot: ConsoleSnapshot
           packetPath: application.metadata.packetPath
         }));
     case "benchmarks":
-      return snapshot.workers.map((worker) => ({
-        id: `benchmark-${worker.id}`,
-        workerId: worker.id,
-        hostname: worker.hostname,
-        throughput: worker.throughput,
-        latencyMs: worker.latencyMs,
-        activeJobs: worker.activeJobs,
-        maxConcurrency: worker.maxConcurrency
-      }));
+      return snapshot.benchmarkRuns;
     default:
       return [];
   }

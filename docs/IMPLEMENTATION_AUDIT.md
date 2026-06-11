@@ -28,6 +28,7 @@ This audit reconciles the take-home prompt, the project phase plan, and the impl
 | 8 console routing and provider consolidation | Complete | Full Refine resource registry, Browser/API/Mock provider registry, mode-selected data/live providers, offline backend fallback, generated Orval API client, unit and Playwright coverage. |
 | 9 applicant portal expansion | Complete | Guarded applicant routes, five-step intake wizard, multi-image upload roles/warnings, readiness/pre-check flow, correction response/resubmission, timeline, export actions, and applicant access tests. |
 | 10 reviewer portal full implementation | Complete | Reviewer dashboard, routed queue/workbench/batches/reports, queue filters, image/evidence/OCR panels, note-required overrides, correction drawer, approve/reject/conditional/escalate decisions, audit timeline, keyboard shortcuts, and Playwright coverage. |
+| 11 admin operations full implementation | Complete | Routed admin dashboard/users/roles/workers/jobs/engines/benchmarks/audit/retention/fixtures/settings pages, persisted settings, worker/job actions, benchmark runs, retention confirmations, audit CSV surface, unit and Playwright coverage. |
 
 ## Audit Fixes Applied
 
@@ -42,6 +43,7 @@ This audit reconciles the take-home prompt, the project phase plan, and the impl
 - Added phase 8 console provider consolidation: registered all operational resources, introduced Browser/API/Mock data providers, selected providers through `ProcessingModeProvider`, generated the Orval FastAPI client, and added resource/fallback tests.
 - Replaced the console applicant one-image intake with a browser-snapshot applicant workflow: dashboard, onboarding, five-step new-application wizard, up to 10 image uploads with roles/warnings, readiness/pre-check, submit/withdraw, correction response, resubmission, timeline, and applicant route guards.
 - Expanded the reviewer portal to a routed Phase 10 workflow: filterable queue, workbench, batch review, reports, evidence/OCR panels, decision panel, correction drawer, approve blocking on unresolved critical failures, note-required pass/fail overrides, keyboard shortcuts, and audit-visible reviewer actions.
+- Expanded the admin portal to a routed Phase 11 operations surface: dashboard metrics, users/roles, worker controls, job queue controls, engine/settings persistence, benchmark runs, filtered audit/export surface, confirmation-gated retention actions, fixture registry, and admin-specific tests.
 
 ## Verification Commands
 
@@ -77,6 +79,7 @@ TTB_E2E_BACKEND_URL=http://127.0.0.1:8011 \
 - Fresh evaluator databases include the duplicate-image upload fix. If reusing an older SQLite database, recreate it or run the Alembic migrations before testing repeat uploads.
 - The phase 9 applicant workflow is implemented for the console Browser provider. Backend/Cluster modes still need matching backend endpoints for the applicant wizard's draft, pre-check, correction response, and packet export actions.
 - The phase 10 reviewer workflow is implemented for the console Browser provider. Backend/Cluster modes still need matching API endpoints for reviewer field decisions, correction requests, final dispositions, batch review, and report listing.
-- Phase 11+ items are not fully implemented: admin operations pages, live backend event subscriptions, browser OCR parity, backend static-console serving, retention/purge UI, benchmarking scripts, and final documentation polish remain future work.
+- The phase 11 admin workflow is implemented for the console Browser provider. Backend/Cluster modes still need matching API endpoints for durable server-side settings, worker control, job control, retention actions, and benchmark execution.
+- Phase 12+ items are not fully implemented: live backend event subscriptions, browser OCR parity, backend static-console serving, security hardening polish, full testing matrix expansion, benchmarking scripts, and final documentation polish remain future work.
 - Backend WebSocket currently streams session snapshots rather than per-event push notifications. It is sufficient for dashboard progress but can be made more granular later.
 - The cluster dashboard uses compact throughput counters rather than a full charting library.

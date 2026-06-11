@@ -1,12 +1,17 @@
 import {
+  createAdminJobsForApplications,
   createApplicantApplication,
   createAudit,
+  createDefaultAdminSettings,
+  createDemoBenchmarkRuns,
   createDemoSnapshot,
   createManualApplication,
   createReviewForApplication
 } from "../../domain/application/demoData";
 import type {
+  AdminSettings,
   ApplicationStatus,
+  BenchmarkRun,
   ConsoleSnapshot,
   ExpectedFields,
   FieldStatus,
@@ -53,6 +58,190 @@ export function subscribeToSnapshot(listener: () => void): () => void {
 
 export function setProcessingMode(mode: ProcessingMode): ConsoleSnapshot {
   return updateSnapshot((snapshot) => ({ ...snapshot, processingMode: mode }));
+}
+
+export function updateAdminSettings(settings: Partial<AdminSettings>, actor = "Demo Admin"): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => ({
+    ...snapshot,
+    adminSettings: {
+      ...snapshot.adminSettings,
+      ...settings
+    },
+    auditEvents: [
+      createAudit(`audit-${Date.now()}`, actor, "admin", "settings.update", "settings", "Updated operations settings.", {
+        changedKeys: Object.keys(settings)
+      }),
+      ...snapshot.auditEvents
+    ]
+  }));
+}
+
+export function updateWorkerOperation(params: {
+  workerId: string;
+  action: "recalibrate" | "drain" | "disable" | "enable";
+  actor?: string;
+}): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => ({
+    ...snapshot,
+    workers: snapshot.workers.map((worker) => {
+      if (worker.id !== params.workerId) return worker;
+      if (params.action === "recalibrate") {
+        return { ...worker, status: "calibrating", lastSeenAt: new Date().toISOString(), avgMsPerImage: Math.max(120, (worker.avgMsPerImage || 650) - 24) };
+      }
+      if (params.action === "drain") {
+        return { ...worker, drainMode: true, status: worker.activeJobs ? "busy" : "online", maxConcurrency: Math.max(1, worker.activeJobs) };
+      }
+      if (params.action === "disable") {
+        return { ...worker, disabled: true, drainMode: true, status: "offline", maxConcurrency: 0 };
+      }
+      return { ...worker, disabled: false, drainMode: false, status: "online", maxConcurrency: Math.max(worker.maxConcurrency, 2) };
+    }),
+    auditEvents: [
+      createAudit(
+        `audit-${Date.now()}`,
+        params.actor || "Demo Admin",
+        "admin",
+        `worker.${params.action}`,
+        "workers",
+        `Admin requested ${params.action} for ${params.workerId}.`,
+        { workerId: params.workerId, action: params.action }
+      ),
+      ...snapshot.auditEvents
+    ]
+  }));
+}
+
+export function updateJobOperation(params: {
+  jobId: string;
+  action: "retry" | "cancel" | "raise_priority";
+  actor?: string;
+}): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => ({
+    ...snapshot,
+    jobs: snapshot.jobs.map((job) => {
+      if (job.id !== params.jobId) return job;
+      if (params.action === "retry") {
+        return {
+          ...job,
+          status: "retrying" as const,
+          attempts: job.attempts + 1,
+          priority: Math.min(100, job.priority + 10),
+          startedAt: undefined,
+          completedAt: undefined,
+          durationMs: undefined,
+          schedulerReason: "Admin manually retried this job."
+        };
+      }
+      if (params.action === "cancel") {
+        return { ...job, status: "cancelled" as const, completedAt: new Date().toISOString(), schedulerReason: "Admin cancelled this job." };
+      }
+      return { ...job, priority: Math.min(100, job.priority + 15), schedulerReason: "Admin raised job priority." };
+    }),
+    auditEvents: [
+      createAudit(
+        `audit-${Date.now()}`,
+        params.actor || "Demo Admin",
+        "admin",
+        `job.${params.action}`,
+        "jobs",
+        `Admin requested ${params.action} for ${params.jobId}.`,
+        { jobId: params.jobId, action: params.action }
+      ),
+      ...snapshot.auditEvents
+    ]
+  }));
+}
+
+export function runAdminBenchmark(params: { imageCount: number; label?: string; mode?: ProcessingMode; actor?: string }): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => {
+    const worker = snapshot.workers.find((candidate) => !candidate.disabled) || snapshot.workers[0];
+    const average = Math.max(120, Math.round((worker?.avgMsPerImage || 650) * (params.mode === "cluster" ? 0.72 : params.mode === "backend" ? 0.88 : 1)));
+    const run: BenchmarkRun = {
+      id: `benchmark-${Date.now()}`,
+      label: params.label || `${params.imageCount} image ${params.mode || snapshot.processingMode} run`,
+      imageCount: params.imageCount,
+      mode: params.mode || snapshot.processingMode,
+      workerId: worker?.id || "worker-local-browser",
+      averageMsPerImage: average,
+      p50OcrMs: Math.round(average * 0.92),
+      p95OcrMs: Math.round(average * 1.65),
+      imagesPerMinute: Math.round(60_000 / average),
+      createdAt: new Date().toISOString()
+    };
+    return {
+      ...snapshot,
+      benchmarkRuns: [run, ...snapshot.benchmarkRuns],
+      auditEvents: [
+        createAudit(
+          `audit-${Date.now()}`,
+          params.actor || "Demo Admin",
+          "admin",
+          "benchmark.run",
+          "benchmarks",
+          `Ran benchmark for ${params.imageCount} images.`,
+          { benchmarkId: run.id, imageCount: params.imageCount, mode: run.mode }
+        ),
+        ...snapshot.auditEvents
+      ]
+    };
+  });
+}
+
+export function purgeRawImages(actor = "Demo Admin"): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => ({
+    ...snapshot,
+    applications: snapshot.applications.map((application) => ({
+      ...application,
+      images: application.review || snapshot.adminSettings.keepReportsOnly ? [] : application.images,
+      metadata: {
+        ...application.metadata,
+        notes: [application.metadata.notes, "Raw image assets purged by retention policy."].filter(Boolean).join(" ")
+      }
+    })),
+    auditEvents: [
+      createAudit(`audit-${Date.now()}`, actor, "admin", "retention.purge_raw_images", "labelAssets", "Purged raw image assets for reviewed packets."),
+      ...snapshot.auditEvents
+    ]
+  }));
+}
+
+export function purgeOldJobs(actor = "Demo Admin"): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => ({
+    ...snapshot,
+    jobs: snapshot.jobs.filter((job) => !["completed", "failed", "cancelled"].includes(job.status)),
+    auditEvents: [
+      createAudit(`audit-${Date.now()}`, actor, "admin", "retention.purge_old_jobs", "jobs", "Purged completed, failed, and cancelled jobs."),
+      ...snapshot.auditEvents
+    ]
+  }));
+}
+
+export function deleteApplicationPacket(applicationId: string, actor = "Demo Admin"): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => ({
+    ...snapshot,
+    applications: snapshot.applications.filter((application) => application.id !== applicationId),
+    jobs: snapshot.jobs.filter((job) => job.applicationId !== applicationId),
+    activeApplicationId: snapshot.activeApplicationId === applicationId ? snapshot.applications.find((application) => application.id !== applicationId)?.id || "" : snapshot.activeApplicationId,
+    auditEvents: [
+      createAudit(`audit-${Date.now()}`, actor, "admin", "retention.delete_packet", "applications", `Deleted application packet ${applicationId}.`, {
+        applicationId
+      }),
+      ...snapshot.auditEvents
+    ]
+  }));
+}
+
+export function purgeAllDemoData(actor = "Demo Admin"): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => ({
+    ...snapshot,
+    applications: [],
+    jobs: [],
+    benchmarkRuns: [],
+    activeApplicationId: "",
+    auditEvents: [
+      createAudit(`audit-${Date.now()}`, actor, "admin", "retention.purge_all", "applications", "Purged all demo applications, jobs, and benchmark results.")
+    ]
+  }));
 }
 
 export function setActiveApplication(applicationId: string, actor = "Review Agent", role: UserRole = "reviewer"): ConsoleSnapshot {
@@ -612,26 +801,30 @@ function persist(snapshot: ConsoleSnapshot): void {
 }
 
 function migrateSnapshot(snapshot: ConsoleSnapshot): ConsoleSnapshot {
+  const applications = snapshot.applications.map((application) => ({
+    ...application,
+    status: normalizeApplicationStatus(application.status),
+    review: application.review
+      ? {
+          ...application.review,
+          status: normalizeReviewStatus(application.review.status),
+          reviewerOverallStatus: application.review.reviewerOverallStatus
+            ? normalizeReviewStatus(application.review.reviewerOverallStatus)
+            : undefined,
+          fields: application.review.fields.map((field) => ({
+            ...field,
+            status: normalizeReviewStatus(field.status),
+            reviewerStatus: field.reviewerStatus ? normalizeReviewStatus(field.reviewerStatus) : undefined
+          }))
+        }
+      : undefined
+  }));
   return {
     ...snapshot,
-    applications: snapshot.applications.map((application) => ({
-      ...application,
-      status: normalizeApplicationStatus(application.status),
-      review: application.review
-        ? {
-            ...application.review,
-            status: normalizeReviewStatus(application.review.status),
-            reviewerOverallStatus: application.review.reviewerOverallStatus
-              ? normalizeReviewStatus(application.review.reviewerOverallStatus)
-              : undefined,
-            fields: application.review.fields.map((field) => ({
-              ...field,
-              status: normalizeReviewStatus(field.status),
-              reviewerStatus: field.reviewerStatus ? normalizeReviewStatus(field.reviewerStatus) : undefined
-            }))
-          }
-        : undefined
-    }))
+    applications,
+    jobs: snapshot.jobs || createAdminJobsForApplications(applications),
+    adminSettings: { ...createDefaultAdminSettings(), ...(snapshot.adminSettings || {}) },
+    benchmarkRuns: snapshot.benchmarkRuns || createDemoBenchmarkRuns()
   };
 }
 

@@ -3,6 +3,18 @@ import routerProvider, { DocumentTitleHandler, UnsavedChangesNotifier } from "@r
 import { App as AntApp, ConfigProvider, theme } from "antd";
 import type { ReactNode } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
+import {
+  AdminAuditPage,
+  AdminBenchmarksPage,
+  AdminEnginesPage,
+  AdminFixturesPage,
+  AdminJobsPage,
+  AdminRetentionPage,
+  AdminRolesPage,
+  AdminSettingsPage,
+  AdminUsersPage,
+  AdminWorkersPage
+} from "./pages/admin/AdminPages";
 import { AdminPortal } from "./pages/admin/AdminPortal";
 import { ApplicantPortal } from "./pages/applicant/ApplicantPortal";
 import { ApplicantApplicationDetail } from "./pages/applicant/ApplicantApplicationDetail";
@@ -88,6 +100,16 @@ function ConsoleRefineShell() {
           <Route path="applicant/applications/:applicationId/corrections" element={<RequireAccess resource="correctionRequests" action="respond"><CorrectionResponsePage /></RequireAccess>} />
           <Route path="applicant/applications/:applicationId/timeline" element={<RequireAccess resource="auditEvents" action="list"><ApplicantTimeline /></RequireAccess>} />
           <Route path="admin" element={<RequireAccess resource="workers" action="manage"><AdminPortal /></RequireAccess>} />
+          <Route path="admin/users" element={<RequireAccess resource="users" action="manage"><AdminUsersPage /></RequireAccess>} />
+          <Route path="admin/roles" element={<RequireAccess resource="settings" action="manage"><AdminRolesPage /></RequireAccess>} />
+          <Route path="admin/workers" element={<RequireAccess resource="workers" action="manage"><AdminWorkersPage /></RequireAccess>} />
+          <Route path="admin/jobs" element={<RequireAccess resource="jobs" action="manage"><AdminJobsPage /></RequireAccess>} />
+          <Route path="admin/engines" element={<RequireAccess resource="settings" action="manage"><AdminEnginesPage /></RequireAccess>} />
+          <Route path="admin/benchmarks" element={<RequireAccess resource="benchmarks" action="manage"><AdminBenchmarksPage /></RequireAccess>} />
+          <Route path="admin/audit" element={<RequireAccess resource="auditEvents" action="manage"><AdminAuditPage /></RequireAccess>} />
+          <Route path="admin/retention" element={<RequireAccess resource="settings" action="purge"><AdminRetentionPage /></RequireAccess>} />
+          <Route path="admin/fixtures" element={<RequireAccess resource="fixtures" action="manage"><AdminFixturesPage /></RequireAccess>} />
+          <Route path="admin/settings" element={<RequireAccess resource="settings" action="manage"><AdminSettingsPage /></RequireAccess>} />
           <Route path="resources/:resourceName" element={<ResourceIndexPage />} />
           <Route path="resources/:resourceName/:id" element={<ResourceIndexPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

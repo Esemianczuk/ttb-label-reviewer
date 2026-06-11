@@ -113,10 +113,55 @@ test("applicant role cannot open reviewer or admin workspaces", async ({ page })
   await expect(page.getByText("Access denied")).toBeVisible();
   await page.goto("/admin");
   await expect(page.getByText("Access denied")).toBeVisible();
+  await page.goto("/admin/jobs");
+  await expect(page.getByText("Access denied")).toBeVisible();
   await page.goto("/resources/workers");
   await expect(page.getByText("Access denied")).toBeVisible();
   await page.goto("/applicant");
   await expect(page.getByText("Applicant Workspace")).toBeVisible();
+});
+
+test("admin operations pages expose worker, job, benchmark, and settings actions", async ({ page }) => {
+  await page.evaluate(() => window.localStorage.setItem("ttb-console-role", "admin"));
+  await page.goto("/admin");
+  await expect(page.getByText("Applications Today")).toBeVisible();
+  await expect(page.getByText("Active Workers")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Workers" })).toBeVisible();
+
+  await page.goto("/admin/workers");
+  await expect(page.getByText("bigbertha.sherpa-map.internal")).toBeVisible();
+  await page.getByRole("button", { name: /Drain/ }).first().click();
+  await expect(page.getByText("Worker drain requested.")).toBeVisible();
+
+  await page.goto("/admin/jobs");
+  await expect(page.getByRole("columnheader", { name: "Scheduler Reason" })).toBeVisible();
+  await page.getByRole("button", { name: "Raise" }).first().click();
+  await expect(page.getByText("Job raise priority requested.")).toBeVisible();
+
+  await page.goto("/admin/benchmarks");
+  await page.getByRole("button", { name: "10 image run" }).click();
+  await expect(page.getByText("Benchmark completed.")).toBeVisible();
+  await expect(page.getByText("10 image admin run")).toBeVisible();
+
+  await page.goto("/admin/engines");
+  await page.getByRole("spinbutton", { name: "Max Concurrency" }).fill("6");
+  await expect(page.getByText("Settings saved.")).toBeVisible();
+  await page.goto("/admin/settings");
+  await page.goto("/admin/engines");
+  await expect(page.getByRole("spinbutton", { name: "Max Concurrency" })).toHaveValue("6");
+});
+
+test("admin audit and retention pages use real events and confirmations", async ({ page }) => {
+  await page.evaluate(() => window.localStorage.setItem("ttb-console-role", "admin"));
+  await page.goto("/admin/audit");
+  await expect(page.getByText("Audit Events")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Export CSV/ })).toBeVisible();
+
+  await page.goto("/admin/retention");
+  await expect(page.getByText("Retention Actions")).toBeVisible();
+  await page.getByRole("button", { name: "Purge Old Jobs" }).click();
+  await page.getByRole("button", { name: "OK" }).click();
+  await expect(page.getByText("Old jobs purged.")).toBeVisible();
 });
 
 test("reviewer surface has no critical axe accessibility violations", async ({ page }) => {

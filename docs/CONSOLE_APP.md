@@ -17,7 +17,7 @@ Open `http://127.0.0.1:5174/`.
 
 - Applicant: dashboard, onboarding, five-step new-application wizard, multi-image upload with per-image roles, readiness/pre-check page, correction response, timeline, withdrawal, resubmission, and packet PDF export.
 - Reviewer: dashboard, filterable queue, routed application workbench, batch review table, report list, field-level pass/fail/review overrides with note rules, correction request drawer, approve/reject/conditional approval/escalation actions, audit timeline, detached image viewer with zoom and pan, and PDF export.
-- Admin: coordinator health, worker dashboard, fixture registry, audit log, access matrix, active-packet PDF export.
+- Admin: operations dashboard, user/role views, worker controls, job queue operations, engine/settings persistence, benchmark runs, audit filters/export, retention actions, fixture registry, and coordinator health.
 
 ## Applicant Routes
 
@@ -44,6 +44,24 @@ The applicant correction flow starts from `NEEDS_CORRECTION`, captures a respons
 The reviewer workbench immediately processes a routed application if it has no review yet. Queue filters cover new submissions, critical failures, government-warning issues, ABV/net-content mismatches, low confidence, corrections, resubmissions, assignment state, and high-confidence passes.
 
 Reviewer decisions are stored in the browser snapshot with audit events. Pass-to-fail and fail-to-pass field overrides require a note; approval is blocked while critical failures remain unresolved; correction requests require a message.
+
+## Admin Routes
+
+- `/admin`
+- `/admin/users`
+- `/admin/roles`
+- `/admin/workers`
+- `/admin/jobs`
+- `/admin/engines`
+- `/admin/benchmarks`
+- `/admin/audit`
+- `/admin/retention`
+- `/admin/fixtures`
+- `/admin/settings`
+
+The admin dashboard shows applications today, submitted, needs-review, approved, rejected, active workers, queue depth, images/minute, p50/p95 OCR time, failed jobs, and estimated storage. Worker actions support recalibrate, drain, disable, and enable. Job actions support retry, cancel, and raise priority. Settings persist in the browser snapshot across Browser, Backend, and Cluster console modes.
+
+Retention actions are confirmation-gated and can purge raw images, purge old jobs, delete an application packet, or purge all demo data. The audit page filters real audit events by actor, role, event, entity, and application, and exports CSV.
 
 ## Processing Modes
 
@@ -87,5 +105,5 @@ npm --prefix apps/console run test:e2e
 npm --prefix apps/console run build
 ```
 
-The Playwright suite runs against desktop Chromium and Pixel 7 viewports. It checks first-sample processing, preserved reviewer overrides across previous/next navigation, detached image zoom controls, reviewer critical-failure approval, reviewer correction requests, reviewer keyboard shortcuts, multi-image applicant submission, applicant correction/resubmission, applicant route access boundaries, and an axe accessibility smoke on the reviewer surface.
+The Playwright suite runs against desktop Chromium and Pixel 7 viewports. It checks first-sample processing, preserved reviewer overrides across previous/next navigation, detached image zoom controls, reviewer critical-failure approval, reviewer correction requests, reviewer keyboard shortcuts, admin worker/job/benchmark/settings actions, admin audit/retention actions, multi-image applicant submission, applicant correction/resubmission, applicant route access boundaries, and an axe accessibility smoke on the reviewer surface.
 It also checks that registered resources render through the Browser provider and that Backend mode presents an offline fallback when the configured coordinator is unavailable.

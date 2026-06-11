@@ -275,6 +275,24 @@ body {
   border-bottom: 0;
 }
 
+.admin-route-button {
+  justify-content: flex-start;
+  width: 100%;
+  height: 42px;
+}
+
+.json-diff {
+  max-height: 260px;
+  margin: 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: 12px;
+  background: #f8fafc;
+  border: 1px solid #d9e2ef;
+  border-radius: 6px;
+  padding: 10px;
+}
+
 .floating-viewer {
   position: fixed;
   z-index: 60;

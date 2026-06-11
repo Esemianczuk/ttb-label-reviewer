@@ -108,6 +108,14 @@ Browser-only reviewer decisions are stored in the same console snapshot and audi
 
 The reviewer status model mirrors the TTB-facing flow without letting model output decide compliance: OCR/model output remains evidence, deterministic validators produce field statuses, and human decisions are explicitly audited.
 
+## Phase 11 Admin Operations
+
+The admin console now exposes `/admin`, `/admin/users`, `/admin/roles`, `/admin/workers`, `/admin/jobs`, `/admin/engines`, `/admin/benchmarks`, `/admin/audit`, `/admin/retention`, `/admin/fixtures`, and `/admin/settings`.
+
+Browser-only operations state includes worker hardware/engine metadata, scheduler-style jobs, persisted admin settings, benchmark runs, and retention actions. Admin actions create audit events for settings updates, worker recalibration/drain/disable/enable, job retry/cancel/priority changes, benchmark runs, raw-image purges, old-job purges, packet deletion, and full demo-data purge.
+
+Settings persist in the console snapshot regardless of Browser, Backend, or Cluster mode. Backend/Cluster mode still need matching API endpoints for durable server-side settings, worker control, job control, retention, and benchmark execution.
+
 ## Phase 4 Worker Agent
 
 `apps/worker` contains a Python worker package runnable with:
