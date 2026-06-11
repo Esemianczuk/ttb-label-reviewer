@@ -20,7 +20,9 @@ export const permissionMatrix: Record<UserRole, Rule[]> = {
   reviewer: [
     { resource: "applications", actions: ["list", "show", "update", "review", "download"] },
     { resource: "reviews", actions: ["list", "show", "update", "override", "download"] },
+    { resource: "correctionRequests", actions: ["list", "show", "create"] },
     { resource: "auditEvents", actions: ["list"] },
+    { resource: "reports", actions: ["list", "download"] },
     { resource: "workers", actions: ["list"] }
   ],
   admin: [

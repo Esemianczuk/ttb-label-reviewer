@@ -1,9 +1,12 @@
 import type { DataProvider } from "@refinedev/core";
 import {
   addManualUpload,
+  acceptAutoReview,
   autoReviewApplication,
   createApplicantDraft,
+  finalizeReviewerDecision,
   getSnapshot,
+  processReviewerBatch,
   requestApplicantCorrection,
   respondToApplicantCorrection,
   resetSnapshot,
@@ -58,6 +61,9 @@ export const browserDataProvider: DataProvider = {
     if (action === "mode") return { data: setProcessingMode((payload as any).mode) as any };
     if (action === "applications/active") return { data: setActiveApplication((payload as any).applicationId) as any };
     if (action === "reviews/auto") return { data: autoReviewApplication((payload as any).applicationId, (payload as any).mode) as any };
+    if (action === "reviews/accept-auto") return { data: acceptAutoReview((payload as any).applicationId) as any };
+    if (action === "reviews/finalize") return { data: finalizeReviewerDecision(payload as any) as any };
+    if (action === "reviews/batch-process") return { data: processReviewerBatch(payload as any) as any };
     if (action === "reviews/field") return { data: updateFieldDecision(payload as any) as any };
     if (action === "reviews/notes") return { data: updateReviewNotes(payload as any) as any };
     if (action === "applications/manual") return { data: addManualUpload(payload as any) as any };

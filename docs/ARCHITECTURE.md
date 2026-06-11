@@ -100,6 +100,14 @@ Browser-only applicant state is stored in the same console snapshot as reviewer/
 
 Route guards enforce the role boundary in the console: applicant role can open applicant routes and correction/timeline resources, but cannot open reviewer or admin workspaces.
 
+## Phase 10 Reviewer Portal
+
+The reviewer console now exposes `/reviewer`, `/reviewer/queue`, `/reviewer/applications/:id`, `/reviewer/batches`, and `/reviewer/reports`. The routed workbench keeps the evidence-first layout: image thumbnails and zoomable viewer, evidence excerpts, OCR text, expected/extracted field table, reviewer override controls, decision panel, correction request drawer, and audit timeline.
+
+Browser-only reviewer decisions are stored in the same console snapshot and audit stream as applicant actions. Field overrides enforce a note when a reviewer flips `PASS` to `FAIL` or `FAIL` to `PASS`; approval is blocked until critical failures are resolved; correction requests require an applicant-facing message. Reviewer actions can accept the automated result, conditionally approve, approve, reject, escalate, request correction, batch-process pending records, and export reports.
+
+The reviewer status model mirrors the TTB-facing flow without letting model output decide compliance: OCR/model output remains evidence, deterministic validators produce field statuses, and human decisions are explicitly audited.
+
 ## Phase 4 Worker Agent
 
 `apps/worker` contains a Python worker package runnable with:

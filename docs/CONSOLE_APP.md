@@ -16,7 +16,7 @@ Open `http://127.0.0.1:5174/`.
 ## Portals
 
 - Applicant: dashboard, onboarding, five-step new-application wizard, multi-image upload with per-image roles, readiness/pre-check page, correction response, timeline, withdrawal, resubmission, and packet PDF export.
-- Reviewer: queue-driven workbench that immediately processes the first sample, next/previous navigation with preserved reviewer decisions, field-level pass/fail/review overrides, notes, detached image viewer with zoom and pan, PDF export.
+- Reviewer: dashboard, filterable queue, routed application workbench, batch review table, report list, field-level pass/fail/review overrides with note rules, correction request drawer, approve/reject/conditional approval/escalation actions, audit timeline, detached image viewer with zoom and pan, and PDF export.
 - Admin: coordinator health, worker dashboard, fixture registry, audit log, access matrix, active-packet PDF export.
 
 ## Applicant Routes
@@ -32,6 +32,18 @@ Open `http://127.0.0.1:5174/`.
 The wizard accepts up to 10 JPG/JPEG/PNG/WebP images in the demo. Each image gets a role: front, back, neck, carton, other, or COLA sheet. The UI flags file-size, dimension, aspect-ratio, and crop/context warnings without blocking submission unless required application data or images are missing.
 
 The applicant correction flow starts from `NEEDS_CORRECTION`, captures a response, marks the packet `RESUBMITTED`, and preserves the correction message, requested fields, and response on the application timeline.
+
+## Reviewer Routes
+
+- `/reviewer`
+- `/reviewer/queue`
+- `/reviewer/applications/:id`
+- `/reviewer/batches`
+- `/reviewer/reports`
+
+The reviewer workbench immediately processes a routed application if it has no review yet. Queue filters cover new submissions, critical failures, government-warning issues, ABV/net-content mismatches, low confidence, corrections, resubmissions, assignment state, and high-confidence passes.
+
+Reviewer decisions are stored in the browser snapshot with audit events. Pass-to-fail and fail-to-pass field overrides require a note; approval is blocked while critical failures remain unresolved; correction requests require a message.
 
 ## Processing Modes
 
@@ -75,5 +87,5 @@ npm --prefix apps/console run test:e2e
 npm --prefix apps/console run build
 ```
 
-The Playwright suite runs against desktop Chromium and Pixel 7 viewports. It checks first-sample processing, preserved reviewer overrides across previous/next navigation, detached image zoom controls, multi-image applicant submission, applicant correction/resubmission, applicant route access boundaries, and an axe accessibility smoke on the reviewer surface.
+The Playwright suite runs against desktop Chromium and Pixel 7 viewports. It checks first-sample processing, preserved reviewer overrides across previous/next navigation, detached image zoom controls, reviewer critical-failure approval, reviewer correction requests, reviewer keyboard shortcuts, multi-image applicant submission, applicant correction/resubmission, applicant route access boundaries, and an axe accessibility smoke on the reviewer surface.
 It also checks that registered resources render through the Browser provider and that Backend mode presents an offline fallback when the configured coordinator is unavailable.

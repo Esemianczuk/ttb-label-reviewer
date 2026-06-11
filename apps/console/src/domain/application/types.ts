@@ -116,6 +116,9 @@ export type ReviewApplication = {
     correctionMessage?: string;
     correctionFields?: string[];
     correctionResponse?: string;
+    reviewerDecision?: "accepted_auto" | "conditionally_approved" | "approved" | "rejected" | "escalated";
+    reviewerDecisionNote?: string;
+    escalationReason?: string;
     precheckSettings?: {
       runOcr: boolean;
       validateGovernmentWarning: boolean;

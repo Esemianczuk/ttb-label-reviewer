@@ -117,13 +117,7 @@ export function updateFieldDecision(params: {
     const applications = snapshot.applications.map((application) => {
       if (application.id !== params.applicationId || !application.review) return application;
       const fields = application.review.fields.map((field) =>
-        field.id === params.fieldId
-          ? {
-              ...field,
-              reviewerStatus: params.status ?? field.reviewerStatus,
-              reviewerReason: params.reason ?? field.reviewerReason
-            }
-          : field
+        field.id === params.fieldId ? applyReviewerFieldDecision(field, params.status, params.reason) : field
       );
       const nextStatus = summarizeFields(fields);
       return {
@@ -150,6 +144,171 @@ export function updateFieldDecision(params: {
           "review_fields",
           `Updated ${params.fieldId} to ${params.status || "existing status"}.`,
           { applicationId: params.applicationId, fieldId: params.fieldId }
+        ),
+        ...snapshot.auditEvents
+      ]
+    };
+  });
+}
+
+export function acceptAutoReview(applicationId: string, actor = "Review Agent"): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => {
+    let acceptedStatus: ReviewStatus | undefined;
+    const applications = snapshot.applications.map((application) => {
+      if (application.id !== applicationId) return application;
+      if (!application.review) throw new Error("Run auto review before accepting the result.");
+      acceptedStatus = application.review.status;
+      return {
+        ...application,
+        status: applicationStatusFromReviewStatus(application.review.status),
+        updatedAt: new Date().toISOString(),
+        review: {
+          ...application.review,
+          reviewerOverallStatus: application.review.status,
+          reviewerNotes: application.review.summary
+        },
+        metadata: {
+          ...application.metadata,
+          reviewerDecision: "accepted_auto" as const,
+          reviewerDecisionNote: application.review.summary
+        }
+      };
+    });
+    return {
+      ...snapshot,
+      applications,
+      auditEvents: [
+        createAudit(
+          `audit-${Date.now()}`,
+          actor,
+          "reviewer",
+          "review.decision.accept_auto",
+          "reviews",
+          `Accepted automated review for ${applicationId}.`,
+          { applicationId, reviewerOverallStatus: acceptedStatus }
+        ),
+        ...snapshot.auditEvents
+      ]
+    };
+  });
+}
+
+export function finalizeReviewerDecision(params: {
+  applicationId: string;
+  decision: "approve" | "conditionally_approve" | "reject" | "escalate";
+  note?: string;
+  actor?: string;
+}): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => {
+    const actor = params.actor || "Review Agent";
+    let summary = "";
+    const applications = snapshot.applications.map((application) => {
+      if (application.id !== params.applicationId) return application;
+      if (!application.review) throw new Error("Run auto review before recording a reviewer decision.");
+      const criticalFailures = unresolvedCriticalFailures(application);
+      if (params.decision === "approve" && criticalFailures.length) {
+        throw new Error("Approve is blocked while critical field failures are unresolved.");
+      }
+
+      const now = new Date().toISOString();
+      if (params.decision === "approve") {
+        summary = `Approved ${params.applicationId}.`;
+        return {
+          ...application,
+          status: "APPROVED" as ApplicationStatus,
+          updatedAt: now,
+          review: { ...application.review, status: "PASS" as ReviewStatus, reviewerOverallStatus: "PASS" as ReviewStatus, reviewerNotes: params.note },
+          metadata: { ...application.metadata, reviewerDecision: "approved" as const, reviewerDecisionNote: params.note }
+        };
+      }
+      if (params.decision === "conditionally_approve") {
+        summary = `Conditionally approved ${params.applicationId}.`;
+        return {
+          ...application,
+          status: "CONDITIONALLY_APPROVED" as ApplicationStatus,
+          updatedAt: now,
+          review: {
+            ...application.review,
+            status: "PASS_WITH_WARNINGS" as ReviewStatus,
+            reviewerOverallStatus: "PASS_WITH_WARNINGS" as ReviewStatus,
+            reviewerNotes: params.note
+          },
+          metadata: { ...application.metadata, reviewerDecision: "conditionally_approved" as const, reviewerDecisionNote: params.note }
+        };
+      }
+      if (params.decision === "reject") {
+        summary = `Rejected ${params.applicationId}.`;
+        return {
+          ...application,
+          status: "REJECTED" as ApplicationStatus,
+          updatedAt: now,
+          review: { ...application.review, status: "FAIL" as ReviewStatus, reviewerOverallStatus: "FAIL" as ReviewStatus, reviewerNotes: params.note },
+          metadata: { ...application.metadata, reviewerDecision: "rejected" as const, reviewerDecisionNote: params.note }
+        };
+      }
+
+      summary = `Escalated ${params.applicationId} to a senior label specialist.`;
+      return {
+        ...application,
+        status: "IN_REVIEW" as ApplicationStatus,
+        assignedTo: "Senior Label Specialist",
+        updatedAt: now,
+        review: {
+          ...application.review,
+          status: "NEEDS_REVIEW" as ReviewStatus,
+          reviewerOverallStatus: "NEEDS_REVIEW" as ReviewStatus,
+          reviewerNotes: params.note
+        },
+        metadata: { ...application.metadata, reviewerDecision: "escalated" as const, escalationReason: params.note, reviewerDecisionNote: params.note }
+      };
+    });
+    return {
+      ...snapshot,
+      applications,
+      auditEvents: [
+        createAudit(
+          `audit-${Date.now()}`,
+          actor,
+          "reviewer",
+          `review.decision.${params.decision}`,
+          "reviews",
+          summary || `Recorded reviewer decision for ${params.applicationId}.`,
+          { applicationId: params.applicationId, decision: params.decision, note: params.note }
+        ),
+        ...snapshot.auditEvents
+      ]
+    };
+  });
+}
+
+export function processReviewerBatch(params: { applicationIds?: string[]; mode?: ProcessingMode; actor?: string } = {}): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => {
+    const processingMode = params.mode || snapshot.processingMode;
+    const ids = new Set(params.applicationIds || snapshot.applications.filter((application) => shouldProcessForReviewer(application)).map((application) => application.id));
+    let processed = 0;
+    const applications = snapshot.applications.map((application) => {
+      if (!ids.has(application.id)) return application;
+      const review = createReviewForApplication(application, processingMode);
+      processed += 1;
+      return {
+        ...application,
+        review,
+        status: applicationStatusFromReviewStatus(review.status),
+        updatedAt: new Date().toISOString()
+      };
+    });
+    return {
+      ...snapshot,
+      applications,
+      auditEvents: [
+        createAudit(
+          `audit-${Date.now()}`,
+          params.actor || "Review Agent",
+          "reviewer",
+          "review.batch_process",
+          "reviews",
+          `Processed ${processed} application${processed === 1 ? "" : "s"} in ${processingMode} mode.`,
+          { applicationIds: Array.from(ids), processingMode, processed }
         ),
         ...snapshot.auditEvents
       ]
@@ -298,6 +457,7 @@ export function withdrawApplicantApplication(applicationId: string): ConsoleSnap
 }
 
 export function requestApplicantCorrection(params: { applicationId: string; message: string; fields: string[]; actor?: string }): ConsoleSnapshot {
+  if (!params.message.trim()) throw new Error("Correction requests require a message.");
   return updateSnapshot((snapshot) => ({
     ...snapshot,
     applications: snapshot.applications.map((application) =>
@@ -407,6 +567,32 @@ function updateApplication(applicationId: string, updater: (application: ReviewA
     ...snapshot,
     applications: snapshot.applications.map((application) => (application.id === applicationId ? updater(application) : application))
   }));
+}
+
+function applyReviewerFieldDecision(field: ReviewField, status?: FieldStatus, reason?: string): ReviewField {
+  const nextStatus = status ?? field.reviewerStatus;
+  const nextReason = reason ?? field.reviewerReason;
+  const currentEffectiveStatus = field.reviewerStatus || field.status;
+  if (status && isPassFailFlip(currentEffectiveStatus, status) && !String(nextReason || "").trim()) {
+    throw new Error("Override note is required when changing a field between pass and fail.");
+  }
+  return {
+    ...field,
+    reviewerStatus: nextStatus,
+    reviewerReason: nextReason
+  };
+}
+
+function isPassFailFlip(from: FieldStatus, to: FieldStatus): boolean {
+  return from !== to && (from === "PASS" || from === "FAIL") && (to === "PASS" || to === "FAIL");
+}
+
+function unresolvedCriticalFailures(application: ReviewApplication): ReviewField[] {
+  return (application.review?.fields || []).filter((field) => field.severity === "critical" && (field.reviewerStatus || field.status) === "FAIL");
+}
+
+function shouldProcessForReviewer(application: ReviewApplication): boolean {
+  return !application.review && !["ARCHIVED", "WITHDRAWN"].includes(application.status);
 }
 
 function updateSnapshot(updater: (snapshot: ConsoleSnapshot) => ConsoleSnapshot): ConsoleSnapshot {

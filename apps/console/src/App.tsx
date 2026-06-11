@@ -13,7 +13,11 @@ import { NewApplicationWizard } from "./pages/applicant/NewApplicationWizard";
 import { PrecheckPage } from "./pages/applicant/PrecheckPage";
 import { AccessDeniedPage } from "./pages/public/AccessDeniedPage";
 import { RoleLanding } from "./pages/public/RoleLanding";
+import { ReviewQueuePage } from "./pages/reviewer/ReviewQueuePage";
+import { ReviewerBatchesPage } from "./pages/reviewer/ReviewerBatchesPage";
 import { ReviewerPortal } from "./pages/reviewer/ReviewerPortal";
+import { ReviewerReportsPage } from "./pages/reviewer/ReviewerReportsPage";
+import { ReviewWorkbenchPage } from "./pages/reviewer/ReviewWorkbenchPage";
 import { ResourceIndexPage } from "./pages/resources/ResourceIndexPage";
 import { AppLayout } from "./layouts/AppLayout";
 import { accessControlProvider } from "./providers/access/permissionMatrix";
@@ -72,6 +76,10 @@ function ConsoleRefineShell() {
         <Route path="/" element={<AppLayout />}>
           <Route index element={<RoleLanding />} />
           <Route path="reviewer" element={<RequireAccess resource="reviews" action="list"><ReviewerPortal /></RequireAccess>} />
+          <Route path="reviewer/queue" element={<RequireAccess resource="reviews" action="list"><ReviewQueuePage /></RequireAccess>} />
+          <Route path="reviewer/applications/:applicationId" element={<RequireAccess resource="reviews" action="show"><ReviewWorkbenchPage /></RequireAccess>} />
+          <Route path="reviewer/batches" element={<RequireAccess resource="reviews" action="update"><ReviewerBatchesPage /></RequireAccess>} />
+          <Route path="reviewer/reports" element={<RequireAccess resource="reports" action="list"><ReviewerReportsPage /></RequireAccess>} />
           <Route path="applicant" element={<RequireAccess resource="applications" action="list"><ApplicantPortal /></RequireAccess>} />
           <Route path="applicant/onboarding" element={<RequireAccess resource="applications" action="create"><ApplicantOnboarding /></RequireAccess>} />
           <Route path="applicant/applications/new" element={<RequireAccess resource="applications" action="create"><NewApplicationWizard /></RequireAccess>} />

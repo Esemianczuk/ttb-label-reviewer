@@ -29,6 +29,40 @@ test("expanded image viewer supports zoom and close controls", async ({ page }) 
   await expect(page.getByRole("dialog", { name: "Expanded label image viewer" })).toBeHidden();
 });
 
+test("reviewer resolves a critical failure and approves the application", async ({ page }) => {
+  await page.goto("/reviewer/applications/app-riverlight-rye-whiskey");
+  await expect(page.getByRole("heading", { name: /Riverlight rye/i })).toBeVisible();
+  await expect(page.getByText("Approval blocked")).toBeVisible();
+
+  const alcoholRow = page.getByRole("row", { name: /Alcohol Content/i });
+  await alcoholRow.getByRole("textbox", { name: /Alcohol Content reasoning/i }).fill("Corrected support confirms the filed ABV.");
+  await alcoholRow.getByText("Pass").click();
+
+  await page.getByRole("textbox", { name: "Reviewer decision note" }).fill("Critical mismatch resolved by corrected support.");
+  await page.getByRole("button", { name: /check-circle Approve/ }).click();
+  await expect(page.getByText("Application approved.")).toBeVisible();
+  await expect(page.getByText("review.decision.approve")).toBeVisible();
+});
+
+test("reviewer requests a correction with an audit-visible message", async ({ page }) => {
+  await page.goto("/reviewer/applications/app-sundaze-hard-seltzer");
+  await expect(page.getByRole("heading", { name: /Sundaze/i })).toBeVisible();
+  await page.getByRole("button", { name: "Request Correction" }).click();
+  await expect(page.getByRole("dialog", { name: "Request Applicant Correction" })).toBeVisible();
+  await page.getByLabel("Correction message").fill("Please confirm the government warning panel and upload the corrected back label.");
+  await page.getByRole("button", { name: "Send Correction Request" }).click();
+  await expect(page.getByText("Correction request sent.")).toBeVisible();
+  await expect(page.getByText("correction.request")).toBeVisible();
+});
+
+test("reviewer keyboard shortcut accepts a high-confidence pass", async ({ page }) => {
+  await page.goto("/reviewer/applications/app-highland-coast-lightkeeper-gin");
+  await expect(page.getByRole("heading", { name: /Highland Coast/i })).toBeVisible();
+  await page.keyboard.press("a");
+  await expect(page.getByText("Automated result accepted.")).toBeVisible();
+  await expect(page.getByText("review.decision.accept_auto")).toBeVisible();
+});
+
 test("applicant happy path creates a multi-image packet and submits it", async ({ page }) => {
   await page.evaluate(() => window.localStorage.setItem("ttb-console-role", "applicant"));
   await page.goto("/applicant/applications/new");
