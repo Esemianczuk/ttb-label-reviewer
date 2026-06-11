@@ -18,7 +18,8 @@ import {
 } from "./applicantUtils";
 import { readinessIssues } from "./applicantUtils";
 import { ApplicationProgressTracker } from "../../components/application/ApplicationProgressTracker";
-import { createApplicantDraft, runApplicantPrecheck, submitApplicantApplication } from "../../providers/data/browserStore";
+import { browserOcrWorkerCountLabel, setBrowserOcrWorkerOverride } from "../../domain/application/browserOcrSettings";
+import { createApplicantDraft, runApplicantPrecheckWithBrowserOcr, submitApplicantApplication } from "../../providers/data/browserStore";
 import { useConsoleStore } from "../../hooks/useConsoleStore";
 
 const { Dragger } = Upload;
@@ -30,45 +31,63 @@ export function NewApplicationWizard() {
   const [current, setCurrent] = useState(0);
   const [uploads, setUploads] = useState<DraftUploadImage[]>([]);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
   const persist = async (action: "draft" | "precheck" | "submit") => {
-    const values = await form.validateFields();
-    if (!uploads.length) {
-      messageApi.error("Attach at least one label image.");
-      setCurrent(2);
-      return;
-    }
-    const images = toLabelImages(uploads);
-    const snapshotAfterDraft = createApplicantDraft({
-      expectedFields: expectedFieldsFromValues(values),
-      images,
-      submitter: values.submitter,
-      notes: values.notes,
-      precheckSettings: {
-        runOcr: Boolean(values.runOcr),
-        validateGovernmentWarning: Boolean(values.validateGovernmentWarning),
-        requireAtLeastOneImage: true,
-        autoSubmitWhenReady: Boolean(values.autoSubmitWhenReady)
+    setSaving(true);
+    try {
+      const values = await form.validateFields();
+      if (!uploads.length) {
+        messageApi.error("Attach at least one label image.");
+        setCurrent(2);
+        return;
       }
-    });
-    const applicationId = snapshotAfterDraft.activeApplicationId;
-    if (action === "draft") {
-      messageApi.success("Draft saved.");
+      const workerOverride = setBrowserOcrWorkerOverride(values.browserWorkerOverride || "auto");
+      const images = toLabelImages(uploads);
+      const snapshotAfterDraft = createApplicantDraft({
+        expectedFields: expectedFieldsFromValues(values),
+        images,
+        submitter: values.submitter,
+        notes: values.notes,
+        precheckSettings: {
+          runOcr: Boolean(values.runOcr),
+          validateGovernmentWarning: Boolean(values.validateGovernmentWarning),
+          requireAtLeastOneImage: true,
+          autoSubmitWhenReady: Boolean(values.autoSubmitWhenReady),
+          browserWorkerOverride: workerOverride
+        }
+      });
+      const applicationId = snapshotAfterDraft.activeApplicationId;
+      if (action === "draft") {
+        messageApi.success("Draft saved.");
+        navigate(`/applicant/applications/${applicationId}`);
+        return;
+      }
+      const snapshotAfterPrecheck = await runApplicantPrecheckWithBrowserOcr(applicationId, snapshot.processingMode, { workerOverride });
+      const application = snapshotAfterPrecheck.applications.find((candidate) => candidate.id === applicationId);
+      if (action === "precheck" || application?.status !== "READY_TO_SUBMIT") {
+        messageApi.success("Pre-check completed.");
+        navigate(`/applicant/applications/${applicationId}/precheck`);
+        return;
+      }
+      submitApplicantApplication(applicationId);
+      messageApi.success("Application submitted.");
       navigate(`/applicant/applications/${applicationId}`);
-      return;
+    } catch (error) {
+      messageApi.error(error instanceof Error ? error.message : "Application action failed.");
+    } finally {
+      setSaving(false);
     }
-    const snapshotAfterPrecheck = runApplicantPrecheck(applicationId, snapshot.processingMode);
-    const application = snapshotAfterPrecheck.applications.find((candidate) => candidate.id === applicationId);
-    if (action === "precheck" || application?.status !== "READY_TO_SUBMIT") {
-      messageApi.success("Pre-check completed.");
-      navigate(`/applicant/applications/${applicationId}/precheck`);
-      return;
-    }
-    submitApplicantApplication(applicationId);
-    messageApi.success("Application submitted.");
-    navigate(`/applicant/applications/${applicationId}`);
   };
+
+  const updateWorkerOverride = (value: string) => {
+    const normalized = setBrowserOcrWorkerOverride(value);
+    form.setFieldValue("browserWorkerOverride", normalized);
+  };
+
+  const currentWorkerOverride = Form.useWatch("browserWorkerOverride", form) || DEFAULT_APPLICANT_VALUES.browserWorkerOverride || "auto";
+  const workerLabel = browserOcrWorkerCountLabel(uploads.length || 1, currentWorkerOverride);
 
   const handleUploadChange = async (nextFiles: UploadFile[]) => {
     const next = nextFiles.slice(0, 10);
@@ -178,6 +197,21 @@ export function NewApplicationWizard() {
                   <Checkbox>Submit automatically if pre-check passes</Checkbox>
                 </Form.Item>
               </Col>
+              <Col xs={24} md={12}>
+                <Form.Item label="Browser OCR workers" name="browserWorkerOverride">
+                  <Select
+                    aria-label="Browser OCR workers"
+                    onChange={updateWorkerOverride}
+                    options={[
+                      { value: "auto", label: "Auto" },
+                      { value: "1", label: "1" },
+                      { value: "2", label: "2" },
+                      { value: "3", label: "3" }
+                    ]}
+                  />
+                </Form.Item>
+                <Typography.Text type="secondary">{workerLabel}</Typography.Text>
+              </Col>
             </Row>
           </div>
 
@@ -205,13 +239,13 @@ export function NewApplicationWizard() {
               Next
             </Button>
           ) : null}
-          <Button icon={<SaveOutlined />} onClick={() => void persist("draft")}>
+          <Button icon={<SaveOutlined />} loading={saving} onClick={() => void persist("draft")}>
             Save Draft
           </Button>
-          <Button icon={<CheckCircleOutlined />} onClick={() => void persist("precheck")}>
+          <Button icon={<CheckCircleOutlined />} loading={saving} onClick={() => void persist("precheck")}>
             Run Pre-check
           </Button>
-          <Button type="primary" icon={<SendOutlined />} onClick={() => void persist("submit")}>
+          <Button type="primary" icon={<SendOutlined />} loading={saving} onClick={() => void persist("submit")}>
             Submit Application
           </Button>
           <Button icon={<FileAddOutlined />} onClick={() => form.resetFields()}>

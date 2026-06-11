@@ -5,6 +5,7 @@
   "description": "Root helper scripts for the local-first TTB Label Reviewer assessment project.",
   "scripts": {
     "browser:test": "npm --prefix browser-demo test",
+    "browser:package-tesseract": "node scripts/package-tesseract-assets.mjs",
     "browser:build": "npm --prefix browser-demo run build",
     "browser:e2e": "npm --prefix browser-demo run test:e2e",
     "console:dev": "npm --prefix apps/console run dev",

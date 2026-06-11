@@ -8,6 +8,7 @@ import {
   createManualApplication,
   createReviewForApplication
 } from "../../domain/application/demoData";
+import { createBrowserOcrReview } from "../../domain/application/browserOcrReview";
 import type {
   AdminSettings,
   ApplicationStatus,
@@ -19,6 +20,7 @@ import type {
   ProcessingMode,
   ReviewApplication,
   ReviewField,
+  ReviewResult,
   ReviewStatus,
   UserRole
 } from "../../domain/application/types";
@@ -292,6 +294,34 @@ export function autoReviewApplication(applicationId: string, mode?: ProcessingMo
         ...snapshot.auditEvents
       ]
     };
+  });
+}
+
+export async function autoReviewApplicationWithBrowserOcr(
+  applicationId: string,
+  mode?: ProcessingMode,
+  options: { workerOverride?: string; onProgress?: (message: string) => void } = {}
+): Promise<ConsoleSnapshot> {
+  const snapshot = getSnapshot();
+  const processingMode = mode || snapshot.processingMode;
+  if (processingMode !== "browser") return autoReviewApplication(applicationId, processingMode);
+  const application = snapshot.applications.find((candidate) => candidate.id === applicationId);
+  if (!application) throw new Error(`Application ${applicationId} was not found.`);
+
+  updateApplication(applicationId, (candidate) => ({
+    ...candidate,
+    status: "IN_REVIEW",
+    updatedAt: new Date().toISOString()
+  }));
+
+  const review = await createBrowserOcrReview(application, processingMode, options);
+  return applyCompletedReview({
+    applicationId,
+    review,
+    actor: "Browser Review Agent",
+    role: "reviewer",
+    action: "review.auto",
+    summary: `Browser OCR review completed for ${applicationId}.`
   });
 }
 
@@ -637,6 +667,56 @@ export function runApplicantPrecheck(applicationId: string, mode?: ProcessingMod
   });
 }
 
+export async function runApplicantPrecheckWithBrowserOcr(
+  applicationId: string,
+  mode?: ProcessingMode,
+  options: { workerOverride?: string; onProgress?: (message: string) => void } = {}
+): Promise<ConsoleSnapshot> {
+  const snapshot = getSnapshot();
+  const processingMode = mode || snapshot.processingMode;
+  const application = snapshot.applications.find((candidate) => candidate.id === applicationId);
+  if (!application) throw new Error(`Application ${applicationId} was not found.`);
+  if (processingMode !== "browser" || application.metadata.precheckSettings?.runOcr === false) {
+    return runApplicantPrecheck(applicationId, processingMode);
+  }
+
+  updateApplication(applicationId, (candidate) => ({
+    ...candidate,
+    status: "PRECHECK_RUNNING",
+    updatedAt: new Date().toISOString()
+  }));
+
+  const review = await createBrowserOcrReview(application, processingMode, options);
+  const hasCriticalReview = review.fields.some((field) => field.severity === "critical" && field.status === "FAIL");
+  const nextStatus: ApplicationStatus =
+    !application.images.length || hasCriticalReview || review.status === "FAIL" ? "APPLICANT_FIX_REQUIRED" : "READY_TO_SUBMIT";
+  const auditSummary =
+    nextStatus === "READY_TO_SUBMIT" ? `Browser OCR pre-check passed for ${applicationId}.` : `Browser OCR pre-check found applicant fixes for ${applicationId}.`;
+
+  return updateSnapshot((current) => ({
+    ...current,
+    applications: current.applications.map((candidate) =>
+      candidate.id === applicationId
+        ? {
+            ...candidate,
+            status: nextStatus,
+            review,
+            updatedAt: new Date().toISOString()
+          }
+        : candidate
+    ),
+    auditEvents: [
+      createAudit(`audit-${Date.now()}`, "Applicant", "applicant", "application.precheck", "applications", auditSummary, {
+        applicationId,
+        processingMode,
+        engine: "tesseract-js-browser",
+        workerOverride: options.workerOverride || "auto"
+      }),
+      ...current.auditEvents
+    ]
+  }));
+}
+
 export function submitApplicantApplication(applicationId: string): ConsoleSnapshot {
   return setApplicationStatus(applicationId, "SUBMITTED", "application.submit", "Submitted application for TTB label review.");
 }
@@ -755,6 +835,37 @@ function updateApplication(applicationId: string, updater: (application: ReviewA
   return updateSnapshot((snapshot) => ({
     ...snapshot,
     applications: snapshot.applications.map((application) => (application.id === applicationId ? updater(application) : application))
+  }));
+}
+
+function applyCompletedReview(params: {
+  applicationId: string;
+  review: ReviewResult;
+  actor: string;
+  role: UserRole;
+  action: string;
+  summary: string;
+}): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => ({
+    ...snapshot,
+    applications: snapshot.applications.map((application) =>
+      application.id === params.applicationId
+        ? {
+            ...application,
+            review: params.review,
+            status: applicationStatusFromReviewStatus(params.review.status),
+            updatedAt: new Date().toISOString()
+          }
+        : application
+    ),
+    auditEvents: [
+      createAudit(`audit-${Date.now()}`, params.actor, params.role, params.action, "reviews", params.summary, {
+        applicationId: params.applicationId,
+        processingMode: params.review.mode,
+        engine: "tesseract-js-browser"
+      }),
+      ...snapshot.auditEvents
+    ]
   }));
 }
 

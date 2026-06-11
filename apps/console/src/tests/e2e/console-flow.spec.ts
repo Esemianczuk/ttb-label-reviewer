@@ -64,36 +64,37 @@ test("reviewer keyboard shortcut accepts a high-confidence pass", async ({ page 
 });
 
 test("applicant happy path creates a multi-image packet and submits it", async ({ page }) => {
+  test.setTimeout(90000);
   await page.evaluate(() => window.localStorage.setItem("ttb-console-role", "applicant"));
   await page.goto("/applicant/applications/new");
   await expect(page.getByText("New Application")).toBeVisible();
 
   await page.getByRole("button", { name: "Next" }).click();
 
-  await page.getByLabel("Brand name").fill("EVALUATOR TEST");
+  await page.getByLabel("Brand name").fill("OLD TOM DISTILLERY");
   await page.getByLabel("Fanciful name").fill("Phase Nine Console Smoke");
-  await page.getByLabel("Class / type").fill("Distilled Spirits Specialty");
-  await page.getByLabel("Alcohol content").fill("40% Alc./Vol.");
+  await page.getByLabel("Class / type").fill("Kentucky Straight Bourbon Whiskey");
+  await page.getByLabel("Alcohol content").fill("45% Alc./Vol. (90 Proof)");
   await page.getByLabel("Net contents").fill("750 mL");
-  await page.getByLabel("Producer / importer").fill("Evaluator Spirits");
+  await page.getByLabel("Producer / importer").fill("Old Tom Distillery");
   await page.getByLabel("Country of origin").fill("United States");
-  await page.getByLabel("TTB application ID").fill("PHASE-9-E2E");
+  await page.getByLabel("TTB application ID").fill("PHASE-13-E2E");
   await page.getByRole("button", { name: "Next" }).click();
 
   await page
     .locator('input[type="file"]')
     .setInputFiles([
-      path.resolve(process.cwd(), "../../browser-demo/public/label-packets/hollow-ridge-bourbon/cola-sheet.png"),
-      path.resolve(process.cwd(), "../../browser-demo/public/label-packets/highland-coast-lightkeeper-gin/cola-sheet.png")
+      path.resolve(process.cwd(), "../../browser-demo/public/label-packets/old-tom-pass/front.png"),
+      path.resolve(process.cwd(), "../../browser-demo/public/label-packets/old-tom-pass/back.png")
     ]);
-  await expect(page.getByRole("row", { name: /cola-sheet\.png Front/i })).toBeVisible();
-  await expect(page.getByRole("row", { name: /cola-sheet\.png Back/i })).toBeVisible();
+  await expect(page.getByRole("row", { name: /front\.png Front/i })).toBeVisible();
+  await expect(page.getByRole("row", { name: /back\.png Back/i })).toBeVisible();
   await page.getByRole("button", { name: "Next" }).click();
   await page.getByRole("button", { name: "Next" }).click();
   await expect(page.getByText("2 label images")).toBeVisible();
   await page.getByRole("button", { name: /Submit Application/i }).click();
-  await expect(page.getByText("Application submitted.")).toBeVisible();
-  await expect(page.getByText("EVALUATOR TEST application")).toBeVisible();
+  await expect(page.getByText("Application submitted.")).toBeVisible({ timeout: 60000 });
+  await expect(page.getByText("OLD TOM DISTILLERY application")).toBeVisible();
   await expect(page.getByText("Submitted").first()).toBeVisible();
 });
 

@@ -1,5 +1,5 @@
 import { CheckCircleOutlined, CloseCircleOutlined, EditOutlined, SendOutlined, StopOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Descriptions, Image, List, Row, Space, Table, Typography } from "antd";
+import { Button, Card, Col, Descriptions, Image, List, Row, Space, Table, Typography, message } from "antd";
 import { Link, useNavigate, useParams } from "react-router";
 import { ApplicationProgressTracker } from "../../components/application/ApplicationProgressTracker";
 import { PdfExportButton } from "../../components/common/PdfExportButton";
@@ -7,7 +7,7 @@ import { StatusTag } from "../../components/common/StatusTag";
 import { fieldLabels } from "../../domain/application/demoData";
 import type { ExpectedFields, ReviewApplication } from "../../domain/application/types";
 import { useConsoleStore } from "../../hooks/useConsoleStore";
-import { runApplicantPrecheck, submitApplicantApplication, withdrawApplicantApplication } from "../../providers/data/browserStore";
+import { runApplicantPrecheckWithBrowserOcr, submitApplicantApplication, withdrawApplicantApplication } from "../../providers/data/browserStore";
 import { readinessIssues } from "./applicantUtils";
 
 export function ApplicantApplicationDetail() {
@@ -91,7 +91,15 @@ export function ApplicantApplicationDetail() {
             Withdraw
           </Button>
           <Button onClick={() => navigate(`/applicant/applications/${application.id}/timeline`)}>Timeline</Button>
-          <Button onClick={() => runApplicantPrecheck(application.id, snapshot.processingMode)}>Run Pre-check</Button>
+          <Button
+            onClick={() =>
+              void runApplicantPrecheckWithBrowserOcr(application.id, snapshot.processingMode).catch((error) =>
+                message.error(error instanceof Error ? error.message : "Pre-check failed.")
+              )
+            }
+          >
+            Run Pre-check
+          </Button>
         </Space>
       </Card>
     </Space>

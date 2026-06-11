@@ -5,6 +5,10 @@ export type BackendHealth = {
   status: "idle" | "checking" | "online" | "offline";
   message: string;
   backendUrl: string;
+  database?: string;
+  assetRoot?: string;
+  staticDir?: string;
+  staticReady?: boolean;
 };
 
 export function useBackendHealth({ enabled = true }: { enabled?: boolean } = {}) {
@@ -38,7 +42,11 @@ export function useBackendHealth({ enabled = true }: { enabled?: boolean } = {})
           setHealth({
             status: "online",
             message: payload.ok ? "Coordinator online" : "Coordinator responded with a degraded status",
-            backendUrl: backendUrlState
+            backendUrl: backendUrlState,
+            database: payload.database,
+            assetRoot: payload.assetRoot,
+            staticDir: payload.staticDir,
+            staticReady: Boolean(payload.staticReady)
           });
         }
       })

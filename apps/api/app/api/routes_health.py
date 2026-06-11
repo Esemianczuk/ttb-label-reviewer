@@ -14,6 +14,8 @@ def health(request: Request):
         "ok": True,
         "database": settings.database_url.split("://", 1)[0],
         "assetRoot": str(settings.asset_root),
+        "staticDir": str(settings.static_dir),
+        "staticReady": (settings.static_dir / "index.html").exists(),
     }
 
 
@@ -21,4 +23,3 @@ def health(request: Request):
 def version(request: Request):
     settings = request.app.state.settings
     return {"name": settings.app_name, "version": settings.version}
-

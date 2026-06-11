@@ -4,8 +4,8 @@ TTB Label Reviewer is intentionally local-first. The browser demo remains the co
 
 ## Modes
 
-- Browser-only: `browser-demo` runs by itself with local samples, browser OCR, deterministic validation, reviewer edits, and report export.
-- Local backend: FastAPI serves API routes and the built frontend when `browser-demo/dist` exists. Uploaded images are stored under `data/assets`.
+- Browser-only: `browser-demo` and the console Browser Only mode run by themselves with local samples, packaged Tesseract.js assets, browser OCR, deterministic validation, reviewer edits, and report export.
+- Local backend: FastAPI serves API routes and the built console when `apps/console/dist` exists. Uploaded images are stored under `data/assets`.
 - Distributed coordinator: backend workers register, heartbeat, claim scored leased jobs, and complete OCR/evidence/validation work.
 
 ## Phase 3 Backend
@@ -123,6 +123,16 @@ The backend exposes `/api/ws/sessions/{sessionId}` for session-scoped applicatio
 Backend live events derive from database diffs and use stable domain names: `application.created`, `application.updated`, `review.started`, `review.progress`, `review.completed`, `job.queued`, `job.assigned`, `job.progress`, `job.completed`, `job.failed`, `worker.registered`, `worker.heartbeat`, `worker.lost`, and `audit.created`. Browser Only mode diffs the local console snapshot and emits the same channel/event interface without opening a backend connection.
 
 The console enables Refine `liveMode: "auto"` so resource list hooks refetch when a matching live event arrives. The admin operations adapter and backend-mode reviewer queue also subscribe directly so dashboard metrics, worker heartbeat state, job status, audit rows, and queue applications update without a manual refresh.
+
+## Phase 13 Browser Offline Parity
+
+The browser demo packages Tesseract.js worker/core files and `eng.traineddata.gz` under `browser-demo/public/tesseract`. Production builds use these local assets by default, so OCR does not depend on jsDelivr or Project Naptha CDNs. The CDN fallback is available only for development when `VITE_ALLOW_TESSERACT_CDN_FALLBACK=1` is set.
+
+Browser worker pools process multi-image application packets and CSV manifests. Console Browser Only pre-checks and reviewer auto-review use the same browser OCR worker pool and JavaScript validators; uploaded image blobs stay in the browser session and are not sent to the backend in Browser Only mode.
+
+## Phase 14 Backend Static Integration
+
+`TTB_API_STATIC_DIR` defaults to `apps/console/dist`. When that directory contains `index.html`, FastAPI mounts it at `/` after the API routes. `/api/health` reports database scheme, asset root, static directory, and whether the static console build is ready. The console header displays backend health and static readiness.
 
 ## Phase 4 Worker Agent
 

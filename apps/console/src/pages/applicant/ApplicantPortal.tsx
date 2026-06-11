@@ -6,15 +6,15 @@ import {
   InboxOutlined,
   WarningOutlined
 } from "@ant-design/icons";
-import { Button, Card, Col, Row, Space, Statistic, Table, Typography } from "antd";
+import { Button, Card, Col, Row, Space, Statistic, Table, Typography, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { Link, useNavigate } from "react-router";
 import { ApplicationProgressTracker } from "../../components/application/ApplicationProgressTracker";
 import { PdfExportButton } from "../../components/common/PdfExportButton";
 import { StatusTag } from "../../components/common/StatusTag";
-import type { ReviewApplication } from "../../domain/application/types";
+import type { ProcessingMode, ReviewApplication } from "../../domain/application/types";
 import { useConsoleStore } from "../../hooks/useConsoleStore";
-import { runApplicantPrecheck, setActiveApplication, submitApplicantApplication } from "../../providers/data/browserStore";
+import { runApplicantPrecheckWithBrowserOcr, setActiveApplication, submitApplicantApplication } from "../../providers/data/browserStore";
 
 export function ApplicantPortal() {
   const { snapshot } = useConsoleStore();
@@ -62,13 +62,13 @@ export function ApplicantPortal() {
           </Space>
         }
       >
-        <ApplicantApplicationTable applications={applications} />
+        <ApplicantApplicationTable applications={applications} mode={snapshot.processingMode} />
       </Card>
     </Space>
   );
 }
 
-export function ApplicantApplicationTable({ applications }: { applications: ReviewApplication[] }) {
+export function ApplicantApplicationTable({ applications, mode }: { applications: ReviewApplication[]; mode: ProcessingMode }) {
   const navigate = useNavigate();
   const columns: ColumnsType<ReviewApplication> = [
     {
@@ -102,7 +102,17 @@ export function ApplicantApplicationTable({ applications }: { applications: Revi
               Submit
             </Button>
           ) : null}
-          {application.status === "DRAFT" ? <Button onClick={() => runApplicantPrecheck(application.id)}>Run</Button> : null}
+          {application.status === "DRAFT" ? (
+            <Button
+              onClick={() =>
+                void runApplicantPrecheckWithBrowserOcr(application.id, mode).catch((error) =>
+                  message.error(error instanceof Error ? error.message : "Pre-check failed.")
+                )
+              }
+            >
+              Run
+            </Button>
+          ) : null}
           {application.status === "NEEDS_CORRECTION" ? (
             <Button danger onClick={() => navigate(`/applicant/applications/${application.id}/corrections`)}>
               Corrections

@@ -9,10 +9,11 @@ npm run dev
 ```
 
 The browser app remains fully usable without the backend.
+Production browser and console builds use packaged Tesseract assets from `browser-demo/public/tesseract`, so no CDN is required at runtime. The development CDN fallback is disabled unless `VITE_ALLOW_TESSERACT_CDN_FALLBACK=1` is set.
 
 The top-right Processing Mode control has three modes:
 
-- **Browser Only** uses the browser worker pool and never requires a backend.
+- **Browser Only** uses the browser worker pool, real browser OCR pre-checks, and never requires a backend.
 - **Local Backend** uploads the current one-image application packet to FastAPI and waits for a local worker/coordinator result.
 - **Cluster** uses the same backend review API while showing worker cards, throughput, and scheduler assignment reasons.
 
@@ -45,7 +46,7 @@ export TTB_API_DATABASE_URL="postgresql+psycopg://user:password@localhost:5432/t
 ./scripts/dev-local-backend.sh
 ```
 
-If `browser-demo/dist/index.html` exists, the backend also serves that static build at `/`.
+`./scripts/dev-local-backend.sh` builds the console when needed and serves `apps/console/dist` at `/`. Override the static directory with `TTB_API_STATIC_DIR`.
 
 ## Smoke Test
 
@@ -75,16 +76,13 @@ Use the same `X-Session-Id` header for application, asset, job, review, and repo
 Start the backend first, then in another terminal run:
 
 ```bash
-JOIN_TOKEN="$(curl -sS -X POST http://127.0.0.1:8000/api/cluster/join-token \
-  -H 'Content-Type: application/json' \
-  -d '{"ttlSeconds":900}' | python -c 'import json,sys; print(json.load(sys.stdin)["token"])')"
-./scripts/dev-worker.sh --session-id local-dev-session --join-token "$JOIN_TOKEN"
+./scripts/dev-worker.sh --session-id local-dev-session
 ```
 
 For a finite smoke run:
 
 ```bash
-./scripts/dev-worker.sh --session-id local-dev-session --join-token "$JOIN_TOKEN" --once
+./scripts/dev-worker.sh --session-id local-dev-session --once
 ```
 
 The equivalent module command is:
@@ -94,13 +92,13 @@ python -m ttb_worker \
   --coordinator http://127.0.0.1:8000 \
   --name auto \
   --concurrency auto \
-  --engines auto \
+  --engines null,tesseract \
   --data-dir ./.worker-cache
 ```
 
 Use `--probe` to print capability and engine availability JSON without registering.
 
-Use `POST /api/cluster/join-token` whenever you want a fresh manual worker join command. mDNS discovery is optional and skipped when `zeroconf` is not installed.
+The dev backend allows local worker registration without a token. Set `TTB_REQUIRE_WORKER_JOIN_TOKEN=1` and use `POST /api/cluster/join-token` whenever you want a fresh manual worker join command. mDNS discovery is optional and skipped when `zeroconf` is not installed.
 
 ## Scheduler Smoke
 

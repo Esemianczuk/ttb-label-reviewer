@@ -65,11 +65,11 @@ Retention actions are confirmation-gated and can purge raw images, purge old job
 
 ## Processing Modes
 
-- Browser Only: uses the persisted in-browser snapshot, bundled one-image sample packets, and local live-event bus. It does not require or probe a backend coordinator.
+- Browser Only: uses the persisted in-browser snapshot, bundled one-image sample packets, local Tesseract OCR assets, browser worker pool controls, shared JavaScript validators, and local live-event bus. It does not require or probe a backend coordinator.
 - Backend: uses the FastAPI data provider, demo bearer auth, the configured backend URL, and the backend session WebSocket.
 - Cluster: uses the same FastAPI data provider as Backend mode, keeps backend live updates active, and enables the cluster dashboard surfaces for worker telemetry.
 
-If Backend or Cluster mode cannot reach the coordinator, the console shows a warning with a `Use Browser Only` action. Browser-only review, uploads, queue navigation, and PDF export remain available offline.
+If Backend or Cluster mode cannot reach the coordinator, the console shows a warning with a `Use Browser Only` action. Browser-only review, OCR pre-check, uploads, queue navigation, and PDF export remain available offline, and uploaded images are read from local browser blobs rather than sent to the backend.
 
 `Reset Demo` clears reviewer decisions, notes, generated uploads, and active queue position back to the first bundled sample.
 

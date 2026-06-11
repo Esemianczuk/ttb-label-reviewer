@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "package:tesseract": "node ../scripts/package-tesseract-assets.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",

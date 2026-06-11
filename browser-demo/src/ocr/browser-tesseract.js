@@ -4,6 +4,7 @@ import { createOcrResult } from './ocr-types.js';
 const TESSERACT_VERSION = '7.0.0';
 const CORE_VERSION = '7.0.0';
 const DEFAULT_CONFIDENCE = 0.75;
+const CDN_FALLBACK_ENV = 'VITE_ALLOW_TESSERACT_CDN_FALLBACK';
 
 let workerPromise = null;
 let assetConfigPromise = null;
@@ -214,6 +215,12 @@ async function resolveTesseractAssetConfig() {
         };
       }
 
+      if (import.meta.env?.[CDN_FALLBACK_ENV] !== '1') {
+        throw new Error(
+          `Packaged Tesseract.js assets were not found at ${localWorkerPath}. Run npm run browser:package-tesseract before building, or set ${CDN_FALLBACK_ENV}=1 for a dev-only CDN fallback.`,
+        );
+      }
+
       return {
         workerPath: `https://cdn.jsdelivr.net/npm/tesseract.js@${TESSERACT_VERSION}/dist/worker.min.js`,
         corePath: `https://cdn.jsdelivr.net/npm/tesseract.js-core@${CORE_VERSION}`,
@@ -225,6 +232,15 @@ async function resolveTesseractAssetConfig() {
     })();
   }
   return assetConfigPromise;
+}
+
+export async function resolveTesseractAssetConfigForTests() {
+  return resolveTesseractAssetConfig();
+}
+
+export function resetTesseractAssetConfigForTests() {
+  assetConfigPromise = null;
+  workerPromise = null;
 }
 
 export async function recognizeImageInBrowser(fileOrBlob, { onProgress } = {}) {

@@ -1,10 +1,12 @@
 import { CheckCircleOutlined, SendOutlined, ToolOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, List, Space, Typography, message } from "antd";
+import { Alert, Button, Card, List, Select, Space, Typography, message } from "antd";
+import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { ApplicationProgressTracker } from "../../components/application/ApplicationProgressTracker";
 import { StatusTag } from "../../components/common/StatusTag";
 import { useConsoleStore } from "../../hooks/useConsoleStore";
-import { runApplicantPrecheck, submitApplicantApplication } from "../../providers/data/browserStore";
+import { browserOcrWorkerCountLabel, getBrowserOcrWorkerOverride, setBrowserOcrWorkerOverride } from "../../domain/application/browserOcrSettings";
+import { runApplicantPrecheckWithBrowserOcr, submitApplicantApplication } from "../../providers/data/browserStore";
 import { readinessIssues } from "./applicantUtils";
 import { ReviewFieldTable } from "./ApplicantApplicationDetail";
 
@@ -12,12 +14,36 @@ export function PrecheckPage() {
   const { applicationId } = useParams();
   const { snapshot } = useConsoleStore();
   const [messageApi, contextHolder] = message.useMessage();
+  const [running, setRunning] = useState(false);
+  const [progress, setProgress] = useState("");
+  const [workerOverride, setWorkerOverrideState] = useState(() => getBrowserOcrWorkerOverride());
   const application = snapshot.applications.find((candidate) => candidate.id === applicationId);
 
   if (!application) return <Card size="small">Application not found.</Card>;
 
   const issues = readinessIssues(application);
   const canSubmit = application.status === "READY_TO_SUBMIT";
+  const workerLabel = browserOcrWorkerCountLabel(application.images.length, workerOverride);
+
+  const updateWorkerOverride = (value: string) => {
+    setWorkerOverrideState(setBrowserOcrWorkerOverride(value));
+  };
+
+  const runPrecheck = async () => {
+    setRunning(true);
+    setProgress("Preparing browser OCR.");
+    try {
+      await runApplicantPrecheckWithBrowserOcr(application.id, snapshot.processingMode, {
+        workerOverride,
+        onProgress: setProgress
+      });
+      messageApi.success("Pre-check completed.");
+    } catch (error) {
+      messageApi.error(error instanceof Error ? error.message : "Pre-check failed.");
+    } finally {
+      setRunning(false);
+    }
+  };
 
   return (
     <Space orientation="vertical" className="full-width" size={16}>
@@ -37,16 +63,34 @@ export function PrecheckPage() {
         )}
       </Card>
       <Card size="small" title="Automated Field Review">
-        {application.review ? <ReviewFieldTable application={application} /> : <Typography.Text>No pre-check result yet.</Typography.Text>}
+        <Space orientation="vertical" className="full-width" size={12}>
+          <Space wrap>
+            <Typography.Text type="secondary">Browser OCR workers</Typography.Text>
+            <Select
+              aria-label="Browser OCR workers"
+              value={workerOverride}
+              onChange={updateWorkerOverride}
+              disabled={running}
+              options={[
+                { value: "auto", label: "Auto" },
+                { value: "1", label: "1" },
+                { value: "2", label: "2" },
+                { value: "3", label: "3" }
+              ]}
+              style={{ width: 120 }}
+            />
+            <Typography.Text type="secondary">{workerLabel}</Typography.Text>
+          </Space>
+          {progress ? <Typography.Text type="secondary">{progress}</Typography.Text> : null}
+          {application.review ? <ReviewFieldTable application={application} /> : <Typography.Text>No pre-check result yet.</Typography.Text>}
+        </Space>
       </Card>
       <Card size="small">
         <Space wrap>
           <Button
             icon={<ToolOutlined />}
-            onClick={() => {
-              runApplicantPrecheck(application.id, snapshot.processingMode);
-              messageApi.success("Pre-check completed.");
-            }}
+            loading={running}
+            onClick={() => void runPrecheck()}
           >
             Run Pre-check
           </Button>

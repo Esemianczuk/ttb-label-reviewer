@@ -29,16 +29,15 @@ import {
   message
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import type { FieldStatus, LabelImage, ReviewApplication, ReviewField } from "../../domain/application/types";
 import { useConsoleStore } from "../../hooks/useConsoleStore";
 import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
 import {
   acceptAutoReview,
-  autoReviewApplication,
+  autoReviewApplicationWithBrowserOcr,
   finalizeReviewerDecision,
-  queueApplication,
   requestApplicantCorrection,
   setActiveApplication,
   updateFieldDecision,
@@ -56,6 +55,7 @@ export function ReviewWorkbench({ applicationId }: { applicationId?: string }) {
   const [messageApi, contextHolder] = message.useMessage();
   const [selectedImageId, setSelectedImageId] = useState<string | undefined>();
   const [correctionOpen, setCorrectionOpen] = useState(false);
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
   const application = applicationId ? snapshot.applications.find((candidate) => candidate.id === applicationId) : activeApplication;
   const selectedImage = application?.images.find((image) => image.id === selectedImageId) || application?.images[0];
 
@@ -69,10 +69,24 @@ export function ReviewWorkbench({ applicationId }: { applicationId?: string }) {
     }
   }, [application?.id, application?.images, selectedImageId]);
 
+  const runAutoReview = useCallback(
+    async (targetApplicationId: string, showSuccess = true) => {
+      setReviewingId(targetApplicationId);
+      try {
+        await autoReviewApplicationWithBrowserOcr(targetApplicationId, snapshot.processingMode);
+        if (showSuccess) messageApi.success("Auto review completed.");
+      } catch (error) {
+        messageApi.error(error instanceof Error ? error.message : "Auto review failed.");
+      } finally {
+        setReviewingId(null);
+      }
+    },
+    [messageApi, snapshot.processingMode]
+  );
+
   useEffect(() => {
     if (application && !application.review && ["DRAFT", "READY_TO_SUBMIT", "SUBMITTED", "RESUBMITTED", "IN_REVIEW"].includes(application.status)) {
-      queueApplication(application.id);
-      autoReviewApplication(application.id, snapshot.processingMode);
+      void runAutoReview(application.id, false);
     }
   }, [application?.id]);
 
@@ -82,8 +96,7 @@ export function ReviewWorkbench({ applicationId }: { applicationId?: string }) {
     if (!next) return;
     setActiveApplication(next.id);
     if (!next.review) {
-      queueApplication(next.id);
-      autoReviewApplication(next.id, snapshot.processingMode);
+      void runAutoReview(next.id, false);
     }
     navigate(`/reviewer/applications/${next.id}`);
   };
@@ -102,7 +115,7 @@ export function ReviewWorkbench({ applicationId }: { applicationId?: string }) {
       () => ({
         n: () => goToOffset(1),
         p: () => goToOffset(-1),
-        r: () => application && runSafely(() => autoReviewApplication(application.id, snapshot.processingMode), "Auto review completed."),
+        r: () => application && void runAutoReview(application.id),
         a: () => application && runSafely(() => acceptAutoReview(application.id), "Automated result accepted."),
         c: () => setCorrectionOpen(true)
       }),
@@ -123,7 +136,8 @@ export function ReviewWorkbench({ applicationId }: { applicationId?: string }) {
           onPrevious={() => goToOffset(-1)}
           hasNext={hasNext}
           hasPrevious={hasPrevious}
-          onRun={() => runSafely(() => autoReviewApplication(application.id, snapshot.processingMode), "Auto review completed.")}
+          reviewing={reviewingId === application.id}
+          onRun={() => void runAutoReview(application.id)}
         />
         <Row gutter={[16, 16]}>
           <Col xs={24} xl={10}>
@@ -153,7 +167,8 @@ function ReviewHeader({
   hasPrevious,
   onNext,
   onPrevious,
-  onRun
+  onRun,
+  reviewing
 }: {
   application: ReviewApplication;
   mode: "browser" | "backend" | "cluster";
@@ -162,6 +177,7 @@ function ReviewHeader({
   onNext: () => void;
   onPrevious: () => void;
   onRun: () => void;
+  reviewing: boolean;
 }) {
   return (
     <Card className="workbench-header" size="small">
@@ -181,7 +197,7 @@ function ReviewHeader({
         <Button type="primary" icon={<ArrowRightOutlined />} disabled={!hasNext} onClick={onNext}>
           Next Application
         </Button>
-        <Button icon={<PlayCircleOutlined />} onClick={onRun}>
+        <Button icon={<PlayCircleOutlined />} loading={reviewing} onClick={onRun}>
           Auto Review
         </Button>
         <PdfExportButton application={application} pageName="Reviewer Workbench" />

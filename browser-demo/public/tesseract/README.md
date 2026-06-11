@@ -1,20 +1,6 @@
 # Local Tesseract.js Assets
 
-The browser OCR module first checks this folder for packaged Tesseract.js assets:
+These files are packaged by `npm run browser:package-tesseract` from `browser-demo/node_modules` and `browser-demo/eng.traineddata`.
+Production browser and console builds load OCR worker, WASM core, and English traineddata from this directory with no runtime CDN dependency.
 
-```text
-public/tesseract/
-  worker.min.js
-  core/
-    tesseract-core.wasm.js
-    tesseract-core-simd.wasm.js
-    tesseract-core-lstm.wasm.js
-    tesseract-core-simd-lstm.wasm.js
-    *.wasm
-  lang/
-    eng.traineddata.gz
-```
-
-If `worker.min.js` is absent, the development build falls back to public Tesseract.js CDNs for engine assets. Uploaded image bytes remain in the browser session.
-
-Do not commit large downloaded language/model bundles unless the project explicitly decides to vendor them for the final submission.
+The CDN fallback is disabled by default and is available only for local development when `VITE_ALLOW_TESSERACT_CDN_FALLBACK=1` is set.

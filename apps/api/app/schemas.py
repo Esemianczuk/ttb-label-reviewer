@@ -257,6 +257,8 @@ class HealthRead(BaseModel):
     ok: bool
     database: str
     assetRoot: str
+    staticDir: str
+    staticReady: bool
 
 
 class OrganizationRead(BaseModel):

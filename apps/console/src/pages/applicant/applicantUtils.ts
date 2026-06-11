@@ -28,6 +28,7 @@ export type ApplicantFormValues = ExpectedFields & {
   runOcr?: boolean;
   validateGovernmentWarning?: boolean;
   autoSubmitWhenReady?: boolean;
+  browserWorkerOverride?: string;
 };
 
 export const DEFAULT_APPLICANT_VALUES: Partial<ApplicantFormValues> = {
@@ -36,7 +37,8 @@ export const DEFAULT_APPLICANT_VALUES: Partial<ApplicantFormValues> = {
   submitter: "Evaluator upload",
   runOcr: true,
   validateGovernmentWarning: true,
-  autoSubmitWhenReady: false
+  autoSubmitWhenReady: false,
+  browserWorkerOverride: "auto"
 };
 
 export function imageCountLabel(count: number): string {

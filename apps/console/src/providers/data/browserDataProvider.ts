@@ -3,6 +3,7 @@ import {
   addManualUpload,
   acceptAutoReview,
   autoReviewApplication,
+  autoReviewApplicationWithBrowserOcr,
   createApplicantDraft,
   deleteApplicationPacket,
   finalizeReviewerDecision,
@@ -16,6 +17,7 @@ import {
   resetSnapshot,
   runAdminBenchmark,
   runApplicantPrecheck,
+  runApplicantPrecheckWithBrowserOcr,
   setActiveApplication,
   setProcessingMode,
   submitApplicantApplication,
@@ -68,7 +70,14 @@ export const browserDataProvider: DataProvider = {
     if (action === "demo/reset") return { data: resetSnapshot() as any };
     if (action === "mode") return { data: setProcessingMode((payload as any).mode) as any };
     if (action === "applications/active") return { data: setActiveApplication((payload as any).applicationId) as any };
-    if (action === "reviews/auto") return { data: autoReviewApplication((payload as any).applicationId, (payload as any).mode) as any };
+    if (action === "reviews/auto") {
+      if (import.meta.env.MODE === "test") return { data: autoReviewApplication((payload as any).applicationId, (payload as any).mode) as any };
+      return {
+        data: (await autoReviewApplicationWithBrowserOcr((payload as any).applicationId, (payload as any).mode, {
+          workerOverride: (payload as any).workerOverride
+        })) as any
+      };
+    }
     if (action === "reviews/accept-auto") return { data: acceptAutoReview((payload as any).applicationId) as any };
     if (action === "reviews/finalize") return { data: finalizeReviewerDecision(payload as any) as any };
     if (action === "reviews/batch-process") return { data: processReviewerBatch(payload as any) as any };
@@ -76,7 +85,14 @@ export const browserDataProvider: DataProvider = {
     if (action === "reviews/notes") return { data: updateReviewNotes(payload as any) as any };
     if (action === "applications/manual") return { data: addManualUpload(payload as any) as any };
     if (action === "applications/draft") return { data: createApplicantDraft(payload as any) as any };
-    if (action === "applications/precheck") return { data: runApplicantPrecheck((payload as any).applicationId, (payload as any).mode) as any };
+    if (action === "applications/precheck") {
+      if (import.meta.env.MODE === "test") return { data: runApplicantPrecheck((payload as any).applicationId, (payload as any).mode) as any };
+      return {
+        data: (await runApplicantPrecheckWithBrowserOcr((payload as any).applicationId, (payload as any).mode, {
+          workerOverride: (payload as any).workerOverride
+        })) as any
+      };
+    }
     if (action === "applications/submit") return { data: submitApplicantApplication((payload as any).applicationId) as any };
     if (action === "applications/withdraw") return { data: withdrawApplicantApplication((payload as any).applicationId) as any };
     if (action === "corrections/request") return { data: requestApplicantCorrection(payload as any) as any };

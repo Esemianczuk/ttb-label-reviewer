@@ -1,4 +1,4 @@
-import { Button, Card, Input, Select, Space, Table, Tag, Typography } from "antd";
+import { Button, Card, Input, Select, Space, Table, Tag, Typography, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSubscription } from "@refinedev/core";
@@ -6,7 +6,7 @@ import { useNavigate } from "react-router";
 import type { ReviewApplication } from "../../domain/application/types";
 import { useConsoleStore } from "../../hooks/useConsoleStore";
 import { useProcessingModeContext } from "../../providers/processing/ProcessingModeProvider";
-import { autoReviewApplication, setActiveApplication } from "../../providers/data/browserStore";
+import { autoReviewApplicationWithBrowserOcr, setActiveApplication } from "../../providers/data/browserStore";
 import { ModeTag, StatusTag } from "../common/StatusTag";
 import {
   REVIEWER_QUEUE_FILTERS,
@@ -25,6 +25,7 @@ export function ReviewQueue({ title = "Review Queue", compact = false }: { title
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<ReviewerQueueFilter>("all");
   const [remoteApplications, setRemoteApplications] = useState<ReviewApplication[] | null>(null);
+  const [processingIds, setProcessingIds] = useState<Set<string>>(() => new Set());
   const backendQueueEnabled = mode !== "browser" && !backendUnavailable;
   const refreshRemoteQueue = useCallback(async () => {
     if (!backendQueueEnabled) {
@@ -52,6 +53,21 @@ export function ReviewQueue({ title = "Review Queue", compact = false }: { title
       }),
     [filter, queueApplications, search]
   );
+
+  const processApplication = async (applicationId: string) => {
+    setProcessingIds((current) => new Set([...current, applicationId]));
+    try {
+      await autoReviewApplicationWithBrowserOcr(applicationId, snapshot.processingMode);
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : "Application processing failed.");
+    } finally {
+      setProcessingIds((current) => {
+        const next = new Set(current);
+        next.delete(applicationId);
+        return next;
+      });
+    }
+  };
 
   const columns: ColumnsType<ReviewApplication> = [
     {
@@ -129,13 +145,13 @@ export function ReviewQueue({ title = "Review Queue", compact = false }: { title
           <Button
             onClick={() => {
               setActiveApplication(application.id);
-              if (!application.review) autoReviewApplication(application.id, snapshot.processingMode);
+              if (!application.review) void processApplication(application.id);
               navigate(`/reviewer/applications/${application.id}`);
             }}
           >
             Open
           </Button>
-          <Button onClick={() => autoReviewApplication(application.id, snapshot.processingMode)}>Process</Button>
+          <Button loading={processingIds.has(application.id)} onClick={() => void processApplication(application.id)}>Process</Button>
         </Space>
       )
     }

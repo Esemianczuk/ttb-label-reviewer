@@ -41,6 +41,10 @@ def _demo_token_ttl_seconds() -> int:
     return int(os.environ.get("TTB_DEMO_TOKEN_TTL_SECONDS", str(12 * 60 * 60)))
 
 
+def _static_dir() -> Path:
+    return Path(os.environ.get("TTB_API_STATIC_DIR", str(_repo_root() / "apps" / "console" / "dist"))).resolve()
+
+
 @dataclass(frozen=True)
 class Settings:
     app_name: str = "TTB Label Reviewer API"
@@ -60,7 +64,7 @@ class Settings:
     enable_mdns: bool = field(default_factory=lambda: os.environ.get("TTB_ENABLE_MDNS", "0") == "1")
     lan_mode: bool = field(default_factory=lambda: os.environ.get("TTB_API_HOST", "127.0.0.1") in {"0.0.0.0", "::"})
     allow_dev_sqlite: bool = field(default_factory=lambda: os.environ.get("TTB_API_ALLOW_DEV_SQLITE", "1") != "0")
-    static_dir: Path = field(default_factory=lambda: (_repo_root() / "browser-demo" / "dist").resolve())
+    static_dir: Path = field(default_factory=_static_dir)
 
     @property
     def asset_root(self) -> Path:

@@ -5,9 +5,17 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [react()],
   publicDir: path.resolve(__dirname, "../../browser-demo/public"),
+  resolve: {
+    alias: {
+      "@browser-demo": path.resolve(__dirname, "../../browser-demo/src")
+    }
+  },
   server: {
     port: 5174,
-    host: "127.0.0.1"
+    host: "127.0.0.1",
+    fs: {
+      allow: [path.resolve(__dirname, "../..")]
+    }
   },
   test: {
     environment: "jsdom",

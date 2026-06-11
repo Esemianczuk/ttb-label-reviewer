@@ -8,7 +8,7 @@ import {
   SafetyCertificateOutlined,
   UserSwitchOutlined
 } from "@ant-design/icons";
-import { Alert, Button, Input, Layout, Menu, Segmented, Select, Space, Tooltip, Typography } from "antd";
+import { Alert, Button, Input, Layout, Menu, Segmented, Select, Space, Tag, Tooltip, Typography } from "antd";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import type { ProcessingMode, UserRole } from "../domain/application/types";
 import { useConsoleStore } from "../hooks/useConsoleStore";
@@ -53,6 +53,7 @@ export function AppLayout() {
         </div>
         <Space wrap className="header-actions">
           <ModeSwitcher mode={mode} onChange={setMode} />
+          <BackendHealthTag health={health} providerLabel={provider.label} />
           <StatusBadge status={activeApplication?.status || "DRAFT"} />
           <Tooltip title="Reset applications, decisions, notes, and active queue position">
             <Button icon={<ReloadOutlined />} onClick={() => resetSnapshot()}>
@@ -117,6 +118,11 @@ export function AppLayout() {
               <div>
                 <Typography.Text type="secondary">Coordinator</Typography.Text>
                 <Typography.Paragraph className="health-copy">{health.message}</Typography.Paragraph>
+                {health.status === "online" ? (
+                  <Typography.Paragraph className="health-copy">
+                    {health.database || "database"} · static {health.staticReady ? "ready" : "missing"}
+                  </Typography.Paragraph>
+                ) : null}
               </div>
               <Input
                 aria-label="Backend coordinator URL"
@@ -145,6 +151,33 @@ export function AppLayout() {
         </Content>
       </Layout>
     </Layout>
+  );
+}
+
+function BackendHealthTag({ health, providerLabel }: { health: ReturnType<typeof useProcessingMode>["health"]; providerLabel: string }) {
+  const color = health.status === "online" ? "green" : health.status === "checking" ? "blue" : health.status === "offline" ? "red" : "default";
+  const label =
+    health.status === "online"
+      ? `Backend Online${health.staticReady ? "" : " API Only"}`
+      : health.status === "offline"
+        ? "Backend Offline"
+        : health.status === "checking"
+          ? "Checking Backend"
+          : providerLabel;
+  const detail = [
+    health.message,
+    health.backendUrl,
+    health.database ? `Database: ${health.database}` : "",
+    health.staticDir ? `Static: ${health.staticReady ? "ready" : "missing"} at ${health.staticDir}` : "",
+    health.assetRoot ? `Assets: ${health.assetRoot}` : ""
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return (
+    <Tooltip title={<span className="tooltip-lines">{detail}</span>}>
+      <Tag color={color}>{label}</Tag>
+    </Tooltip>
   );
 }
 

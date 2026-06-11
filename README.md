@@ -8,16 +8,17 @@ This is an assessment prototype, not an official TTB or Treasury system, and it 
 
 ### Browser-Only Mode
 
-The browser app runs without a backend. It loads sample application packets, performs browser OCR for uploads, applies deterministic validators, lets reviewers override field decisions with notes, and exports reports.
+The browser app runs without a backend. It loads sample application packets, performs browser OCR for uploads and multi-image CSV batches, applies deterministic validators, lets reviewers override field decisions with notes, and exports reports. Production browser and console builds load the Tesseract worker, WASM core, and English traineddata from `browser-demo/public/tesseract`; there is no runtime CDN dependency by default.
 
 ```bash
 cd browser-demo
 source ~/.nvm/nvm.sh && nvm use 20
 npm install
+npm run package:tesseract
 npm run dev
 ```
 
-Current browser mode includes a bounded dedicated Web Worker pool for uploaded image batches. The sample queue remains fixture-backed for deterministic evaluator demos. Phase 7 adds the operations dashboard: Processing Mode, backend URL detection, severity-first application table, filters, reviewer shortcuts, and the expandable image viewer.
+Current browser mode includes a bounded dedicated Web Worker pool for uploaded image batches, and the worker count is visible and adjustable. The CDN fallback is development-only and must be enabled explicitly with `VITE_ALLOW_TESSERACT_CDN_FALLBACK=1`.
 
 ### Local Backend Mode
 
@@ -34,7 +35,7 @@ export TTB_API_DATABASE_URL="postgresql+psycopg://user:password@localhost:5432/t
 ./scripts/dev-local-backend.sh
 ```
 
-The backend serves `browser-demo/dist` from `/` when a production browser build exists.
+The backend serves `apps/console/dist` from `/` when a production console build exists. `TTB_API_STATIC_DIR` can point to another static build, and defaults to `apps/console/dist`.
 
 In the browser, choose **Local Backend** from Processing Mode. The app probes the configured URL, logs in as the demo applicant, uploads the one-image application packet, starts a backend review, listens to the session WebSocket, and polls the review until the worker result is available. If the backend is unavailable, the same Auto Review button falls back to Browser Only.
 
@@ -43,14 +44,11 @@ In the browser, choose **Local Backend** from Processing Mode. The app probes th
 The Python worker agent in `apps/worker` lets trusted local machines register with the coordinator from Linux, macOS, or Windows. It probes host capabilities, calibrates available OCR engines, heartbeats, claims leased jobs, downloads scoped assets, and completes OCR/evidence/validation tasks. Browser clients never process another browser client's uploaded images.
 
 ```bash
-JOIN_TOKEN="$(curl -sS -X POST http://127.0.0.1:8000/api/cluster/join-token \
-  -H 'Content-Type: application/json' \
-  -d '{"ttlSeconds":900}' | python -c 'import json,sys; print(json.load(sys.stdin)["token"])')"
-./scripts/dev-worker.sh --session-id local-dev-session --join-token "$JOIN_TOKEN"
+./scripts/dev-worker.sh --session-id local-dev-session
 ```
 
-The worker always includes a deterministic null OCR engine for demos and tests. If local OCR tooling such as Tesseract is installed, the worker advertises and can use it without making those packages mandatory.
-Manual join tokens are short-lived; the worker receives and stores a persistent secret after registration.
+The dev backend permits local worker registration by default; set `TTB_REQUIRE_WORKER_JOIN_TOKEN=1` to require manual join tokens. The worker starts with `null,tesseract` engines by default: deterministic null OCR is always present, while Tesseract is used when the local binary and Python bindings are installed.
+Manual join tokens are short-lived when enabled; the worker receives and stores a persistent secret after registration.
 Cluster mode uses the same backend review API while the browser uses demo admin auth to show worker cards, throughput counters, and recent scheduler assignment reasons from `/api/workers/events`.
 
 ## Current Repository Layout
@@ -72,7 +70,7 @@ The requested future `apps/browser` and `apps/worker` structure will be introduc
 
 ## Refine Console
 
-`apps/console` adds an enterprise-style reviewer console without removing the V1 browser demo. It includes applicant, reviewer, and admin portals; role-based access rules; demo bearer auth for backend calls; browser/backend/cluster mode controls; a Refine resource registry; browser/API/mock data providers; browser and backend live providers; a full applicant workflow with onboarding, multi-image intake, pre-check, submission, corrections, resubmission, and timeline routes; a routed reviewer dashboard, queue, workbench, batch review, reports, correction requests, approvals, rejections, escalations, keyboard shortcuts, and audit-visible decisions; routed admin operations for users, roles, workers, jobs, engines, benchmarks, audit, retention, fixtures, and settings; detached image zoom/pan; generated Orval API client; PDF exports; Vitest unit tests; and Playwright desktop/mobile accessibility coverage.
+`apps/console` adds an enterprise-style reviewer console without removing the V1 browser demo. It includes applicant, reviewer, and admin portals; role-based access rules; demo bearer auth for backend calls; browser/backend/cluster mode controls; a Refine resource registry; browser/API/mock data providers; browser and backend live providers; browser-only pre-checks and reviewer auto-review backed by the same local Tesseract OCR/validators as the browser demo; a full applicant workflow with onboarding, multi-image intake, pre-check, submission, corrections, resubmission, and timeline routes; a routed reviewer dashboard, queue, workbench, batch review, reports, correction requests, approvals, rejections, escalations, keyboard shortcuts, and audit-visible decisions; routed admin operations for users, roles, workers, jobs, engines, benchmarks, audit, retention, fixtures, and settings; detached image zoom/pan; generated Orval API client; PDF exports; Vitest unit tests; and Playwright desktop/mobile accessibility coverage.
 
 ```bash
 npm install --prefix apps/console

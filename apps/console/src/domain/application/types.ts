@@ -124,6 +124,7 @@ export type ReviewApplication = {
       validateGovernmentWarning: boolean;
       requireAtLeastOneImage: boolean;
       autoSubmitWhenReady: boolean;
+      browserWorkerOverride?: string;
     };
   };
 };
