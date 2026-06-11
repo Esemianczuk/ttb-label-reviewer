@@ -4,8 +4,11 @@
   "private": true,
   "description": "Root helper scripts for the local-first TTB Label Reviewer assessment project.",
   "scripts": {
-    "test": "npm --prefix browser-demo test",
-    "build": "npm --prefix browser-demo run build",
+    "test": "npm --prefix browser-demo test && npm --prefix apps/console test",
+    "build": "npm --prefix browser-demo run build && npm --prefix apps/console run build",
+    "console:dev": "npm --prefix apps/console run dev",
+    "console:test": "npm --prefix apps/console test",
+    "console:e2e": "npm --prefix apps/console run test:e2e",
     "api:dev": "./scripts/dev-local-backend.sh",
     "worker:dev": "./scripts/dev-worker.sh",
     "check": "./scripts/check-all.sh"

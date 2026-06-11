@@ -1,0 +1,1 @@
+export const DEFAULT_STALE_TIME_MS = 10_000;

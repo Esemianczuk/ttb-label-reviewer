@@ -9,6 +9,7 @@ tools/ttb_collector/cache/
 **/playwright-report/
 **/test-results/
 *.log
+*.tsbuildinfo
 
 __pycache__/
 *.py[cod]

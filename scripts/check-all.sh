@@ -13,4 +13,7 @@ fi
 npm --prefix browser-demo test
 npm --prefix browser-demo run test:e2e
 npm --prefix browser-demo run build
+npm --prefix apps/console test
+npm --prefix apps/console run test:e2e
+npm --prefix apps/console run build
 python -m pytest -q

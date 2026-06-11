@@ -57,6 +57,7 @@ Cluster mode uses the same backend review API while the browser shows worker car
 
 ```text
 apps/api/                    Optional FastAPI coordinator
+apps/console/                Refine + Ant Design role-based operations console
 apps/worker/                 Optional Python worker agent
 browser-demo/                 V1 Vite browser app
 docs/                         Architecture and evaluator notes
@@ -68,6 +69,17 @@ scripts/check-all.sh          Local verification entrypoint
 ```
 
 The requested future `apps/browser` and `apps/worker` structure will be introduced incrementally. Until then, `browser-demo` is the compatibility app and should keep passing its existing tests and build.
+
+## Refine Console
+
+`apps/console` adds an enterprise-style reviewer console without removing the V1 browser demo. It includes applicant, reviewer, and admin portals; role-based access rules; browser/backend/cluster mode controls; one-image upload intake; immediate sample queue processing; preserved reviewer overrides; detached image zoom/pan; audit tables; worker telemetry; Orval client generation config; PDF exports; Vitest unit tests; and Playwright desktop/mobile accessibility coverage.
+
+```bash
+npm install --prefix apps/console
+npm --prefix apps/console run dev
+```
+
+See [docs/CONSOLE_APP.md](docs/CONSOLE_APP.md) for portal behavior and verification commands.
 
 ## Quick Checks
 
@@ -82,6 +94,7 @@ The script runs:
 - `npm test` in `browser-demo`
 - `npm run test:e2e` in `browser-demo`
 - `npm run build` in `browser-demo`
+- `npm test`, `npm run test:e2e`, and `npm run build` in `apps/console`
 - `python -m pytest -q` for root Python, backend API, and worker tests
 
 You can also run the browser checks directly:
