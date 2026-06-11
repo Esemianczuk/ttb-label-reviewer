@@ -58,7 +58,7 @@ TTB_E2E_BACKEND_URL=http://127.0.0.1:8011 \
 
 ## Known Limits
 
-- Existing SQLite databases created before the duplicate-image fix can still have the old unique `assets.sha256` constraint. For evaluator demos, use a fresh local database or run Alembic migrations before repeat-upload testing.
+- Fresh evaluator databases include the duplicate-image upload fix. If reusing an older SQLite database, recreate it or run the Alembic migrations before testing repeat uploads.
 - Phase 8+ items are not fully implemented: persisted agent decision audit events, retention/purge UI, benchmarking scripts, and final Phase 14/15 documentation polish remain future work.
 - Backend WebSocket currently streams session snapshots rather than per-event push notifications. It is sufficient for dashboard progress but can be made more granular later.
 - The cluster dashboard uses compact throughput counters rather than a full charting library.
