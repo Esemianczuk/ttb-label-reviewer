@@ -40,7 +40,7 @@ It inserts the demo organization and users used by `/api/auth/demo-login`.
 
 - Immutable application snapshots.
 - `POST /api/applications` now creates version `1` automatically.
-- Future correction/resubmission workflows should append versions instead of overwriting prior submissions.
+- Correction/resubmission workflows append versions instead of overwriting prior submissions.
 
 `review_decisions`
 
@@ -49,6 +49,7 @@ It inserts the demo organization and users used by `/api/auth/demo-login`.
 `correction_requests`
 
 - Reviewer/admin requests back to applicants with status, message, field keys, and resolution timestamp.
+- `request_correction` creates open requests; `resubmit` resolves them.
 
 `audit_events`
 
@@ -71,6 +72,8 @@ Human routes now require `Authorization: Bearer <demo token>`. `X-Session-Id` is
 
 These fields are nullable or derived, but new application creates set owner and organization from the authenticated user.
 
+Application status changes are canonical and audited through `POST /api/applications/{id}/transition`; see [APPLICATION_WORKFLOW.md](APPLICATION_WORKFLOW.md).
+
 ## Verification
 
 Focused Phase 4 checks:
@@ -78,6 +81,7 @@ Focused Phase 4 checks:
 ```bash
 python -m pytest apps/api/app/tests/test_phase4_enterprise_models.py -q
 python -m pytest apps/api/app/tests/test_phase5_auth_rbac.py -q
+python -m pytest apps/api/app/tests/test_phase6_workflow.py -q
 ```
 
 Full backend and repo checks:

@@ -21,6 +21,7 @@ import {
 import { ImageWorkbench } from "../common/ImageWorkbench";
 import { PdfExportButton } from "../common/PdfExportButton";
 import { ModeTag, StatusTag } from "../common/StatusTag";
+import { ApplicationProgressTracker } from "../application/ApplicationProgressTracker";
 
 export function ReviewWorkbench() {
   const { snapshot, activeApplication, activeIndex, hasNext, hasPrevious } = useConsoleStore();
@@ -107,6 +108,7 @@ function ReviewHeader({
           <ModeTag mode={mode} />
         </Space>
         <Typography.Text type="secondary">{application.metadata.description}</Typography.Text>
+        <ApplicationProgressTracker status={application.status} />
       </div>
       <Space wrap>
         <Button icon={<ArrowLeftOutlined />} disabled={!hasPrevious} onClick={onPrevious}>

@@ -214,7 +214,7 @@ def complete(worker_id: str, payload: JobCompleteRequest, request: Request, sess
                 review.result_json = payload.result.get("review_result", payload.result)
                 review.completed_at = now
                 if review.application:
-                    review.application.status = "review_completed"
+                    review.application.status = "IN_REVIEW"
             elif review.status == "queued":
                 review.status = "processing"
     session.add(models.WorkerEvent(worker_id=worker.id, event_type="job_completed", payload_json={"job_id": job.id}))
@@ -242,7 +242,7 @@ def fail(worker_id: str, payload: JobFailRequest, request: Request, session: Ses
             review.status = "failed"
             review.completed_at = models.now_utc()
             if review.application:
-                review.application.status = "review_failed"
+                review.application.status = "IN_REVIEW"
     session.add(models.WorkerEvent(worker_id=worker.id, event_type="job_failed", payload_json=payload.model_dump(mode="json")))
     session.commit()
     session.refresh(job)

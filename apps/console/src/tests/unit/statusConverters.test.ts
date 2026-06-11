@@ -6,6 +6,7 @@ import {
   normalizeApplicationStatus,
   normalizeReviewStatus
 } from "../../domain/application/status";
+import { workflowMilestoneIndex, workflowStepState } from "../../domain/application/workflow";
 
 describe("canonical status converters", () => {
   it("normalizes legacy API application statuses", () => {
@@ -34,5 +35,15 @@ describe("canonical status converters", () => {
     expect(displayStatus("NEEDS_CORRECTION")).toBe("Needs Correction");
     expect(backendModeFromProcessingMode("cluster")).toBe("distributed");
     expect(backendModeFromProcessingMode("backend")).toBe("backend");
+  });
+
+  it("maps canonical application states into progress tracker milestones", () => {
+    expect(workflowMilestoneIndex("DRAFT")).toBe(0);
+    expect(workflowMilestoneIndex("PRECHECK_RUNNING")).toBe(1);
+    expect(workflowMilestoneIndex("RESUBMITTED")).toBe(2);
+    expect(workflowMilestoneIndex("NEEDS_CORRECTION")).toBe(3);
+    expect(workflowMilestoneIndex("APPROVED")).toBe(4);
+    expect(workflowMilestoneIndex("ARCHIVED")).toBe(5);
+    expect(workflowStepState("NEEDS_CORRECTION", 3)).toBe("error");
   });
 });

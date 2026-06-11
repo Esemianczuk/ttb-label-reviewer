@@ -133,6 +133,15 @@ body {
   line-height: 1.25;
 }
 
+.application-progress {
+  max-width: min(760px, 100%);
+  margin-top: 8px;
+}
+
+.application-progress .ant-steps-item-title {
+  font-size: 12px;
+}
+
 .form-card .ant-upload-wrapper {
   display: block;
 }

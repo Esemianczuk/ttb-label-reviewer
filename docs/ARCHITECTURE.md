@@ -72,6 +72,10 @@ The backend coordinator now protects human API routes with signed demo bearer to
 
 RBAC is enforced in the API, not only in UI controls. Applicants are scoped to applications they own, reviewers cannot manage workers, admins can manage all coordinator resources, and worker secrets cannot call human endpoints. See [AUTH_RBAC.md](AUTH_RBAC.md) for the route contract and verification checks.
 
+## Application Workflow
+
+Applications now move through canonical workflow states with `POST /api/applications/{id}/transition`. The transition service enforces legal state changes, actor permissions, applicant ownership, image requirements, correction notes, resubmission versioning, approval override rules, and audit events. See [APPLICATION_WORKFLOW.md](APPLICATION_WORKFLOW.md) for the transition table.
+
 ## Phase 4 Worker Agent
 
 `apps/worker` contains a Python worker package runnable with:
@@ -98,6 +102,7 @@ The current worker intentionally avoids bundling model weights or requiring nati
 - Browser-only mode never sends images to another browser.
 - Backend human routes require signed demo bearer tokens; `X-Session-Id` is retained as a session/work queue hint.
 - Applicant assets and reports are scoped by application ownership.
+- Application state changes must go through the transition service.
 - Uploaded filenames are sanitized and never used as storage paths.
 - MIME type and upload size are validated before object-store writes.
 - The object store is content-addressed as `data/assets/{sha256[:2]}/{sha256}.ext`.

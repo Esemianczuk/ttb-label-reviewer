@@ -5,12 +5,13 @@ from ..core.statuses import canonical_application_status, canonical_review_statu
 
 
 def application_to_read(application: models.Application):
+    status = canonical_application_status(application.status)
     return {
         "id": application.id,
         "sessionId": application.session_id,
         "source": application.source,
-        "status": application.status,
-        "canonicalStatus": canonical_application_status(application.status),
+        "status": status,
+        "canonicalStatus": status,
         "ownerUserId": application.owner_user_id,
         "organizationId": application.organization_id,
         "expectedFields": application.expected_fields,

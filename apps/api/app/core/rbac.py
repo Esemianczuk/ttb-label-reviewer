@@ -34,7 +34,7 @@ def applicant_can_access(user: models.User, resource: str, action: str, entity: 
     if resource == "applications":
         if action == "create":
             return AccessDecision(True)
-        if action in {"list", "read", "upload", "run_precheck", "submit", "withdraw"}:
+        if action in {"list", "read", "upload", "run_precheck", "submit", "resubmit", "withdraw"}:
             return owned_application_decision(user, entity)
     if resource in {"assets", "reviews", "reports", "jobs"} and action in {"read", "export", "cancel"}:
         application = application_from_entity(entity)

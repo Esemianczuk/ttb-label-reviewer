@@ -10,6 +10,20 @@ ApplicationSource = Literal["sample", "upload", "public_cola_registry", "manual"
 ImageRole = Literal["front", "back", "neck", "carton", "cola_sheet", "unknown"]
 JobStatus = Literal["queued", "leased", "running", "completed", "failed", "cancelled"]
 UserRole = Literal["applicant", "reviewer", "admin"]
+ApplicationTransition = Literal[
+    "run_precheck",
+    "precheck_pass",
+    "precheck_fail",
+    "submit",
+    "start_review",
+    "request_correction",
+    "resubmit",
+    "approve",
+    "reject",
+    "conditionally_approve",
+    "withdraw",
+    "archive",
+]
 
 
 class ExpectedFields(BaseModel):
@@ -58,6 +72,16 @@ class ApplicationRead(BaseModel):
     assetCount: int = 0
     versionCount: int = 0
     currentVersionNumber: int | None = None
+
+
+class ApplicationTransitionRequest(BaseModel):
+    transition: ApplicationTransition
+    note: str | None = None
+    fieldKeys: list[str] = Field(default_factory=list)
+    reviewerOverride: bool = False
+    acknowledgedNoChangeCorrection: bool = False
+    expectedFields: ExpectedFields | None = None
+    metadata: ApplicationMetadata | None = None
 
 
 class AssetRead(BaseModel):

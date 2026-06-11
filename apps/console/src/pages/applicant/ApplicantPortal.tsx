@@ -7,6 +7,7 @@ import { useConsoleStore } from "../../hooks/useConsoleStore";
 import { addManualUpload, autoReviewApplication, setActiveApplication } from "../../providers/data/browserStore";
 import { PdfExportButton } from "../../components/common/PdfExportButton";
 import { StatusTag } from "../../components/common/StatusTag";
+import { ApplicationProgressTracker } from "../../components/application/ApplicationProgressTracker";
 
 const { Dragger } = Upload;
 
@@ -165,6 +166,9 @@ function ApplicantApplicationTable({ applications, mode }: { applications: Revie
       rowKey="id"
       dataSource={applications}
       pagination={{ pageSize: 7 }}
+      expandable={{
+        expandedRowRender: (application) => <ApplicationProgressTracker status={application.status} />
+      }}
       columns={[
         {
           title: "Application",

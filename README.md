@@ -175,6 +175,7 @@ The V1 app remains in `browser-demo/`. New shared contracts start in `packages/s
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/DISTRIBUTED_MODE.md](docs/DISTRIBUTED_MODE.md), and [docs/EVALUATOR_GUIDE.md](docs/EVALUATOR_GUIDE.md) for the coordinator and worker shape.
 The Phase 4 enterprise backend tables are documented in [docs/BACKEND_ENTERPRISE_MODEL.md](docs/BACKEND_ENTERPRISE_MODEL.md).
 Demo auth and RBAC enforcement are documented in [docs/AUTH_RBAC.md](docs/AUTH_RBAC.md).
+Application workflow transitions are documented in [docs/APPLICATION_WORKFLOW.md](docs/APPLICATION_WORKFLOW.md).
 The Phase 5 hardware-aware scheduler is documented in [docs/SCHEDULER.md](docs/SCHEDULER.md).
 Phase 6 worker join/discovery is documented in [docs/DISTRIBUTED_MODE.md](docs/DISTRIBUTED_MODE.md).
 Phase 7 frontend backend/cluster mode is documented in [docs/EVALUATOR_GUIDE.md](docs/EVALUATOR_GUIDE.md).
