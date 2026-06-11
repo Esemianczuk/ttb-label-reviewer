@@ -96,7 +96,8 @@ The response includes `coordinatorUrl`, `token`, `expiresAt`, and a ready-to-cop
 mDNS/zeroconf discovery is optional:
 
 ```bash
-python -m pip install -e apps/api[discovery] -e apps/worker[discovery]
+python -m pip install -r requirements-dev.txt
+python -m pip install -e "apps/api[discovery]" -e "apps/worker[discovery]"
 TTB_ENABLE_MDNS=1 TTB_API_HOST=0.0.0.0 ./scripts/dev-local-backend.sh
 python -m ttb_worker --discover --join-token "$JOIN_TOKEN"
 ```

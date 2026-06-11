@@ -39,7 +39,7 @@ fi
 # shellcheck source=/dev/null
 source "$VENV_DIR/bin/activate"
 python -m pip install --upgrade pip
-python -m pip install -e "apps/api[test]" -e "apps/worker[test]" -e ".[test]"
+python -m pip install -r requirements-dev.txt
 
 npm install --prefix browser-demo
 npm install --prefix apps/console
@@ -50,6 +50,8 @@ cat <<'EOF'
 Development setup complete.
 
 Next commands:
+  . .venv/bin/activate
+  python -m pytest -q
   npm run console:dev
   ./scripts/dev-local-backend.sh
   ./scripts/dev-worker.sh

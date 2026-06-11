@@ -46,7 +46,7 @@ Sync repo:
     "$ROOT_DIR/" "$HOST:$REMOTE_DIR/"
 
 Create Python environment and install worker/API dependencies:
-  ssh $HOST 'cd $REMOTE_DIR && python3 -m venv .venv && . .venv/bin/activate && python -m pip install -U pip && python -m pip install -e apps/worker -e apps/api'
+  ssh $HOST 'cd $REMOTE_DIR && python3 -m venv .venv && . .venv/bin/activate && python -m pip install -U pip && python -m pip install -r requirements-dev.txt'
 
 Start a worker:
   ssh $HOST 'cd $REMOTE_DIR && . .venv/bin/activate && TTB_WORKER_COORDINATOR="'"\$TTB_WORKER_COORDINATOR"'" TTB_WORKER_JOIN_TOKEN="'"\$TTB_WORKER_JOIN_TOKEN"'" ./scripts/dev-worker.sh --name "'"$(echo "$HOST" | tr '@/.' '____')"'"'

@@ -89,6 +89,20 @@ Set up the local developer environment from the repository root:
 ./scripts/setup-dev.sh
 ```
 
+The Python portion is defined in `requirements-dev.txt` and installs the API, worker, and collector packages in editable mode:
+
+```bash
+python -m pip install -r requirements-dev.txt
+```
+
+Equivalent explicit editable command:
+
+```bash
+python -m pip install -e "apps/api[test]" -e "apps/worker[test]" -e ".[test]"
+```
+
+The default Python test environment includes `pytest`, `httpx`, `alembic`, `sqlalchemy`, `fastapi`, `uvicorn`, and `pydantic`. It does not install optional OCR/CUDA packages; worker tests use the deterministic `null` engine path.
+
 Run the deterministic unit/build checks:
 
 ```bash
@@ -101,6 +115,7 @@ The script runs:
 - `npm test` in `apps/console`
 - `npm run build` in `browser-demo`
 - `npm run build` in `apps/console`
+- `python scripts/check-python-env.py`
 - `python -m pytest -q` for root Python, backend API, and worker tests
 
 Playwright end-to-end checks are opt-in:

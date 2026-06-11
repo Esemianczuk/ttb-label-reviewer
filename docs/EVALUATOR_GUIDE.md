@@ -108,6 +108,18 @@ The worker claim response includes a scored assignment decision with `score_ms`,
 
 ## Verification
 
+Set up dependencies once from the repository root:
+
+```bash
+./scripts/setup-dev.sh
+```
+
+For Python-only setup, use the same editable requirements file:
+
+```bash
+python -m pip install -r requirements-dev.txt
+```
+
 Run all checks:
 
 ```bash

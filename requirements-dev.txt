@@ -1,0 +1,10 @@
+# Python development environment for the full local repo.
+#
+# These editable installs intentionally pull in:
+# - FastAPI coordinator deps and test extras: fastapi, uvicorn, sqlalchemy,
+#   alembic, pydantic, httpx, pytest.
+# - Worker deps and test extras without optional OCR/CUDA packages.
+# - Root collector package deps and tests.
+-e ./apps/api[test]
+-e ./apps/worker[test]
+-e .[test]

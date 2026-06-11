@@ -26,6 +26,20 @@ ensure_node_deps() {
   [[ -d "$app_dir/node_modules" ]] || fail "Missing $app_dir/node_modules. Run ./scripts/setup-dev.sh or npm install --prefix $app_dir."
 }
 
+ensure_python_env() {
+  if [[ -d ".venv" ]]; then
+    # shellcheck source=/dev/null
+    source ".venv/bin/activate"
+    return
+  fi
+
+  if [[ -n "${VIRTUAL_ENV:-}" ]]; then
+    return
+  fi
+
+  fail "Missing .venv. Run ./scripts/setup-dev.sh so tests use local editable installs instead of global Python packages."
+}
+
 ensure_playwright_chromium() {
   node <<'NODE' || fail "Playwright Chromium is missing. Run npm run playwright:install."
 const fs = require("node:fs");
@@ -41,15 +55,13 @@ NODE
 use_node_20_if_available
 require_command npm
 require_command node
-require_command python
 
 ensure_node_deps browser-demo
 ensure_node_deps apps/console
 
-if [[ -d ".venv" ]]; then
-  # shellcheck source=/dev/null
-  source ".venv/bin/activate"
-fi
+ensure_python_env
+require_command python
+python scripts/check-python-env.py
 
 if [[ "${RUN_E2E:-0}" == "1" ]]; then
   ensure_playwright_chromium

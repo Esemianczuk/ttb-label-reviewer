@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "ttb-label-reviewer-worker"
 version = "0.1.0"
@@ -21,3 +25,6 @@ test = [
 
 [project.scripts]
 ttb-worker = "ttb_worker.main:main"
+
+[tool.setuptools.packages.find]
+include = ["ttb_worker*"]
