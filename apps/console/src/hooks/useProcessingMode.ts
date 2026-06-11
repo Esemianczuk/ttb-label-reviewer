@@ -1,9 +1,26 @@
-import type { ProcessingMode } from "../domain/application/types";
-import { setProcessingMode } from "../providers/data/browserStore";
-import { useConsoleStore } from "./useConsoleStore";
+import { useProcessingModeContext } from "../providers/processing/ProcessingModeProvider";
 
 export function useProcessingMode() {
-  const { snapshot } = useConsoleStore();
-  const setMode = (mode: ProcessingMode) => setProcessingMode(mode);
-  return { mode: snapshot.processingMode, setMode };
+  const {
+    mode,
+    setMode,
+    provider,
+    health,
+    backendUrl,
+    setBackendUrl,
+    backendUnavailable,
+    fallbackToBrowser,
+    clusterDashboardActive
+  } = useProcessingModeContext();
+  return {
+    mode,
+    setMode,
+    provider,
+    health,
+    backendUrl,
+    setBackendUrl,
+    backendUnavailable,
+    fallbackToBrowser,
+    clusterDashboardActive
+  };
 }

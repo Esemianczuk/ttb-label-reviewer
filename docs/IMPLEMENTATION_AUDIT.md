@@ -25,6 +25,7 @@ This audit reconciles the take-home prompt, the project phase plan, and the impl
 | 5 hardware-aware scheduler | Complete for prototype | Scored assignment, dependencies, fairness/cache/network tests, scheduler reason codes. |
 | 6 worker discovery and join | Complete | Join-token flow, persistent worker secrets, optional mDNS, LAN warning, lab-host docs. |
 | 7 frontend backend/hybrid mode | Complete | Browser/Backend/Cluster mode selector, fallback, backend client, session WebSocket snapshots, cluster dashboard, batch queue, Playwright coverage. |
+| 8 console routing and provider consolidation | Complete | Full Refine resource registry, Browser/API/Mock provider registry, mode-selected data/live providers, offline backend fallback, generated Orval API client, unit and Playwright coverage. |
 
 ## Audit Fixes Applied
 
@@ -36,6 +37,7 @@ This audit reconciles the take-home prompt, the project phase plan, and the impl
 - Added signed demo bearer auth, seeded applicant/reviewer/admin users, API-enforced RBAC, ownership checks, worker-token isolation, authz audit events, and frontend demo-token handoff.
 - Added canonical application workflow transitions with guards, correction/version side effects, audit events, and console progress tracking.
 - Replaced worker substring validation with shared deterministic Python validators, shared JS/Python golden fixtures, schema-shaped worker review results, and OCR evidence candidate preservation.
+- Added phase 8 console provider consolidation: registered all operational resources, introduced Browser/API/Mock data providers, selected providers through `ProcessingModeProvider`, generated the Orval FastAPI client, and added resource/fallback tests.
 
 ## Verification Commands
 
@@ -52,6 +54,9 @@ python -m pytest apps/api/app/tests/test_phase6_workflow.py -q
 python -m pytest apps/api/app/tests/test_phase7_validators.py -q
 cd browser-demo && node ./node_modules/vitest/vitest.mjs run src/tests/export-report.test.js src/tests/hybrid-mode.test.js
 cd browser-demo && node ./node_modules/@playwright/test/cli.js test tests/e2e/phase7.spec.js --project=chromium-desktop
+npm --prefix apps/console run generate:api
+npm --prefix apps/console test
+npm --prefix apps/console run test:e2e
 ```
 
 Live repeatability check:
@@ -65,6 +70,6 @@ TTB_E2E_BACKEND_URL=http://127.0.0.1:8011 \
 ## Known Limits
 
 - Fresh evaluator databases include the duplicate-image upload fix. If reusing an older SQLite database, recreate it or run the Alembic migrations before testing repeat uploads.
-- Phase 8+ items are not fully implemented: persisted agent decision audit events, retention/purge UI, benchmarking scripts, and final Phase 14/15 documentation polish remain future work.
+- Phase 9+ items are not fully implemented: applicant portal expansion, persisted agent decision audit events, retention/purge UI, benchmarking scripts, and final Phase 14/15 documentation polish remain future work.
 - Backend WebSocket currently streams session snapshots rather than per-event push notifications. It is sufficient for dashboard progress but can be made more granular later.
 - The cluster dashboard uses compact throughput counters rather than a full charting library.

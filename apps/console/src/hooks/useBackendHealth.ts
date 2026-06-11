@@ -2,20 +2,29 @@ import { useEffect, useState } from "react";
 import { getBackendUrl, setBackendUrl } from "../providers/data/backendDataProvider";
 
 export type BackendHealth = {
-  status: "checking" | "online" | "offline";
+  status: "idle" | "checking" | "online" | "offline";
   message: string;
   backendUrl: string;
 };
 
-export function useBackendHealth() {
+export function useBackendHealth({ enabled = true }: { enabled?: boolean } = {}) {
   const [backendUrlState, setBackendUrlState] = useState(() => getBackendUrl());
   const [health, setHealth] = useState<BackendHealth>({
-    status: "checking",
-    message: "Checking backend coordinator",
+    status: enabled ? "checking" : "idle",
+    message: enabled ? "Checking backend coordinator" : "Backend not required in Browser Only mode",
     backendUrl: backendUrlState
   });
 
   useEffect(() => {
+    if (!enabled) {
+      setHealth({
+        status: "idle",
+        message: "Backend not required in Browser Only mode",
+        backendUrl: backendUrlState
+      });
+      return;
+    }
+
     let cancelled = false;
     const controller = new AbortController();
     setHealth({ status: "checking", message: "Checking backend coordinator", backendUrl: backendUrlState });
@@ -49,7 +58,7 @@ export function useBackendHealth() {
       controller.abort();
       window.clearTimeout(timeout);
     };
-  }, [backendUrlState]);
+  }, [backendUrlState, enabled]);
 
   const updateBackendUrl = (url: string) => {
     const normalized = url.replace(/\/+$/, "");

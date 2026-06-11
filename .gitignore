@@ -10,6 +10,7 @@ tools/ttb_collector/cache/
 **/test-results/
 *.log
 *.tsbuildinfo
+apps/console/openapi.generated.json
 
 __pycache__/
 *.py[cod]
@@ -23,6 +24,6 @@ __pycache__/
 *.7z
 *.traineddata
 /*.png
-data/
+/data/
 .worker-cache/
 benchmarks/results/

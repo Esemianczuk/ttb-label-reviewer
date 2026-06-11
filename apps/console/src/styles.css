@@ -98,6 +98,10 @@ body {
   background: #eef2f7;
 }
 
+.backend-fallback-alert {
+  margin-bottom: 16px;
+}
+
 .portal-grid {
   display: grid;
   grid-template-columns: minmax(360px, 0.9fr) minmax(420px, 1.1fr);

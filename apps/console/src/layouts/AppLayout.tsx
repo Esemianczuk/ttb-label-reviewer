@@ -8,22 +8,32 @@ import {
   SafetyCertificateOutlined,
   UserSwitchOutlined
 } from "@ant-design/icons";
-import { Button, Input, Layout, Menu, Segmented, Select, Space, Tooltip, Typography } from "antd";
+import { Alert, Button, Input, Layout, Menu, Segmented, Select, Space, Tooltip, Typography } from "antd";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import type { ProcessingMode, UserRole } from "../domain/application/types";
-import { useBackendHealth } from "../hooks/useBackendHealth";
 import { useConsoleStore } from "../hooks/useConsoleStore";
 import { useCurrentRole } from "../hooks/useCurrentRole";
-import { setProcessingMode, resetSnapshot } from "../providers/data/browserStore";
+import { resetSnapshot } from "../providers/data/browserStore";
 import { ModeTag, StatusBadge } from "../components/common/StatusTag";
+import { useProcessingMode } from "../hooks/useProcessingMode";
 
 export function AppLayout() {
   const { Header, Sider, Content } = Layout;
   const navigate = useNavigate();
   const location = useLocation();
   const { role, identity, setRole } = useCurrentRole();
-  const { snapshot, activeApplication } = useConsoleStore();
-  const { health, backendUrl, setBackendUrl } = useBackendHealth();
+  const { activeApplication } = useConsoleStore();
+  const {
+    mode,
+    setMode,
+    provider,
+    health,
+    backendUrl,
+    setBackendUrl,
+    backendUnavailable,
+    fallbackToBrowser,
+    clusterDashboardActive
+  } = useProcessingMode();
 
   const selectRole = (nextRole: UserRole) => {
     setRole(nextRole);
@@ -41,7 +51,7 @@ export function AppLayout() {
           </div>
         </div>
         <Space wrap className="header-actions">
-          <ModeSwitcher mode={snapshot.processingMode} onChange={setProcessingMode} />
+          <ModeSwitcher mode={mode} onChange={setMode} />
           <StatusBadge status={activeApplication?.status || "DRAFT"} />
           <Tooltip title="Reset applications, decisions, notes, and active queue position">
             <Button icon={<ReloadOutlined />} onClick={() => resetSnapshot()}>
@@ -93,8 +103,10 @@ export function AppLayout() {
               <div>
                 <Typography.Text type="secondary">Processing mode</Typography.Text>
                 <div>
-                  <ModeTag mode={snapshot.processingMode} />
+                  <ModeTag mode={mode} />
                 </div>
+                <Typography.Text type="secondary">{provider.label}</Typography.Text>
+                {clusterDashboardActive ? <Typography.Paragraph className="health-copy">Cluster dashboard enabled</Typography.Paragraph> : null}
               </div>
               <div>
                 <Typography.Text type="secondary">Coordinator</Typography.Text>
@@ -113,6 +125,16 @@ export function AppLayout() {
           </div>
         </Sider>
         <Content className="app-content">
+          {backendUnavailable ? (
+            <Alert
+              className="backend-fallback-alert"
+              type="warning"
+              showIcon
+              message="Backend coordinator unavailable"
+              description="Backend and Cluster modes use the FastAPI provider. Browser Only keeps the queue, review tools, uploads, and PDF export available offline."
+              action={<Button onClick={fallbackToBrowser}>Use Browser Only</Button>}
+            />
+          ) : null}
           <Outlet />
         </Content>
       </Layout>
@@ -127,7 +149,7 @@ function ModeSwitcher({ mode, onChange }: { mode: ProcessingMode; onChange: (mod
       value={mode}
       onChange={(value) => onChange(value as ProcessingMode)}
       options={[
-        { label: "Browser", value: "browser" },
+        { label: "Browser Only", value: "browser" },
         { label: "Backend", value: "backend" },
         { label: "Cluster", value: "cluster" }
       ]}

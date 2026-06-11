@@ -6,13 +6,14 @@ import { AdminPortal } from "./pages/admin/AdminPortal";
 import { ApplicantPortal } from "./pages/applicant/ApplicantPortal";
 import { RoleLanding } from "./pages/public/RoleLanding";
 import { ReviewerPortal } from "./pages/reviewer/ReviewerPortal";
+import { ResourceIndexPage } from "./pages/resources/ResourceIndexPage";
 import { AppLayout } from "./layouts/AppLayout";
 import { accessControlProvider } from "./providers/access/permissionMatrix";
 import { auditLogProvider } from "./providers/audit/auditProvider";
 import { authProvider } from "./providers/auth/authProvider";
-import { browserDataProvider } from "./providers/data/browserDataProvider";
-import { liveProvider } from "./providers/live/liveProvider";
 import { createNotificationProvider } from "./providers/notification/notificationProvider";
+import { ProcessingModeProvider, useProcessingModeContext } from "./providers/processing/ProcessingModeProvider";
+import { consoleResources } from "./resources";
 
 export function App() {
   return (
@@ -29,7 +30,9 @@ export function App() {
         }}
       >
         <AntApp>
-          <ConsoleRefineShell />
+          <ProcessingModeProvider>
+            <ConsoleRefineShell />
+          </ProcessingModeProvider>
         </AntApp>
       </ConfigProvider>
     </BrowserRouter>
@@ -38,21 +41,17 @@ export function App() {
 
 function ConsoleRefineShell() {
   const { notification } = AntApp.useApp();
+  const { dataProvider, liveProvider } = useProcessingModeContext();
   return (
     <Refine
       routerProvider={routerProvider}
-      dataProvider={browserDataProvider}
+      dataProvider={dataProvider}
       authProvider={authProvider}
       accessControlProvider={accessControlProvider}
       auditLogProvider={auditLogProvider}
       liveProvider={liveProvider}
       notificationProvider={createNotificationProvider(notification)}
-      resources={[
-        { name: "applications", list: "/reviewer", show: "/reviewer" },
-        { name: "reviews", list: "/reviewer" },
-        { name: "workers", list: "/admin" },
-        { name: "auditEvents", list: "/admin" }
-      ]}
+      resources={consoleResources}
       options={{
         syncWithLocation: true,
         warnWhenUnsavedChanges: false,
@@ -65,6 +64,8 @@ function ConsoleRefineShell() {
           <Route path="reviewer" element={<ReviewerPortal />} />
           <Route path="applicant" element={<ApplicantPortal />} />
           <Route path="admin" element={<AdminPortal />} />
+          <Route path="resources/:resourceName" element={<ResourceIndexPage />} />
+          <Route path="resources/:resourceName/:id" element={<ResourceIndexPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

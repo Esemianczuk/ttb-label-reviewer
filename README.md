@@ -72,11 +72,17 @@ The requested future `apps/browser` and `apps/worker` structure will be introduc
 
 ## Refine Console
 
-`apps/console` adds an enterprise-style reviewer console without removing the V1 browser demo. It includes applicant, reviewer, and admin portals; role-based access rules; demo bearer auth for backend calls; browser/backend/cluster mode controls; one-image upload intake; immediate sample queue processing; preserved reviewer overrides; detached image zoom/pan; audit tables; worker telemetry; Orval client generation config; PDF exports; Vitest unit tests; and Playwright desktop/mobile accessibility coverage.
+`apps/console` adds an enterprise-style reviewer console without removing the V1 browser demo. It includes applicant, reviewer, and admin portals; role-based access rules; demo bearer auth for backend calls; browser/backend/cluster mode controls; a Refine resource registry; browser/API/mock data providers; one-image upload intake; immediate sample queue processing; preserved reviewer overrides; detached image zoom/pan; audit tables; worker telemetry; generated Orval API client; PDF exports; Vitest unit tests; and Playwright desktop/mobile accessibility coverage.
 
 ```bash
 npm install --prefix apps/console
 npm --prefix apps/console run dev
+```
+
+Regenerate the console API client from the local FastAPI OpenAPI schema with:
+
+```bash
+npm --prefix apps/console run generate:api
 ```
 
 See [docs/CONSOLE_APP.md](docs/CONSOLE_APP.md) for portal behavior and verification commands.

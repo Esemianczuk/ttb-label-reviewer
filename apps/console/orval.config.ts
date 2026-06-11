@@ -3,7 +3,7 @@ import { defineConfig } from "orval";
 export default defineConfig({
   ttbApi: {
     input: {
-      target: process.env.TTB_OPENAPI_URL || "http://127.0.0.1:8000/openapi.json"
+      target: process.env.TTB_OPENAPI_URL || "openapi.generated.json"
     },
     output: {
       target: "src/api/generated/ttbApi.ts",

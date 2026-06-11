@@ -80,6 +80,18 @@ Applications now move through canonical workflow states with `POST /api/applicat
 
 Browser and backend worker validation now share golden JSON fixtures and equivalent deterministic rules. The Python module `ttb_validation` mirrors the browser validators for fuzzy brand/class matching, ABV/proof equivalence, mL/liter equivalence, required government-warning segments, and optional producer/country/fanciful fields. See [VALIDATION_ENGINE.md](VALIDATION_ENGINE.md).
 
+## Phase 8 Console Providers
+
+The Refine console now registers the core operational resources up front: applications, versions, assets, reviews, review decisions, corrections, users, workers, jobs, audit events, settings, reports, fixtures, and benchmarks.
+
+`ProcessingModeProvider` selects the active provider set:
+
+- Browser Only uses `browserDataProvider` and the local snapshot live provider. It does not require backend health checks.
+- Backend uses `apiDataProvider`, demo bearer auth, and the backend session WebSocket.
+- Cluster uses the same API and live providers as Backend while enabling cluster-specific dashboard surfaces.
+
+The console also includes `mockDataProvider` for isolated tests and demos. The generated Orval client in `apps/console/src/api/generated/ttbApi.ts` is produced from the FastAPI OpenAPI schema by `npm --prefix apps/console run generate:api`.
+
 ## Phase 4 Worker Agent
 
 `apps/worker` contains a Python worker package runnable with:

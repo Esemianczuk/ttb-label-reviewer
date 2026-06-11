@@ -45,6 +45,10 @@ export function getConsoleIdentity(): ConsoleIdentity {
   return identities[getStoredRole()];
 }
 
+export function getConsoleIdentities(): ConsoleIdentity[] {
+  return Object.values(identities);
+}
+
 export const authProvider: AuthProvider = {
   login: async ({ role }: { role?: UserRole }) => {
     setStoredRole(role || "reviewer");

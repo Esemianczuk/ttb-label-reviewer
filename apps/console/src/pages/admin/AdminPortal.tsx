@@ -7,6 +7,8 @@ import type { AuditEvent, ReviewApplication, WorkerSnapshot } from "../../domain
 import { permissionMatrix } from "../../providers/access/permissionMatrix";
 import { PdfExportButton } from "../../components/common/PdfExportButton";
 import { StatusTag } from "../../components/common/StatusTag";
+import { consoleResourceNames, resourceLabels } from "../../resources";
+import { NavLink } from "react-router";
 
 export function AdminPortal() {
   const { snapshot, activeApplication } = useConsoleStore();
@@ -55,6 +57,11 @@ export function AdminPortal() {
             key: "fixtures",
             label: "Fixtures",
             children: <FixtureRegistry applications={snapshot.applications} />
+          },
+          {
+            key: "resources",
+            label: "Resources",
+            children: <ResourceRegistry />
           },
           {
             key: "audit",
@@ -164,5 +171,23 @@ function AccessMatrix() {
         </Col>
       ))}
     </Row>
+  );
+}
+
+function ResourceRegistry() {
+  return (
+    <Table
+      rowKey="name"
+      dataSource={consoleResourceNames.map((name) => ({ name, label: resourceLabels[name] }))}
+      pagination={false}
+      columns={[
+        { title: "Resource", dataIndex: "label" },
+        { title: "Key", dataIndex: "name" },
+        {
+          title: "Route",
+          render: (_, resource) => <NavLink to={`/resources/${resource.name}`}>Open resource</NavLink>
+        }
+      ]}
+    />
   );
 }

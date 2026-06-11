@@ -49,3 +49,21 @@ test("reviewer surface has no critical axe accessibility violations", async ({ p
   const results = await new AxeBuilder({ page }).include(".app-content").withTags(["wcag2a", "wcag2aa"]).analyze();
   expect(results.violations).toEqual([]);
 });
+
+test("registered resources render through the active browser provider", async ({ page }) => {
+  await page.goto("/resources/applications");
+  await expect(page.getByText("Applications").first()).toBeVisible();
+  await expect(page.getByRole("main").getByText("Browser Only")).toBeVisible();
+  await expect(page.getByText("Hollow Ridge bourbon COLA sheet")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Application Versions" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Benchmarks" })).toBeVisible();
+});
+
+test("backend mode warns and falls back when coordinator is unavailable", async ({ page }) => {
+  await page.addInitScript(() => window.localStorage.setItem("ttb-console-backend-url", "http://127.0.0.1:59999"));
+  await page.goto("/");
+  await page.getByLabel("Processing mode").getByText("Backend").click();
+  await expect(page.getByText("Backend coordinator unavailable").first()).toBeVisible({ timeout: 5000 });
+  await page.getByRole("button", { name: "Use Browser Only" }).first().click();
+  await expect(page.getByRole("radio", { name: "Browser Only" })).toBeChecked();
+});
