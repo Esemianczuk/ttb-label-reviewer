@@ -184,6 +184,7 @@ def audit_event_to_read(event: models.AuditEvent):
 
 def setting_to_read(setting: models.Setting):
     return {
+        "id": setting.key,
         "key": setting.key,
         "value": setting.value_json,
         "updatedAt": setting.updated_at,

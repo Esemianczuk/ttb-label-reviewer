@@ -112,9 +112,9 @@ The reviewer status model mirrors the TTB-facing flow without letting model outp
 
 The admin console now exposes `/admin`, `/admin/users`, `/admin/roles`, `/admin/workers`, `/admin/jobs`, `/admin/engines`, `/admin/benchmarks`, `/admin/audit`, `/admin/retention`, `/admin/fixtures`, and `/admin/settings`.
 
-Browser-only operations state includes worker hardware/engine metadata, scheduler-style jobs, persisted admin settings, benchmark runs, and retention actions. Admin actions create audit events for settings updates, worker recalibration/drain/disable/enable, job retry/cancel/priority changes, benchmark runs, raw-image purges, old-job purges, packet deletion, and full demo-data purge.
+Browser-only operations state includes worker hardware/engine metadata, scheduler-style jobs, persisted admin settings, benchmark runs, and retention actions. Backend/Cluster mode uses FastAPI admin routes for live worker/job lists, audit events, server-side settings, worker recalibration/drain/disable/enable, job retry/cancel/priority changes, and retention actions.
 
-Settings persist in the console snapshot regardless of Browser, Backend, or Cluster mode. Backend/Cluster mode still need matching API endpoints for durable server-side settings, worker control, job control, retention, and benchmark execution.
+Admin actions create audit events for settings updates, worker operations, job operations, benchmark runs, raw-image purges, old-job purges, packet deletion, and full demo-data purge where the active provider supports the operation.
 
 ## Phase 4 Worker Agent
 

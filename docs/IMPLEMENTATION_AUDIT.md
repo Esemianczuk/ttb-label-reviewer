@@ -28,7 +28,7 @@ This audit reconciles the take-home prompt, the project phase plan, and the impl
 | 8 console routing and provider consolidation | Complete | Full Refine resource registry, Browser/API/Mock provider registry, mode-selected data/live providers, offline backend fallback, generated Orval API client, unit and Playwright coverage. |
 | 9 applicant portal expansion | Complete | Guarded applicant routes, five-step intake wizard, multi-image upload roles/warnings, readiness/pre-check flow, correction response/resubmission, timeline, export actions, and applicant access tests. |
 | 10 reviewer portal full implementation | Complete | Reviewer dashboard, routed queue/workbench/batches/reports, queue filters, image/evidence/OCR panels, note-required overrides, correction drawer, approve/reject/conditional/escalate decisions, audit timeline, keyboard shortcuts, and Playwright coverage. |
-| 11 admin operations full implementation | Complete | Routed admin dashboard/users/roles/workers/jobs/engines/benchmarks/audit/retention/fixtures/settings pages, persisted settings, worker/job actions, benchmark runs, retention confirmations, audit CSV surface, unit and Playwright coverage. |
+| 11 admin operations full implementation | Complete | Routed admin dashboard/users/roles/workers/jobs/engines/benchmarks/audit/retention/fixtures/settings pages, provider-backed Browser/Backend admin data, FastAPI admin operations endpoints, persisted settings, worker/job actions, benchmark runs, retention confirmations, audit CSV surface, unit/API/Playwright coverage. |
 
 ## Audit Fixes Applied
 
@@ -43,7 +43,7 @@ This audit reconciles the take-home prompt, the project phase plan, and the impl
 - Added phase 8 console provider consolidation: registered all operational resources, introduced Browser/API/Mock data providers, selected providers through `ProcessingModeProvider`, generated the Orval FastAPI client, and added resource/fallback tests.
 - Replaced the console applicant one-image intake with a browser-snapshot applicant workflow: dashboard, onboarding, five-step new-application wizard, up to 10 image uploads with roles/warnings, readiness/pre-check, submit/withdraw, correction response, resubmission, timeline, and applicant route guards.
 - Expanded the reviewer portal to a routed Phase 10 workflow: filterable queue, workbench, batch review, reports, evidence/OCR panels, decision panel, correction drawer, approve blocking on unresolved critical failures, note-required pass/fail overrides, keyboard shortcuts, and audit-visible reviewer actions.
-- Expanded the admin portal to a routed Phase 11 operations surface: dashboard metrics, users/roles, worker controls, job queue controls, engine/settings persistence, benchmark runs, filtered audit/export surface, confirmation-gated retention actions, fixture registry, and admin-specific tests.
+- Expanded the admin portal to a routed Phase 11 operations surface: dashboard metrics, users/roles, worker controls, job queue controls, engine/settings persistence, benchmark runs, filtered audit/export surface, confirmation-gated retention actions, fixture registry, backend admin endpoints, and admin-specific tests.
 
 ## Verification Commands
 

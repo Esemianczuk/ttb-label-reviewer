@@ -16,8 +16,8 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { StatusTag } from "../../components/common/StatusTag";
 import { useBackendHealth } from "../../hooks/useBackendHealth";
-import { useConsoleStore } from "../../hooks/useConsoleStore";
 import { adminMetrics } from "./adminUtils";
+import { useAdminOperations } from "./useAdminOperations";
 
 const adminRoutes = [
   { to: "/admin/users", label: "Users", icon: <TeamOutlined /> },
@@ -33,7 +33,7 @@ const adminRoutes = [
 ];
 
 export function AdminPortal() {
-  const { snapshot, activeApplication } = useConsoleStore();
+  const { snapshot, activeApplication } = useAdminOperations();
   const { health } = useBackendHealth();
   const metrics = adminMetrics(snapshot);
 

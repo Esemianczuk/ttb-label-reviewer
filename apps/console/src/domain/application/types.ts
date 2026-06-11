@@ -137,7 +137,7 @@ export type WorkerSnapshot = {
   cpu?: string;
   ramGb?: number;
   gpu?: string;
-  status: "online" | "offline" | "busy" | "calibrating";
+  status: "online" | "offline" | "busy" | "calibrating" | "draining" | "disabled";
   activeJobs: number;
   maxConcurrency: number;
   capabilities: string[];
@@ -154,7 +154,7 @@ export type AdminJob = {
   id: string;
   applicationId: string;
   type: "ocr" | "evidence_crop" | "validation" | "review_result";
-  status: "queued" | "running" | "completed" | "failed" | "cancelled" | "retrying";
+  status: "queued" | "leased" | "running" | "completed" | "failed" | "cancelled" | "retrying";
   priority: number;
   workerId?: string;
   engine: string;

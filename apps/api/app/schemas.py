@@ -180,6 +180,36 @@ class WorkerRegisterResponse(WorkerRead):
     workerSecret: str | None = None
 
 
+class AuditEventRead(BaseModel):
+    id: str
+    actorUserId: str | None
+    actorRole: str
+    eventType: str
+    entityType: str
+    entityId: str
+    summary: str
+    before: dict[str, Any] | None = None
+    after: dict[str, Any] | None = None
+    metadata: dict[str, Any]
+    createdAt: datetime
+
+
+class SettingRead(BaseModel):
+    id: str
+    key: str
+    value: dict[str, Any]
+    updatedAt: datetime
+
+
+class SettingUpdate(BaseModel):
+    value: dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationResult(BaseModel):
+    ok: bool = True
+    count: int = 0
+
+
 class JoinTokenCreate(BaseModel):
     ttlSeconds: int | None = None
     coordinatorUrl: str | None = None

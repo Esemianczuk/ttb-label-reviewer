@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .. import models
@@ -21,6 +22,18 @@ def require_job(session: Session, job_id: str, session_id: str, current_user: mo
     return job
 
 
+@router.get("", response_model=list[JobRead])
+def list_jobs(
+    limit: int = 100,
+    session: Session = Depends(get_session),
+    current_user: models.User = Depends(get_current_user),
+):
+    require_permission(session, current_user, resource="jobs", action="manage")
+    safe_limit = max(1, min(limit, 250))
+    jobs = session.scalars(select(models.Job).order_by(models.Job.created_at.desc()).limit(safe_limit)).all()
+    return [job_to_read(job) for job in jobs]
+
+
 @router.get("/{job_id}", response_model=JobRead)
 def get_job(
     job_id: str,
@@ -30,6 +43,75 @@ def get_job(
 ):
     job = require_job(session, job_id, session_id, current_user)
     require_permission(session, current_user, resource="jobs", action="read", entity=job, entity_id=job_id, not_found_for_applicant=True)
+    return job_to_read(job)
+
+
+@router.post("/{job_id}/retry", response_model=JobRead)
+def retry_job(
+    job_id: str,
+    session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
+    current_user: models.User = Depends(get_current_user),
+):
+    job = require_job(session, job_id, session_id, current_user)
+    require_permission(session, current_user, resource="jobs", action="manage", entity=job, entity_id=job_id)
+    before = {"status": job.status, "assignedWorkerId": job.assigned_worker_id, "error": job.error}
+    if job.assigned_worker_id:
+        worker = session.get(models.Worker, job.assigned_worker_id)
+        if worker:
+            worker.active_jobs = max(0, worker.active_jobs - 1)
+    job.status = "queued"
+    job.error = None
+    job.assigned_worker_id = None
+    job.lease_expires_at = None
+    job.started_at = None
+    job.completed_at = None
+    job.updated_at = models.now_utc()
+    session.add(
+        models.AuditEvent(
+            actor_user_id=current_user.id,
+            actor_role=current_user.role,
+            event_type="job.retry",
+            entity_type="jobs",
+            entity_id=job.id,
+            summary=f"Retried job {job.id}.",
+            before_json=before,
+            after_json={"status": job.status, "priority": job.priority},
+            metadata_json={"applicationId": job.application_id},
+        )
+    )
+    session.commit()
+    session.refresh(job)
+    return job_to_read(job)
+
+
+@router.post("/{job_id}/raise-priority", response_model=JobRead)
+def raise_job_priority(
+    job_id: str,
+    session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
+    current_user: models.User = Depends(get_current_user),
+):
+    job = require_job(session, job_id, session_id, current_user)
+    require_permission(session, current_user, resource="jobs", action="manage", entity=job, entity_id=job_id)
+    before_priority = job.priority
+    job.priority = max(job.priority + 10, 110)
+    job.updated_at = models.now_utc()
+    session.add(
+        models.AuditEvent(
+            actor_user_id=current_user.id,
+            actor_role=current_user.role,
+            event_type="job.raise_priority",
+            entity_type="jobs",
+            entity_id=job.id,
+            summary=f"Raised priority for job {job.id}.",
+            before_json={"priority": before_priority},
+            after_json={"priority": job.priority},
+            metadata_json={"applicationId": job.application_id},
+        )
+    )
+    session.commit()
+    session.refresh(job)
     return job_to_read(job)
 
 
@@ -51,6 +133,18 @@ def cancel_job(
         job.error = "Cancelled by requester."
         job.assigned_worker_id = None
         job.lease_expires_at = None
+        job.updated_at = models.now_utc()
+        session.add(
+            models.AuditEvent(
+                actor_user_id=current_user.id,
+                actor_role=current_user.role,
+                event_type="job.cancel",
+                entity_type="jobs",
+                entity_id=job.id,
+                summary=f"Cancelled job {job.id}.",
+                metadata_json={"applicationId": job.application_id},
+            )
+        )
         session.commit()
         session.refresh(job)
     return job_to_read(job)

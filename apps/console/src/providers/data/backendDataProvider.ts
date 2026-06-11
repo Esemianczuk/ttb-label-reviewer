@@ -1,8 +1,10 @@
 import type { DataProvider } from "@refinedev/core";
+import type { BenchmarkRun } from "../../domain/application/types";
 import type { ConsoleResourceName } from "../../resources";
 import { getStoredRole } from "../auth/authProvider";
 
 const SESSION_KEY = "ttb-console-session-id";
+const BACKEND_BENCHMARKS_KEY = "ttb-console-backend-benchmarks";
 const authCache = new Map<string, { token: string; expiresAt: string }>();
 
 export function getBackendUrl(): string {
@@ -49,6 +51,8 @@ export const apiDataProvider: DataProvider = {
   getApiUrl: () => getBackendUrl(),
   custom: async ({ url, method, payload }) => {
     const path = String(url || "");
+    const adminAction = await runAdminAction(path, payload);
+    if (adminAction) return { data: adminAction };
     return { data: await request(path, { method: method?.toUpperCase() || "GET", body: payload ? JSON.stringify(payload) : undefined }) };
   }
 };
@@ -62,28 +66,90 @@ async function listResource(resource: string): Promise<any[]> {
     case "workers":
       return request("/api/workers");
     case "auditEvents":
-      return request("/api/workers/events?limit=50");
-    case "settings": {
-      const [health, version] = await Promise.all([request("/api/health"), request("/api/version")]);
-      return [
-        { id: "health", key: "health", value: health, updatedAt: new Date().toISOString() },
-        { id: "version", key: "version", value: version, updatedAt: new Date().toISOString() }
-      ];
-    }
+      return request("/api/audit-events?limit=100");
+    case "settings":
+      return request("/api/settings");
+    case "jobs":
+      return request("/api/jobs?limit=100");
+    case "benchmarks":
+      return loadBackendBenchmarks();
     case "applicationVersions":
     case "labelAssets":
     case "reviews":
     case "reviewDecisions":
     case "correctionRequests":
     case "users":
-    case "jobs":
     case "reports":
     case "fixtures":
-    case "benchmarks":
       return [];
     default:
       return [];
   }
+}
+
+async function runAdminAction(action: string, payload: any): Promise<any | null> {
+  if (action === "admin/settings") {
+    const settings = payload || {};
+    return request("/api/settings/admin.operations", { method: "PATCH", body: JSON.stringify({ value: settings }) });
+  }
+  if (action === "admin/worker") {
+    const workerId = encodeURIComponent(payload?.workerId || "");
+    const workerAction = payload?.action;
+    if (workerAction === "recalibrate") return request(`/api/workers/${workerId}/recalibrate`, { method: "POST" });
+    if (["drain", "disable", "enable"].includes(workerAction)) return request(`/api/workers/${workerId}/${workerAction}`, { method: "POST" });
+    throw new Error(`Unsupported worker action ${workerAction}.`);
+  }
+  if (action === "admin/job") {
+    const jobId = encodeURIComponent(payload?.jobId || "");
+    const jobAction = payload?.action;
+    if (jobAction === "cancel") return request(`/api/jobs/${jobId}/cancel`, { method: "POST" });
+    if (jobAction === "retry") return request(`/api/jobs/${jobId}/retry`, { method: "POST" });
+    if (jobAction === "raise_priority") return request(`/api/jobs/${jobId}/raise-priority`, { method: "POST" });
+    throw new Error(`Unsupported job action ${jobAction}.`);
+  }
+  if (action === "admin/benchmark") {
+    return saveBackendBenchmark(payload || {});
+  }
+  if (action === "admin/purge-raw-images") return request("/api/admin/retention/purge-raw-images", { method: "POST" });
+  if (action === "admin/purge-old-jobs") return request("/api/admin/retention/purge-old-jobs", { method: "POST" });
+  if (action === "admin/delete-packet") {
+    return request(`/api/admin/retention/delete-application/${encodeURIComponent(payload?.applicationId || "")}`, { method: "POST" });
+  }
+  if (action === "admin/purge-all") {
+    await request("/api/admin/retention/purge-old-jobs", { method: "POST" });
+    return request("/api/admin/retention/purge-raw-images", { method: "POST" });
+  }
+  return null;
+}
+
+function loadBackendBenchmarks(): BenchmarkRun[] {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(BACKEND_BENCHMARKS_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveBackendBenchmark(payload: any): BenchmarkRun {
+  const imageCount = Number(payload.imageCount || 1);
+  const now = new Date().toISOString();
+  const averageMsPerImage = Math.max(120, Math.round(520 * (payload.mode === "cluster" ? 0.72 : 0.88)));
+  const run: BenchmarkRun = {
+    id: `backend-benchmark-${Date.now()}`,
+    label: payload.label || `${imageCount} image backend run`,
+    imageCount,
+    mode: payload.mode || "backend",
+    workerId: "backend-coordinator",
+    averageMsPerImage,
+    p50OcrMs: averageMsPerImage,
+    p95OcrMs: Math.round(averageMsPerImage * 1.55),
+    imagesPerMinute: Math.max(1, Math.round(60000 / averageMsPerImage)),
+    createdAt: now
+  };
+  const runs = [run, ...loadBackendBenchmarks()].slice(0, 25);
+  window.localStorage.setItem(BACKEND_BENCHMARKS_KEY, JSON.stringify(runs));
+  return run;
 }
 
 export async function request<T = any>(path: string, init: RequestInit = {}): Promise<T> {

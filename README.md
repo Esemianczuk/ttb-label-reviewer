@@ -21,7 +21,7 @@ Current browser mode includes a bounded dedicated Web Worker pool for uploaded i
 
 ### Local Backend Mode
 
-The optional FastAPI coordinator in `apps/api` can serve the built frontend, persist applications and reviews, store uploaded assets locally, and assign review jobs to local worker agents. Browser-only mode remains available when the backend is not running.
+The optional FastAPI coordinator in `apps/api` can serve the built frontend, persist applications and reviews, store uploaded assets locally, assign review jobs to local worker agents, and back the console admin operations for live workers, jobs, audit events, settings, and retention actions. Browser-only mode remains available when the backend is not running.
 
 ```bash
 ./scripts/dev-local-backend.sh

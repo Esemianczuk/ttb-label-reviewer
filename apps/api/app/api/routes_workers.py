@@ -168,6 +168,88 @@ def recalibrate(
     return worker_to_read(worker)
 
 
+@router.post("/{worker_id}/drain", response_model=WorkerRead)
+def drain_worker(worker_id: str, session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
+    require_permission(session, current_user, resource="workers", action="manage", entity_id=worker_id)
+    worker = require_worker(session, worker_id)
+    calibration = dict(worker.calibration or {})
+    calibration["drainMode"] = True
+    calibration["drainRequestedAt"] = models.now_utc().isoformat()
+    worker.calibration = calibration
+    worker.status = "draining"
+    worker.last_seen_at = models.now_utc()
+    session.add(models.WorkerEvent(worker_id=worker.id, event_type="worker_drain_requested", payload_json={"worker_id": worker.id}))
+    session.add(
+        models.AuditEvent(
+            actor_user_id=current_user.id,
+            actor_role=current_user.role,
+            event_type="worker.drain",
+            entity_type="workers",
+            entity_id=worker.id,
+            summary=f"Requested drain for worker {worker.id}.",
+            metadata_json={"workerId": worker.id},
+        )
+    )
+    session.commit()
+    session.refresh(worker)
+    return worker_to_read(worker)
+
+
+@router.post("/{worker_id}/disable", response_model=WorkerRead)
+def disable_worker(worker_id: str, session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
+    require_permission(session, current_user, resource="workers", action="manage", entity_id=worker_id)
+    worker = require_worker(session, worker_id)
+    calibration = dict(worker.calibration or {})
+    calibration["disabled"] = True
+    calibration["disabledAt"] = models.now_utc().isoformat()
+    worker.calibration = calibration
+    worker.status = "disabled"
+    worker.last_seen_at = models.now_utc()
+    session.add(models.WorkerEvent(worker_id=worker.id, event_type="worker_disabled", payload_json={"worker_id": worker.id}))
+    session.add(
+        models.AuditEvent(
+            actor_user_id=current_user.id,
+            actor_role=current_user.role,
+            event_type="worker.disable",
+            entity_type="workers",
+            entity_id=worker.id,
+            summary=f"Disabled worker {worker.id}.",
+            metadata_json={"workerId": worker.id},
+        )
+    )
+    session.commit()
+    session.refresh(worker)
+    return worker_to_read(worker)
+
+
+@router.post("/{worker_id}/enable", response_model=WorkerRead)
+def enable_worker(worker_id: str, session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
+    require_permission(session, current_user, resource="workers", action="manage", entity_id=worker_id)
+    worker = require_worker(session, worker_id)
+    calibration = dict(worker.calibration or {})
+    calibration["disabled"] = False
+    calibration["drainMode"] = False
+    calibration["enabledAt"] = models.now_utc().isoformat()
+    worker.calibration = calibration
+    worker.status = "online"
+    worker.last_seen_at = models.now_utc()
+    session.add(models.WorkerEvent(worker_id=worker.id, event_type="worker_enabled", payload_json={"worker_id": worker.id}))
+    session.add(
+        models.AuditEvent(
+            actor_user_id=current_user.id,
+            actor_role=current_user.role,
+            event_type="worker.enable",
+            entity_type="workers",
+            entity_id=worker.id,
+            summary=f"Enabled worker {worker.id}.",
+            metadata_json={"workerId": worker.id},
+        )
+    )
+    session.commit()
+    session.refresh(worker)
+    return worker_to_read(worker)
+
+
 @router.post("/{worker_id}/claim", response_model=JobClaimResponse)
 def claim(worker_id: str, payload: JobClaimRequest, request: Request, session: Session = Depends(get_session)):
     worker = require_worker(session, worker_id)

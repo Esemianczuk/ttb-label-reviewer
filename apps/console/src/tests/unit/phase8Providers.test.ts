@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { consoleResourceNames } from "../../resources";
 import { healthApiHealthGet } from "../../api/generated/ttbApi";
-import { apiDataProvider } from "../../providers/data/backendDataProvider";
+import { apiDataProvider, setBackendUrl } from "../../providers/data/backendDataProvider";
 import { browserDataProvider } from "../../providers/data/browserDataProvider";
 import { providerForMode } from "../../providers/data/providerRegistry";
 import { resetSnapshot } from "../../providers/data/browserStore";
@@ -44,6 +44,26 @@ describe("phase 8 provider consolidation", () => {
         })
       })
     );
+  });
+
+  it("maps admin operations to backend endpoints", async () => {
+    setBackendUrl("http://127.0.0.1:8123");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ token: "token-admin-provider", expiresAt: new Date(Date.now() + 3600_000).toISOString() }))
+      .mockResolvedValueOnce(jsonResponse({ id: "admin.operations", key: "admin.operations", value: { maxConcurrency: 8 }, updatedAt: new Date().toISOString() }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await apiDataProvider.custom?.({
+      url: "admin/settings",
+      method: "post",
+      payload: { maxConcurrency: 8 }
+    });
+
+    expect(response?.data).toEqual(expect.objectContaining({ key: "admin.operations" }));
+    expect(fetchMock.mock.calls[1][0]).toBe("http://127.0.0.1:8123/api/settings/admin.operations");
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body as string)).toEqual({ value: { maxConcurrency: 8 } });
+    setBackendUrl("http://127.0.0.1:8000");
   });
 
   it("exposes a generated Orval API client instead of the old placeholder", () => {

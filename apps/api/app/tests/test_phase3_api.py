@@ -239,6 +239,62 @@ def test_job_cancel_releases_worker_capacity(client: TestClient):
     assert client.get("/api/workers/worker-test-1", headers=auth_headers(client, "admin")).json()["activeJobs"] == 0
 
 
+def test_admin_operations_endpoints_manage_backend_jobs_settings_and_workers(client: TestClient):
+    application = create_application(client)
+    upload_image(client, application["id"], data=b"\x89PNG\r\n\x1a\nadmin-ops")
+    review_response = client.post(f"/api/applications/{application['id']}/review", json={}, headers=auth_headers(client, "reviewer"))
+    assert review_response.status_code == 201, review_response.text
+
+    admin_headers = auth_headers(client, "admin")
+    jobs = client.get("/api/jobs?limit=10", headers=admin_headers)
+    assert jobs.status_code == 200, jobs.text
+    assert jobs.json()
+    job = jobs.json()[0]
+
+    raised = client.post(f"/api/jobs/{job['id']}/raise-priority", headers=admin_headers)
+    assert raised.status_code == 200, raised.text
+    assert raised.json()["priority"] > job["priority"]
+
+    retried = client.post(f"/api/jobs/{job['id']}/retry", headers=admin_headers)
+    assert retried.status_code == 200, retried.text
+    assert retried.json()["status"] == "queued"
+
+    cancelled = client.post(f"/api/jobs/{job['id']}/cancel", headers=admin_headers)
+    assert cancelled.status_code == 200, cancelled.text
+    assert cancelled.json()["status"] == "cancelled"
+
+    settings = client.get("/api/settings", headers=admin_headers)
+    assert settings.status_code == 200, settings.text
+    assert any(setting["key"] == "admin.operations" for setting in settings.json())
+
+    updated = client.patch("/api/settings/admin.operations", json={"value": {"maxConcurrency": 7}}, headers=admin_headers)
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["value"]["maxConcurrency"] == 7
+    assert updated.json()["value"]["preferredOcrEngine"] == "browser-fixture"
+
+    worker = register_worker(client)
+    drained = client.post(f"/api/workers/{worker['id']}/drain", headers=admin_headers)
+    assert drained.status_code == 200, drained.text
+    assert drained.json()["calibration"]["drainMode"] is True
+
+    disabled = client.post(f"/api/workers/{worker['id']}/disable", headers=admin_headers)
+    assert disabled.status_code == 200, disabled.text
+    assert disabled.json()["status"] == "disabled"
+
+    enabled = client.post(f"/api/workers/{worker['id']}/enable", headers=admin_headers)
+    assert enabled.status_code == 200, enabled.text
+    assert enabled.json()["calibration"]["disabled"] is False
+
+    audit = client.get("/api/audit-events?limit=20", headers=admin_headers)
+    assert audit.status_code == 200, audit.text
+    event_types = {event["eventType"] for event in audit.json()}
+    assert {"settings.update", "worker.disable", "job.cancel"}.issubset(event_types)
+
+    purged = client.post("/api/admin/retention/purge-old-jobs", headers=admin_headers)
+    assert purged.status_code == 200, purged.text
+    assert purged.json()["count"] >= 1
+
+
 def test_websocket_progress_smoke(client: TestClient):
     with client.websocket_connect("/api/ws/sessions/session-a") as websocket:
         assert websocket.receive_json() == {"type": "connected", "scope": "session", "sessionId": "session-a"}

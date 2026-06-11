@@ -59,7 +59,7 @@ Reviewer decisions are stored in the browser snapshot with audit events. Pass-to
 - `/admin/fixtures`
 - `/admin/settings`
 
-The admin dashboard shows applications today, submitted, needs-review, approved, rejected, active workers, queue depth, images/minute, p50/p95 OCR time, failed jobs, and estimated storage. Worker actions support recalibrate, drain, disable, and enable. Job actions support retry, cancel, and raise priority. Settings persist in the browser snapshot across Browser, Backend, and Cluster console modes.
+The admin dashboard shows applications today, submitted, needs-review, approved, rejected, active workers, queue depth, images/minute, p50/p95 OCR time, failed jobs, and estimated storage. Worker actions support recalibrate, drain, disable, and enable. Job actions support retry, cancel, and raise priority. Settings persist in the browser snapshot for Browser Only mode and in FastAPI settings for Backend/Cluster mode.
 
 Retention actions are confirmation-gated and can purge raw images, purge old jobs, delete an application packet, or purge all demo data. The audit page filters real audit events by actor, role, event, entity, and application, and exports CSV.
 

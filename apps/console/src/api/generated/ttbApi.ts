@@ -124,6 +124,32 @@ export interface AssetRead {
   width?: AssetReadWidth;
 }
 
+export type AuditEventReadActorUserId = string | null;
+
+export type AuditEventReadAfterAnyOf = { [key: string]: unknown };
+
+export type AuditEventReadAfter = AuditEventReadAfterAnyOf | null;
+
+export type AuditEventReadBeforeAnyOf = { [key: string]: unknown };
+
+export type AuditEventReadBefore = AuditEventReadBeforeAnyOf | null;
+
+export type AuditEventReadMetadata = { [key: string]: unknown };
+
+export interface AuditEventRead {
+  actorRole: string;
+  actorUserId?: AuditEventReadActorUserId;
+  after?: AuditEventReadAfter;
+  before?: AuditEventReadBefore;
+  createdAt: string;
+  entityId: string;
+  entityType: string;
+  eventType: string;
+  id: string;
+  metadata: AuditEventReadMetadata;
+  summary: string;
+}
+
 export type AuthzCanRequestEntityId = string | null;
 
 export type AuthzCanRequestParams = { [key: string]: unknown };
@@ -310,6 +336,11 @@ export interface LogoutResponse {
   ok?: boolean;
 }
 
+export interface OperationResult {
+  count?: number;
+  ok?: boolean;
+}
+
 export type ReviewCreateMode = typeof ReviewCreateMode[keyof typeof ReviewCreateMode];
 
 
@@ -339,6 +370,20 @@ export interface ReviewRead {
   mode: string;
   result?: ReviewReadResult;
   status: string;
+}
+
+export type SettingReadValue = { [key: string]: unknown };
+
+export interface SettingRead {
+  key: string;
+  updatedAt: string;
+  value: SettingReadValue;
+}
+
+export type SettingUpdateValue = { [key: string]: unknown };
+
+export interface SettingUpdate {
+  value?: SettingUpdateValue;
 }
 
 export type UserReadOrganizationId = string | null;
@@ -450,9 +495,136 @@ export interface WorkerRegisterResponse {
   workerSecret?: WorkerRegisterResponseWorkerSecret;
 }
 
+export type ListAuditEventsApiAuditEventsGetParams = {
+limit?: number;
+actor_role?: string | null;
+event_type?: string | null;
+entity_type?: string | null;
+entity_id?: string | null;
+};
+
+export type ListJobsApiJobsGetParams = {
+limit?: number;
+};
+
 export type ListWorkerEventsApiWorkersEventsGetParams = {
 limit?: number;
 };
+
+/**
+ * @summary Delete Application Packet
+ */
+export type deleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostResponse200 = {
+  data: OperationResult
+  status: 200
+}
+
+export type deleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type deleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostResponseSuccess = (deleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostResponse200) & {
+  headers: Headers;
+};
+export type deleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostResponseError = (deleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostResponse422) & {
+  headers: Headers;
+};
+
+export type deleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostResponse = (deleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostResponseSuccess | deleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostResponseError)
+
+export const getDeleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostUrl = (applicationId: string,) => {
+
+
+
+
+  return `/api/admin/retention/delete-application/${applicationId}`
+}
+
+export const deleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPost = async (applicationId: string, options?: RequestInit): Promise<deleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostResponse> => {
+
+  return apiFetch<deleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostResponse>(getDeleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostUrl(applicationId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+/**
+ * @summary Purge Old Jobs
+ */
+export type purgeOldJobsApiAdminRetentionPurgeOldJobsPostResponse200 = {
+  data: OperationResult
+  status: 200
+}
+
+export type purgeOldJobsApiAdminRetentionPurgeOldJobsPostResponseSuccess = (purgeOldJobsApiAdminRetentionPurgeOldJobsPostResponse200) & {
+  headers: Headers;
+};
+;
+
+export type purgeOldJobsApiAdminRetentionPurgeOldJobsPostResponse = (purgeOldJobsApiAdminRetentionPurgeOldJobsPostResponseSuccess)
+
+export const getPurgeOldJobsApiAdminRetentionPurgeOldJobsPostUrl = () => {
+
+
+
+
+  return `/api/admin/retention/purge-old-jobs`
+}
+
+export const purgeOldJobsApiAdminRetentionPurgeOldJobsPost = async ( options?: RequestInit): Promise<purgeOldJobsApiAdminRetentionPurgeOldJobsPostResponse> => {
+
+  return apiFetch<purgeOldJobsApiAdminRetentionPurgeOldJobsPostResponse>(getPurgeOldJobsApiAdminRetentionPurgeOldJobsPostUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+/**
+ * @summary Purge Raw Images
+ */
+export type purgeRawImagesApiAdminRetentionPurgeRawImagesPostResponse200 = {
+  data: OperationResult
+  status: 200
+}
+
+export type purgeRawImagesApiAdminRetentionPurgeRawImagesPostResponseSuccess = (purgeRawImagesApiAdminRetentionPurgeRawImagesPostResponse200) & {
+  headers: Headers;
+};
+;
+
+export type purgeRawImagesApiAdminRetentionPurgeRawImagesPostResponse = (purgeRawImagesApiAdminRetentionPurgeRawImagesPostResponseSuccess)
+
+export const getPurgeRawImagesApiAdminRetentionPurgeRawImagesPostUrl = () => {
+
+
+
+
+  return `/api/admin/retention/purge-raw-images`
+}
+
+export const purgeRawImagesApiAdminRetentionPurgeRawImagesPost = async ( options?: RequestInit): Promise<purgeRawImagesApiAdminRetentionPurgeRawImagesPostResponse> => {
+
+  return apiFetch<purgeRawImagesApiAdminRetentionPurgeRawImagesPostResponse>(getPurgeRawImagesApiAdminRetentionPurgeRawImagesPostUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
 
 /**
  * @summary List Applications
@@ -811,6 +983,56 @@ export const getAssetContentApiAssetsAssetIdContentGet = async (assetId: string,
 
 
 /**
+ * @summary List Audit Events
+ */
+export type listAuditEventsApiAuditEventsGetResponse200 = {
+  data: AuditEventRead[]
+  status: 200
+}
+
+export type listAuditEventsApiAuditEventsGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type listAuditEventsApiAuditEventsGetResponseSuccess = (listAuditEventsApiAuditEventsGetResponse200) & {
+  headers: Headers;
+};
+export type listAuditEventsApiAuditEventsGetResponseError = (listAuditEventsApiAuditEventsGetResponse422) & {
+  headers: Headers;
+};
+
+export type listAuditEventsApiAuditEventsGetResponse = (listAuditEventsApiAuditEventsGetResponseSuccess | listAuditEventsApiAuditEventsGetResponseError)
+
+export const getListAuditEventsApiAuditEventsGetUrl = (params?: ListAuditEventsApiAuditEventsGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/audit-events?${stringifiedParams}` : `/api/audit-events`
+}
+
+export const listAuditEventsApiAuditEventsGet = async (params?: ListAuditEventsApiAuditEventsGetParams, options?: RequestInit): Promise<listAuditEventsApiAuditEventsGetResponse> => {
+
+  return apiFetch<listAuditEventsApiAuditEventsGetResponse>(getListAuditEventsApiAuditEventsGetUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+/**
  * @summary Demo Login
  */
 export type demoLoginApiAuthDemoLoginPostResponse200 = {
@@ -1087,6 +1309,56 @@ export const healthApiHealthGet = async ( options?: RequestInit): Promise<health
 
 
 /**
+ * @summary List Jobs
+ */
+export type listJobsApiJobsGetResponse200 = {
+  data: JobRead[]
+  status: 200
+}
+
+export type listJobsApiJobsGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type listJobsApiJobsGetResponseSuccess = (listJobsApiJobsGetResponse200) & {
+  headers: Headers;
+};
+export type listJobsApiJobsGetResponseError = (listJobsApiJobsGetResponse422) & {
+  headers: Headers;
+};
+
+export type listJobsApiJobsGetResponse = (listJobsApiJobsGetResponseSuccess | listJobsApiJobsGetResponseError)
+
+export const getListJobsApiJobsGetUrl = (params?: ListJobsApiJobsGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/jobs?${stringifiedParams}` : `/api/jobs`
+}
+
+export const listJobsApiJobsGet = async (params?: ListJobsApiJobsGetParams, options?: RequestInit): Promise<listJobsApiJobsGetResponse> => {
+
+  return apiFetch<listJobsApiJobsGetResponse>(getListJobsApiJobsGetUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+/**
  * @summary Get Job
  */
 export type getJobApiJobsJobIdGetResponse200 = {
@@ -1162,6 +1434,92 @@ export const getCancelJobApiJobsJobIdCancelPostUrl = (jobId: string,) => {
 export const cancelJobApiJobsJobIdCancelPost = async (jobId: string, options?: RequestInit): Promise<cancelJobApiJobsJobIdCancelPostResponse> => {
 
   return apiFetch<cancelJobApiJobsJobIdCancelPostResponse>(getCancelJobApiJobsJobIdCancelPostUrl(jobId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+/**
+ * @summary Raise Job Priority
+ */
+export type raiseJobPriorityApiJobsJobIdRaisePriorityPostResponse200 = {
+  data: JobRead
+  status: 200
+}
+
+export type raiseJobPriorityApiJobsJobIdRaisePriorityPostResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type raiseJobPriorityApiJobsJobIdRaisePriorityPostResponseSuccess = (raiseJobPriorityApiJobsJobIdRaisePriorityPostResponse200) & {
+  headers: Headers;
+};
+export type raiseJobPriorityApiJobsJobIdRaisePriorityPostResponseError = (raiseJobPriorityApiJobsJobIdRaisePriorityPostResponse422) & {
+  headers: Headers;
+};
+
+export type raiseJobPriorityApiJobsJobIdRaisePriorityPostResponse = (raiseJobPriorityApiJobsJobIdRaisePriorityPostResponseSuccess | raiseJobPriorityApiJobsJobIdRaisePriorityPostResponseError)
+
+export const getRaiseJobPriorityApiJobsJobIdRaisePriorityPostUrl = (jobId: string,) => {
+
+
+
+
+  return `/api/jobs/${jobId}/raise-priority`
+}
+
+export const raiseJobPriorityApiJobsJobIdRaisePriorityPost = async (jobId: string, options?: RequestInit): Promise<raiseJobPriorityApiJobsJobIdRaisePriorityPostResponse> => {
+
+  return apiFetch<raiseJobPriorityApiJobsJobIdRaisePriorityPostResponse>(getRaiseJobPriorityApiJobsJobIdRaisePriorityPostUrl(jobId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+/**
+ * @summary Retry Job
+ */
+export type retryJobApiJobsJobIdRetryPostResponse200 = {
+  data: JobRead
+  status: 200
+}
+
+export type retryJobApiJobsJobIdRetryPostResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type retryJobApiJobsJobIdRetryPostResponseSuccess = (retryJobApiJobsJobIdRetryPostResponse200) & {
+  headers: Headers;
+};
+export type retryJobApiJobsJobIdRetryPostResponseError = (retryJobApiJobsJobIdRetryPostResponse422) & {
+  headers: Headers;
+};
+
+export type retryJobApiJobsJobIdRetryPostResponse = (retryJobApiJobsJobIdRetryPostResponseSuccess | retryJobApiJobsJobIdRetryPostResponseError)
+
+export const getRetryJobApiJobsJobIdRetryPostUrl = (jobId: string,) => {
+
+
+
+
+  return `/api/jobs/${jobId}/retry`
+}
+
+export const retryJobApiJobsJobIdRetryPost = async (jobId: string, options?: RequestInit): Promise<retryJobApiJobsJobIdRetryPostResponse> => {
+
+  return apiFetch<retryJobApiJobsJobIdRetryPostResponse>(getRetryJobApiJobsJobIdRetryPostUrl(jobId),
   {
     ...options,
     method: 'POST'
@@ -1253,6 +1611,87 @@ export const getReviewApiReviewsReviewIdGet = async (reviewId: string, options?:
     method: 'GET'
 
 
+  }
+);}
+
+
+
+/**
+ * @summary List Settings
+ */
+export type listSettingsApiSettingsGetResponse200 = {
+  data: SettingRead[]
+  status: 200
+}
+
+export type listSettingsApiSettingsGetResponseSuccess = (listSettingsApiSettingsGetResponse200) & {
+  headers: Headers;
+};
+;
+
+export type listSettingsApiSettingsGetResponse = (listSettingsApiSettingsGetResponseSuccess)
+
+export const getListSettingsApiSettingsGetUrl = () => {
+
+
+
+
+  return `/api/settings`
+}
+
+export const listSettingsApiSettingsGet = async ( options?: RequestInit): Promise<listSettingsApiSettingsGetResponse> => {
+
+  return apiFetch<listSettingsApiSettingsGetResponse>(getListSettingsApiSettingsGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+/**
+ * @summary Update Setting
+ */
+export type updateSettingApiSettingsKeyPatchResponse200 = {
+  data: SettingRead
+  status: 200
+}
+
+export type updateSettingApiSettingsKeyPatchResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type updateSettingApiSettingsKeyPatchResponseSuccess = (updateSettingApiSettingsKeyPatchResponse200) & {
+  headers: Headers;
+};
+export type updateSettingApiSettingsKeyPatchResponseError = (updateSettingApiSettingsKeyPatchResponse422) & {
+  headers: Headers;
+};
+
+export type updateSettingApiSettingsKeyPatchResponse = (updateSettingApiSettingsKeyPatchResponseSuccess | updateSettingApiSettingsKeyPatchResponseError)
+
+export const getUpdateSettingApiSettingsKeyPatchUrl = (key: string,) => {
+
+
+
+
+  return `/api/settings/${key}`
+}
+
+export const updateSettingApiSettingsKeyPatch = async (key: string,
+    settingUpdate: SettingUpdate, options?: RequestInit): Promise<updateSettingApiSettingsKeyPatchResponse> => {
+
+  return apiFetch<updateSettingApiSettingsKeyPatchResponse>(getUpdateSettingApiSettingsKeyPatchUrl(key),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      settingUpdate,)
   }
 );}
 
@@ -1552,6 +1991,135 @@ export const completeApiWorkersWorkerIdCompletePost = async (workerId: string,
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
       jobCompleteRequest,)
+  }
+);}
+
+
+
+/**
+ * @summary Disable Worker
+ */
+export type disableWorkerApiWorkersWorkerIdDisablePostResponse200 = {
+  data: WorkerRead
+  status: 200
+}
+
+export type disableWorkerApiWorkersWorkerIdDisablePostResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type disableWorkerApiWorkersWorkerIdDisablePostResponseSuccess = (disableWorkerApiWorkersWorkerIdDisablePostResponse200) & {
+  headers: Headers;
+};
+export type disableWorkerApiWorkersWorkerIdDisablePostResponseError = (disableWorkerApiWorkersWorkerIdDisablePostResponse422) & {
+  headers: Headers;
+};
+
+export type disableWorkerApiWorkersWorkerIdDisablePostResponse = (disableWorkerApiWorkersWorkerIdDisablePostResponseSuccess | disableWorkerApiWorkersWorkerIdDisablePostResponseError)
+
+export const getDisableWorkerApiWorkersWorkerIdDisablePostUrl = (workerId: string,) => {
+
+
+
+
+  return `/api/workers/${workerId}/disable`
+}
+
+export const disableWorkerApiWorkersWorkerIdDisablePost = async (workerId: string, options?: RequestInit): Promise<disableWorkerApiWorkersWorkerIdDisablePostResponse> => {
+
+  return apiFetch<disableWorkerApiWorkersWorkerIdDisablePostResponse>(getDisableWorkerApiWorkersWorkerIdDisablePostUrl(workerId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+/**
+ * @summary Drain Worker
+ */
+export type drainWorkerApiWorkersWorkerIdDrainPostResponse200 = {
+  data: WorkerRead
+  status: 200
+}
+
+export type drainWorkerApiWorkersWorkerIdDrainPostResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type drainWorkerApiWorkersWorkerIdDrainPostResponseSuccess = (drainWorkerApiWorkersWorkerIdDrainPostResponse200) & {
+  headers: Headers;
+};
+export type drainWorkerApiWorkersWorkerIdDrainPostResponseError = (drainWorkerApiWorkersWorkerIdDrainPostResponse422) & {
+  headers: Headers;
+};
+
+export type drainWorkerApiWorkersWorkerIdDrainPostResponse = (drainWorkerApiWorkersWorkerIdDrainPostResponseSuccess | drainWorkerApiWorkersWorkerIdDrainPostResponseError)
+
+export const getDrainWorkerApiWorkersWorkerIdDrainPostUrl = (workerId: string,) => {
+
+
+
+
+  return `/api/workers/${workerId}/drain`
+}
+
+export const drainWorkerApiWorkersWorkerIdDrainPost = async (workerId: string, options?: RequestInit): Promise<drainWorkerApiWorkersWorkerIdDrainPostResponse> => {
+
+  return apiFetch<drainWorkerApiWorkersWorkerIdDrainPostResponse>(getDrainWorkerApiWorkersWorkerIdDrainPostUrl(workerId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+/**
+ * @summary Enable Worker
+ */
+export type enableWorkerApiWorkersWorkerIdEnablePostResponse200 = {
+  data: WorkerRead
+  status: 200
+}
+
+export type enableWorkerApiWorkersWorkerIdEnablePostResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type enableWorkerApiWorkersWorkerIdEnablePostResponseSuccess = (enableWorkerApiWorkersWorkerIdEnablePostResponse200) & {
+  headers: Headers;
+};
+export type enableWorkerApiWorkersWorkerIdEnablePostResponseError = (enableWorkerApiWorkersWorkerIdEnablePostResponse422) & {
+  headers: Headers;
+};
+
+export type enableWorkerApiWorkersWorkerIdEnablePostResponse = (enableWorkerApiWorkersWorkerIdEnablePostResponseSuccess | enableWorkerApiWorkersWorkerIdEnablePostResponseError)
+
+export const getEnableWorkerApiWorkersWorkerIdEnablePostUrl = (workerId: string,) => {
+
+
+
+
+  return `/api/workers/${workerId}/enable`
+}
+
+export const enableWorkerApiWorkersWorkerIdEnablePost = async (workerId: string, options?: RequestInit): Promise<enableWorkerApiWorkersWorkerIdEnablePostResponse> => {
+
+  return apiFetch<enableWorkerApiWorkersWorkerIdEnablePostResponse>(getEnableWorkerApiWorkersWorkerIdEnablePostUrl(workerId),
+  {
+    ...options,
+    method: 'POST'
+
+
   }
 );}
 

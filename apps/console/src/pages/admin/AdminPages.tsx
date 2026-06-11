@@ -31,20 +31,10 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { StatusTag } from "../../components/common/StatusTag";
 import type { AdminJob, AdminSettings, AuditEvent, BenchmarkRun, ReviewApplication, WorkerSnapshot } from "../../domain/application/types";
-import { useConsoleStore } from "../../hooks/useConsoleStore";
 import { getConsoleIdentities } from "../../providers/auth/authProvider";
 import { permissionMatrix } from "../../providers/access/permissionMatrix";
-import {
-  deleteApplicationPacket,
-  purgeAllDemoData,
-  purgeOldJobs,
-  purgeRawImages,
-  runAdminBenchmark,
-  updateAdminSettings,
-  updateJobOperation,
-  updateWorkerOperation
-} from "../../providers/data/browserStore";
 import { adminMetrics, downloadCsv, estimatedStorageBytes, jobDuration, settingLabel } from "./adminUtils";
+import { useAdminOperations } from "./useAdminOperations";
 
 export function AdminUsersPage() {
   return (
@@ -84,10 +74,10 @@ export function AdminRolesPage() {
 }
 
 export function AdminWorkersPage() {
-  const { snapshot } = useConsoleStore();
+  const { snapshot, loading, runAction } = useAdminOperations();
   const [messageApi, contextHolder] = message.useMessage();
-  const act = (workerId: string, action: "recalibrate" | "drain" | "disable" | "enable") => {
-    updateWorkerOperation({ workerId, action });
+  const act = async (workerId: string, action: "recalibrate" | "drain" | "disable" | "enable") => {
+    await runAction("admin/worker", { workerId, action });
     messageApi.success(`Worker ${action} requested.`);
   };
 
@@ -97,7 +87,7 @@ export function AdminWorkersPage() {
       <Row gutter={[16, 16]}>
         {snapshot.workers.map((worker) => (
           <Col xs={24} lg={8} key={worker.id}>
-            <WorkerCard worker={worker} onAction={act} />
+            <WorkerCard worker={worker} loading={loading} onAction={act} />
           </Col>
         ))}
       </Row>
@@ -105,7 +95,7 @@ export function AdminWorkersPage() {
   );
 }
 
-function WorkerCard({ worker, onAction }: { worker: WorkerSnapshot; onAction: (workerId: string, action: "recalibrate" | "drain" | "disable" | "enable") => void }) {
+function WorkerCard({ worker, loading, onAction }: { worker: WorkerSnapshot; loading: boolean; onAction: (workerId: string, action: "recalibrate" | "drain" | "disable" | "enable") => void }) {
   const load = worker.maxConcurrency ? Math.round((worker.activeJobs / worker.maxConcurrency) * 100) : 0;
   return (
     <Card
@@ -123,12 +113,12 @@ function WorkerCard({ worker, onAction }: { worker: WorkerSnapshot; onAction: (w
         <Typography.Text>Last heartbeat: {new Date(worker.lastSeenAt).toLocaleString()}</Typography.Text>
         <Space wrap>{(worker.engines || worker.capabilities).map((engine) => <Tag key={engine}>{engine}</Tag>)}</Space>
         <Space wrap>
-          <Button icon={<ReloadOutlined />} onClick={() => onAction(worker.id, "recalibrate")}>Recalibrate</Button>
-          <Button icon={<PauseCircleOutlined />} onClick={() => onAction(worker.id, "drain")}>Drain</Button>
+          <Button loading={loading} icon={<ReloadOutlined />} onClick={() => onAction(worker.id, "recalibrate")}>Recalibrate</Button>
+          <Button loading={loading} icon={<PauseCircleOutlined />} onClick={() => onAction(worker.id, "drain")}>Drain</Button>
           {worker.disabled ? (
-            <Button icon={<PlayCircleOutlined />} onClick={() => onAction(worker.id, "enable")}>Enable</Button>
+            <Button loading={loading} icon={<PlayCircleOutlined />} onClick={() => onAction(worker.id, "enable")}>Enable</Button>
           ) : (
-            <Button danger icon={<StopOutlined />} onClick={() => onAction(worker.id, "disable")}>Disable</Button>
+            <Button loading={loading} danger icon={<StopOutlined />} onClick={() => onAction(worker.id, "disable")}>Disable</Button>
           )}
         </Space>
       </Space>
@@ -137,10 +127,10 @@ function WorkerCard({ worker, onAction }: { worker: WorkerSnapshot; onAction: (w
 }
 
 export function AdminJobsPage() {
-  const { snapshot } = useConsoleStore();
+  const { snapshot, loading, runAction } = useAdminOperations();
   const [messageApi, contextHolder] = message.useMessage();
-  const act = (jobId: string, action: "retry" | "cancel" | "raise_priority") => {
-    updateJobOperation({ jobId, action });
+  const act = async (jobId: string, action: "retry" | "cancel" | "raise_priority") => {
+    await runAction("admin/job", { jobId, action });
     messageApi.success(`Job ${action.replace("_", " ")} requested.`);
   };
   const columns: ColumnsType<AdminJob> = [
@@ -161,9 +151,9 @@ export function AdminJobsPage() {
       width: 240,
       render: (_, job) => (
         <Space>
-          <Button onClick={() => act(job.id, "retry")}>Retry</Button>
-          <Button onClick={() => act(job.id, "raise_priority")}>Raise</Button>
-          <Button danger onClick={() => act(job.id, "cancel")}>Cancel</Button>
+          <Button loading={loading} onClick={() => act(job.id, "retry")}>Retry</Button>
+          <Button loading={loading} onClick={() => act(job.id, "raise_priority")}>Raise</Button>
+          <Button loading={loading} danger onClick={() => act(job.id, "cancel")}>Cancel</Button>
         </Space>
       )
     }
@@ -171,43 +161,46 @@ export function AdminJobsPage() {
   return (
     <Card size="small" title="Jobs">
       {contextHolder}
-      <Table rowKey="id" dataSource={snapshot.jobs} columns={columns} pagination={{ pageSize: 10 }} scroll={{ x: 1500 }} />
+      <Table loading={loading} rowKey="id" dataSource={snapshot.jobs} columns={columns} pagination={{ pageSize: 10 }} scroll={{ x: 1500 }} />
     </Card>
   );
 }
 
 export function AdminEnginesPage() {
-  const { snapshot } = useConsoleStore();
+  const { snapshot, runAction } = useAdminOperations();
   return (
     <SettingsForm
       title="Engine Settings"
       settings={snapshot.adminSettings}
       fields={["preferredOcrEngine", "browserOcrAllowed", "backendCpuOcrAllowed", "gpuOcrAllowed", "distributedWorkersAllowed", "maxConcurrency"]}
+      onUpdate={(values) => runAction("admin/settings", values as Record<string, unknown>)}
     />
   );
 }
 
 export function AdminSettingsPage() {
-  const { snapshot } = useConsoleStore();
+  const { snapshot, runAction } = useAdminOperations();
   return (
     <SettingsForm
       title="System Settings"
       settings={snapshot.adminSettings}
       fields={["validatorThreshold", "warningStrictness", "retentionRawImagesDays", "retentionJobsDays", "keepReportsOnly"]}
+      onUpdate={(values) => runAction("admin/settings", values as Record<string, unknown>)}
     />
   );
 }
 
-function SettingsForm({ title, settings, fields }: { title: string; settings: AdminSettings; fields: Array<keyof AdminSettings> }) {
+function SettingsForm({ title, settings, fields, onUpdate }: { title: string; settings: AdminSettings; fields: Array<keyof AdminSettings>; onUpdate: (settings: Partial<AdminSettings>) => Promise<void> }) {
   const [messageApi, contextHolder] = message.useMessage();
   return (
     <Card size="small" title={title}>
       {contextHolder}
       <Form
+        key={fields.map((field) => `${String(field)}:${String(settings[field])}`).join("|")}
         layout="vertical"
         initialValues={settings}
-        onValuesChange={(_, values) => {
-          updateAdminSettings(values);
+        onValuesChange={async (_, values) => {
+          await onUpdate(values);
           messageApi.success("Settings saved.");
         }}
       >
@@ -238,10 +231,10 @@ function settingControl(key: keyof AdminSettings, value: AdminSettings[keyof Adm
 }
 
 export function AdminBenchmarksPage() {
-  const { snapshot } = useConsoleStore();
+  const { snapshot, loading, runAction } = useAdminOperations();
   const [messageApi, contextHolder] = message.useMessage();
-  const run = (imageCount: number) => {
-    runAdminBenchmark({ imageCount, label: `${imageCount} image admin run`, mode: snapshot.processingMode });
+  const run = async (imageCount: number) => {
+    await runAction("admin/benchmark", { imageCount, label: `${imageCount} image admin run`, mode: snapshot.processingMode });
     messageApi.success("Benchmark completed.");
   };
   return (
@@ -250,7 +243,7 @@ export function AdminBenchmarksPage() {
       <Card size="small" title="Run Benchmarks">
         <Space wrap>
           {[1, 10, 50].map((count) => (
-            <Button key={count} icon={<BarChartOutlined />} onClick={() => run(count)}>
+            <Button key={count} loading={loading} icon={<BarChartOutlined />} onClick={() => run(count)}>
               {count} image run
             </Button>
           ))}
@@ -285,7 +278,7 @@ function BenchmarkTable({ runs }: { runs: BenchmarkRun[] }) {
 }
 
 export function AdminAuditPage() {
-  const { snapshot } = useConsoleStore();
+  const { snapshot, loading } = useAdminOperations();
   const [actor, setActor] = useState<string>();
   const [role, setRole] = useState<string>();
   const [event, setEvent] = useState<string>();
@@ -315,16 +308,17 @@ export function AdminAuditPage() {
           <Button icon={<DownloadOutlined />} onClick={() => downloadCsv("ttb-audit-events.csv", rows)}>Export CSV</Button>
         </Space>
       </Card>
-      <AuditTable rows={rows} />
+      <AuditTable rows={rows} loading={loading} />
     </Space>
   );
 }
 
-function AuditTable({ rows }: { rows: AuditEvent[] }) {
+function AuditTable({ rows, loading }: { rows: AuditEvent[]; loading: boolean }) {
   return (
     <Card size="small" title="Audit Events">
       <Table
         rowKey="id"
+        loading={loading}
         dataSource={rows}
         pagination={{ pageSize: 10 }}
         expandable={{
@@ -344,11 +338,11 @@ function AuditTable({ rows }: { rows: AuditEvent[] }) {
 }
 
 export function AdminRetentionPage() {
-  const { snapshot } = useConsoleStore();
+  const { snapshot, runAction } = useAdminOperations();
   const [messageApi, contextHolder] = message.useMessage();
   const firstApplication = snapshot.applications[0];
-  const confirm = (action: () => void, success: string) => {
-    action();
+  const confirm = async (action: () => Promise<void>, success: string) => {
+    await action();
     messageApi.success(success);
   };
   return (
@@ -358,19 +352,20 @@ export function AdminRetentionPage() {
         title="Retention Defaults"
         settings={snapshot.adminSettings}
         fields={["retentionRawImagesDays", "retentionJobsDays", "keepReportsOnly"]}
+        onUpdate={(values) => runAction("admin/settings", values as Record<string, unknown>)}
       />
       <Card size="small" title="Retention Actions">
         <Space wrap>
-          <Popconfirm title="Purge raw images?" onConfirm={() => confirm(purgeRawImages, "Raw images purged.")}>
+          <Popconfirm title="Purge raw images?" onConfirm={() => confirm(() => runAction("admin/purge-raw-images"), "Raw images purged.")}>
             <Button danger icon={<DeleteOutlined />}>Purge Raw Images</Button>
           </Popconfirm>
-          <Popconfirm title="Purge completed and failed jobs?" onConfirm={() => confirm(purgeOldJobs, "Old jobs purged.")}>
+          <Popconfirm title="Purge completed and failed jobs?" onConfirm={() => confirm(() => runAction("admin/purge-old-jobs"), "Old jobs purged.")}>
             <Button danger icon={<DeleteOutlined />}>Purge Old Jobs</Button>
           </Popconfirm>
-          <Popconfirm title={`Delete ${firstApplication?.title || "selected packet"}?`} onConfirm={() => firstApplication && confirm(() => deleteApplicationPacket(firstApplication.id), "Application packet deleted.")}>
+          <Popconfirm title={`Delete ${firstApplication?.title || "selected packet"}?`} onConfirm={() => firstApplication && confirm(() => runAction("admin/delete-packet", { applicationId: firstApplication.id }), "Application packet deleted.")}>
             <Button danger disabled={!firstApplication} icon={<DeleteOutlined />}>Delete Application Packet</Button>
           </Popconfirm>
-          <Popconfirm title="Purge all demo data?" onConfirm={() => confirm(purgeAllDemoData, "All demo data purged.")}>
+          <Popconfirm title="Purge all demo data?" onConfirm={() => confirm(() => runAction("admin/purge-all"), "All demo data purged.")}>
             <Button danger icon={<DeleteOutlined />}>Purge All Demo Data</Button>
           </Popconfirm>
         </Space>
@@ -383,7 +378,7 @@ export function AdminRetentionPage() {
 }
 
 export function AdminFixturesPage() {
-  const { snapshot } = useConsoleStore();
+  const { snapshot } = useAdminOperations();
   const columns: ColumnsType<ReviewApplication> = [
     { title: "Fixture", render: (_, application) => application.metadata.fixtureId || application.id },
     { title: "Brand", render: (_, application) => application.expectedFields.brandName },
