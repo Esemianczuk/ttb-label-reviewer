@@ -106,7 +106,7 @@ def fetch_search_with_browser(query: dict[str, Any], *, search_base_url: str) ->
 
 
 def extract_candidates_from_html(html: str, *, base_url: str) -> list[dict[str, Any]]:
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     candidates: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
 

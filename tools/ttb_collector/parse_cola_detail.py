@@ -82,7 +82,7 @@ def parse_detail_html(
     retrieved_at: str | None = None,
     ttb_id_hint: str | None = None,
 ) -> dict[str, Any]:
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     raw_fields = extract_raw_fields(soup)
     mapped = map_raw_fields(raw_fields)
     parse_warnings: list[str] = []
