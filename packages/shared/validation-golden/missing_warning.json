@@ -1,0 +1,21 @@
+{
+  "id": "missing_warning",
+  "description": "Missing health warning should fail.",
+  "expectedFields": {
+    "productType": "distilled_spirits",
+    "brandName": "Clear Fork",
+    "classType": "Gin",
+    "alcoholContent": "42% Alc./Vol.",
+    "netContents": "750 mL",
+    "governmentWarningRequired": true
+  },
+  "ocrText": "CLEAR FORK\\nGIN\\n42% ALC/VOL\\n750 ML\\nDISTILLED FROM GRAIN",
+  "expectedOverallStatus": "FAIL",
+  "expectedStatuses": {
+    "brandName": "PASS",
+    "classType": "PASS",
+    "alcoholContent": "PASS",
+    "netContents": "PASS",
+    "governmentWarningRequired": "FAIL"
+  }
+}

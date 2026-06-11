@@ -1,0 +1,21 @@
+{
+  "id": "net_contents_liters",
+  "description": "1 L should be equivalent to 1000 mL.",
+  "expectedFields": {
+    "productType": "distilled_spirits",
+    "brandName": "River Bend",
+    "classType": "Vodka",
+    "alcoholContent": "40% Alc./Vol.",
+    "netContents": "1 L",
+    "governmentWarningRequired": true
+  },
+  "ocrText": "RIVER BEND\\nVODKA\\n40% ALC BY VOL\\n1000 ML\\nGOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+  "expectedOverallStatus": "PASS",
+  "expectedStatuses": {
+    "brandName": "PASS",
+    "classType": "PASS",
+    "alcoholContent": "PASS",
+    "netContents": "PASS",
+    "governmentWarningRequired": "PASS"
+  }
+}

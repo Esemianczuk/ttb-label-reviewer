@@ -1,0 +1,27 @@
+{
+  "id": "brand_case_quote",
+  "description": "Curly quote and case normalization: STONE'S THROW should match Stone's Throw.",
+  "expectedFields": {
+    "productType": "distilled_spirits",
+    "brandName": "Stone's Throw",
+    "fancifulName": "Single Barrel",
+    "classType": "Bourbon Whiskey",
+    "alcoholContent": "45% Alc./Vol.",
+    "netContents": "750 mL",
+    "governmentWarningRequired": true,
+    "producerName": "Stone's Throw Distilling",
+    "countryOfOrigin": "United States"
+  },
+  "ocrText": "STONE\\u2019S THROW\\nSINGLE BARREL\\nBOURBON WHISKEY\\n45% ALC BY VOL\\n750 ML\\nDISTILLED BY STONE'S THROW DISTILLING\\nUNITED STATES\\nGOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+  "expectedOverallStatus": "PASS",
+  "expectedStatuses": {
+    "brandName": "PASS",
+    "fancifulName": "PASS",
+    "classType": "PASS",
+    "alcoholContent": "PASS",
+    "netContents": "PASS",
+    "governmentWarningRequired": "PASS",
+    "producerName": "PASS",
+    "countryOfOrigin": "PASS"
+  }
+}

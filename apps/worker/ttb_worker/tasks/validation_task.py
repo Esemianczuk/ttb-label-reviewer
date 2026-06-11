@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-import re
 from datetime import datetime, timezone
 from pathlib import Path
 from time import monotonic
 from typing import Any
 
+from ttb_validation import validate_label_packet
+
 from ..engines.base import OcrEngine
 from ..transport import CoordinatorClient
 from .ocr_task import choose_engine, load_job_image
-
-
-CRITICAL_FIELDS = {"brandName", "classType", "alcoholContent", "netContents", "governmentWarningRequired"}
 
 
 def process_validation_job(
@@ -27,9 +25,10 @@ def process_validation_job(
     asset_ids = payload.get("asset_ids") or payload.get("assetIds") or []
     engine = choose_engine(engines, job)
     ocr_results = []
+    ocr_payloads = []
 
     if asset_ids:
-        for asset_id in asset_ids:
+        for index, asset_id in enumerate(asset_ids):
             asset_job = {
                 **job,
                 "payload": {
@@ -39,39 +38,36 @@ def process_validation_job(
                 },
             }
             image_bytes = load_job_image(asset_job, client, cache_dir=cache_dir)
-            ocr_results.append(engine.recognize(image_bytes, {"payload": asset_job["payload"], "job": asset_job}))
+            result = engine.recognize(image_bytes, {"payload": asset_job["payload"], "job": asset_job})
+            ocr_results.append(result)
+            ocr_payloads.append(ocr_result_to_validator_payload(result, asset_id=asset_id, image_index=index, worker_id=worker_id))
     else:
         image_bytes = load_job_image(job, client, cache_dir=cache_dir)
-        ocr_results.append(engine.recognize(image_bytes, {"payload": payload, "job": job}))
+        result = engine.recognize(image_bytes, {"payload": payload, "job": job})
+        ocr_results.append(result)
+        ocr_payloads.append(ocr_result_to_validator_payload(result, asset_id=payload.get("asset_id") or payload.get("assetId"), image_index=0, worker_id=worker_id))
 
-    combined_text = "\n".join(result.text for result in ocr_results if result.text)
-    fields = [_review_field(key, expected, combined_text, ocr_results) for key, expected in expected_fields.items()]
-    critical_failures = [field for field in fields if field["severity"] == "critical" and field["status"] != "PASS"]
-    warning_failures = [field for field in fields if field["severity"] == "warning" and field["status"] != "PASS"]
-    overall_status = "PASS" if not critical_failures and not warning_failures else "FAIL" if critical_failures else "PASS_WITH_WARNINGS"
+    validation = validate_label_packet(expected_fields, ocr_payloads)
+    fields = validation["fields"]
+    overall_status = validation["overallStatus"]
+    combined_text = validation["combinedOcr"]["rawText"]
     total_ms = max(0, int((monotonic() - started) * 1000))
 
     review_result = {
         "id": f"review-result-{job['id']}",
         "packetId": job["applicationId"],
+        "applicationId": job["applicationId"],
         "mode": "distributed",
         "overallStatus": overall_status,
         "fields": fields,
-        "files": [
-            {
-                "assetIds": asset_ids,
-                "status": "PROCESSED",
-                "engine": engine.id,
-                "confidence": _average([result.confidence for result in ocr_results]),
-            }
-        ],
+        "files": file_reviews(job, payload, asset_ids, ocr_results, worker_id),
         "timings": {
             "totalMs": total_ms,
             "ocrMs": sum(result.elapsed_ms for result in ocr_results),
             "validationMs": total_ms,
         },
-        "enginesUsed": [{"id": engine.id, "displayName": engine.display_name}],
-        "workersUsed": [{"id": worker_id}],
+        "enginesUsed": [{"engineId": engine.id, "displayName": engine.display_name, "timingMs": sum(result.elapsed_ms for result in ocr_results)}],
+        "workersUsed": [{"workerId": worker_id, "mode": "distributed"}],
         "createdAt": datetime.now(timezone.utc).isoformat(),
         "combinedText": combined_text,
     }
@@ -81,87 +77,48 @@ def process_validation_job(
     }
 
 
-def _review_field(key: str, expected: Any, combined_text: str, ocr_results: list) -> dict[str, Any]:
-    field_name = _field_label(key)
-    severity = "critical" if key in CRITICAL_FIELDS else "warning"
-    if expected in (None, ""):
-        return {
-            "fieldKey": key,
-            "field": field_name,
-            "expected": "",
-            "extracted": None,
-            "status": "NOT_APPLICABLE",
-            "severity": "info",
-            "confidence": 1.0,
-            "reason": "No expected value was supplied for this optional field.",
-            "evidence": [],
-        }
+def ocr_result_to_validator_payload(result, *, asset_id: str | None, image_index: int, worker_id: str) -> dict[str, Any]:
+    def annotate(items: list[dict[str, Any]], kind: str) -> list[dict[str, Any]]:
+        annotated = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            annotated.append(
+                {
+                    **item,
+                    "assetId": asset_id or item.get("assetId") or "",
+                    "imageId": asset_id or item.get("imageId") or f"image-{image_index}",
+                    "engine": result.engine_id,
+                    "workerId": worker_id,
+                    "kind": kind,
+                }
+            )
+        return annotated
 
-    expected_text = _expected_to_text(key, expected)
-    match = _contains_expected(combined_text, expected_text)
-    status = "PASS" if match else "NOT_FOUND"
-    confidence = _average([result.confidence for result in ocr_results]) if match else 0.0
     return {
-        "fieldKey": key,
-        "field": field_name,
-        "expected": expected_text,
-        "extracted": expected_text if match else None,
-        "status": status,
-        "severity": severity,
-        "confidence": confidence,
-        "reason": "Expected application value was found in OCR evidence." if match else "Expected application value was not found in OCR evidence.",
-        "evidence": _evidence_for(expected_text, combined_text, confidence) if match else [],
-        "agentStatus": "auto_reviewed",
+        "rawText": result.text,
+        "blocks": [*annotate(result.lines, "line"), *annotate(result.words, "word")],
+        "processingTimeMs": result.elapsed_ms,
+        "engine": result.engine_id,
+        "assetId": asset_id,
+        "imageId": asset_id or f"image-{image_index}",
     }
 
 
-def _field_label(key: str) -> str:
-    return re.sub(r"(?<!^)([A-Z])", r" \1", key).replace("_", " ").title()
-
-
-def _expected_to_text(key: str, expected: Any) -> str:
-    if isinstance(expected, bool):
-        if key == "governmentWarningRequired":
-            return "GOVERNMENT WARNING" if expected else "No government warning required"
-        return "true" if expected else "false"
-    return str(expected)
-
-
-def _contains_expected(combined_text: str, expected: str) -> bool:
-    normalized_text = _normalize(combined_text)
-    normalized_expected = _normalize(expected)
-    if not normalized_expected:
-        return True
-    if normalized_expected in normalized_text:
-        return True
-    expected_tokens = [token for token in normalized_expected.split() if len(token) > 1]
-    return bool(expected_tokens) and all(token in normalized_text for token in expected_tokens)
-
-
-def _normalize(value: str) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
-
-
-def _evidence_for(expected: str, combined_text: str, confidence: float) -> list[dict[str, Any]]:
-    return [
-        {
-            "text": expected,
-            "context": _snippet(combined_text, expected),
-            "confidence": confidence,
-            "source": "worker_ocr",
-        }
-    ]
-
-
-def _snippet(text: str, expected: str) -> str:
-    normalized_index = text.lower().find(expected.lower())
-    if normalized_index < 0:
-        return text[:160]
-    start = max(0, normalized_index - 60)
-    end = min(len(text), normalized_index + len(expected) + 60)
-    return text[start:end]
-
-
-def _average(values: list[float]) -> float:
-    clean = [value for value in values if value is not None]
-    return sum(clean) / len(clean) if clean else 0.0
+def file_reviews(job: dict[str, Any], payload: dict[str, Any], asset_ids: list[str], ocr_results: list, worker_id: str) -> list[dict[str, Any]]:
+    ids = asset_ids or [payload.get("asset_id") or payload.get("assetId") or ""]
+    reviews = []
+    for index, result in enumerate(ocr_results):
+        asset_id = ids[index] if index < len(ids) else ""
+        reviews.append(
+            {
+                "imageId": asset_id or f"image-{index}",
+                "assetId": asset_id,
+                "filename": payload.get("filename") or payload.get("original_filename") or f"{asset_id or job['id']}.image",
+                "engine": result.engine_id,
+                "workerId": worker_id,
+                "timingMs": result.elapsed_ms,
+                "warnings": list(result.metadata.get("warnings") or []),
+            }
+        )
+    return reviews

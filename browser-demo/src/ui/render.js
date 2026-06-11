@@ -74,7 +74,7 @@ function criticalIssues(review) {
 
 function engineSummary(review) {
   return (
-    review?.enginesUsed?.map((engine) => engine.displayName || engine.id).join(', ') ||
+    review?.enginesUsed?.map((engine) => engine.displayName || engine.id || engine.engineId).join(', ') ||
     review?.files?.map((file) => file.ocrResult?.engine).filter(Boolean).join(', ') ||
     ''
   );

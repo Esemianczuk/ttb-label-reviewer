@@ -35,6 +35,7 @@ This audit reconciles the take-home prompt, the project phase plan, and the impl
 - Added Playwright coverage for CSV manifest batching and reviewer override/export flow.
 - Added signed demo bearer auth, seeded applicant/reviewer/admin users, API-enforced RBAC, ownership checks, worker-token isolation, authz audit events, and frontend demo-token handoff.
 - Added canonical application workflow transitions with guards, correction/version side effects, audit events, and console progress tracking.
+- Replaced worker substring validation with shared deterministic Python validators, shared JS/Python golden fixtures, schema-shaped worker review results, and OCR evidence candidate preservation.
 
 ## Verification Commands
 
@@ -48,6 +49,7 @@ Targeted checks added or rerun during this audit:
 python -m pytest apps/api/app/tests/test_phase3_api.py -q
 python -m pytest apps/api/app/tests/test_phase5_auth_rbac.py -q
 python -m pytest apps/api/app/tests/test_phase6_workflow.py -q
+python -m pytest apps/api/app/tests/test_phase7_validators.py -q
 cd browser-demo && node ./node_modules/vitest/vitest.mjs run src/tests/export-report.test.js src/tests/hybrid-mode.test.js
 cd browser-demo && node ./node_modules/@playwright/test/cli.js test tests/e2e/phase7.spec.js --project=chromium-desktop
 ```

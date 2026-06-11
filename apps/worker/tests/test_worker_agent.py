@@ -129,7 +129,7 @@ def test_worker_processes_fake_review_end_to_end(api_client: TestClient, tmp_pat
     assert {field["fieldKey"] for field in completed["result"]["fields"]} >= {"brandName", "classType", "alcoholContent"}
 
     report = api_client.get(f"/api/reports/{review['id']}.json", headers=auth_headers(api_client, "reviewer", "worker-session")).json()
-    assert report["result"]["workersUsed"] == [{"id": "worker-pytest"}]
+    assert report["result"]["workersUsed"] == [{"workerId": "worker-pytest", "mode": "distributed"}]
     assert agent.run_once() is False
 
 

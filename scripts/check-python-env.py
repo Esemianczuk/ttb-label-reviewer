@@ -20,6 +20,7 @@ REQUIRED_IMPORTS = [
     "uvicorn",
     "pydantic",
     "tools.ttb_collector",
+    "ttb_validation",
     "app.main",
     "ttb_worker.main",
 ]

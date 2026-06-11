@@ -1,0 +1,21 @@
+{
+  "id": "partial_warning",
+  "description": "A heading-only government warning must not pass.",
+  "expectedFields": {
+    "productType": "distilled_spirits",
+    "brandName": "Copper Hill",
+    "classType": "Rum",
+    "alcoholContent": "40% Alc./Vol.",
+    "netContents": "750 mL",
+    "governmentWarningRequired": true
+  },
+  "ocrText": "COPPER HILL\\nRUM\\n40% ALC BY VOL\\n750 ML\\nGOVERNMENT WARNING",
+  "expectedOverallStatus": "NEEDS_REVIEW",
+  "expectedStatuses": {
+    "brandName": "PASS",
+    "classType": "PASS",
+    "alcoholContent": "PASS",
+    "netContents": "PASS",
+    "governmentWarningRequired": "NEEDS_REVIEW"
+  }
+}

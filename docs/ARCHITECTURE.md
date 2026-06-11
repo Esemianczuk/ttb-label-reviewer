@@ -76,6 +76,10 @@ RBAC is enforced in the API, not only in UI controls. Applicants are scoped to a
 
 Applications now move through canonical workflow states with `POST /api/applications/{id}/transition`. The transition service enforces legal state changes, actor permissions, applicant ownership, image requirements, correction notes, resubmission versioning, approval override rules, and audit events. See [APPLICATION_WORKFLOW.md](APPLICATION_WORKFLOW.md) for the transition table.
 
+## Deterministic Validation
+
+Browser and backend worker validation now share golden JSON fixtures and equivalent deterministic rules. The Python module `ttb_validation` mirrors the browser validators for fuzzy brand/class matching, ABV/proof equivalence, mL/liter equivalence, required government-warning segments, and optional producer/country/fanciful fields. See [VALIDATION_ENGINE.md](VALIDATION_ENGINE.md).
+
 ## Phase 4 Worker Agent
 
 `apps/worker` contains a Python worker package runnable with:
@@ -103,6 +107,7 @@ The current worker intentionally avoids bundling model weights or requiring nati
 - Backend human routes require signed demo bearer tokens; `X-Session-Id` is retained as a session/work queue hint.
 - Applicant assets and reports are scoped by application ownership.
 - Application state changes must go through the transition service.
+- OCR/model output is treated as evidence; deterministic validators decide statuses.
 - Uploaded filenames are sanitized and never used as storage paths.
 - MIME type and upload size are validated before object-store writes.
 - The object store is content-addressed as `data/assets/{sha256[:2]}/{sha256}.ext`.

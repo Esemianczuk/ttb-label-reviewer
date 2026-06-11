@@ -99,7 +99,7 @@ export function summarizeReviewForBatchRow(review, processingMode, durationMs) {
     .map((field) => field.field)
     .join(', ');
   const workerEngine =
-    review?.enginesUsed?.map((engine) => engine.displayName || engine.id).join(', ') ||
+    review?.enginesUsed?.map((engine) => engine.displayName || engine.id || engine.engineId).join(', ') ||
     review?.files?.map((file) => file.ocrResult?.engine).filter(Boolean).join(', ') ||
     'browser';
   return {

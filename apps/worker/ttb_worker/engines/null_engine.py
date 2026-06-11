@@ -5,6 +5,14 @@ from typing import Any
 
 from .base import EngineEstimate, EngineHealth, OcrEngine, OcrResult
 
+GOVERNMENT_WARNING_TEXT = (
+    "GOVERNMENT WARNING:\n"
+    "(1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy "
+    "because of the risk of birth defects.\n"
+    "(2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, "
+    "and may cause health problems."
+)
+
 
 class NullOcrEngine(OcrEngine):
     id = "null"
@@ -66,5 +74,5 @@ def _expected_fields_text(expected_fields: dict[str, Any]) -> str:
     ]
     lines = [str(expected_fields[key]) for key in ordered_keys if expected_fields.get(key)]
     if expected_fields.get("governmentWarningRequired"):
-        lines.append("GOVERNMENT WARNING")
+        lines.append(GOVERNMENT_WARNING_TEXT)
     return "\n".join(lines) or "NO FIXTURE OCR TEXT SUPPLIED"

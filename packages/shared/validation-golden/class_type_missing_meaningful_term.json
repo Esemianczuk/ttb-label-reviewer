@@ -1,0 +1,21 @@
+{
+  "id": "class_type_missing_meaningful_term",
+  "description": "Class/type should fail when a meaningful expected term is missing.",
+  "expectedFields": {
+    "productType": "distilled_spirits",
+    "brandName": "Old Mill",
+    "classType": "Bourbon Whiskey",
+    "alcoholContent": "45% Alc./Vol.",
+    "netContents": "750 mL",
+    "governmentWarningRequired": true
+  },
+  "ocrText": "OLD MILL\\nWHISKEY\\n45% ALC BY VOL\\n750 ML\\nGOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+  "expectedOverallStatus": "FAIL",
+  "expectedStatuses": {
+    "brandName": "PASS",
+    "classType": "FAIL",
+    "alcoholContent": "PASS",
+    "netContents": "PASS",
+    "governmentWarningRequired": "PASS"
+  }
+}

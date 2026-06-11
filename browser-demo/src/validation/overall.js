@@ -38,6 +38,7 @@ export function validateLabelPacket(expected, imageResults) {
   ];
 
   const optionalFields = [
+    validateOptionalTextField(FIELD_LABELS.fancifulName, expected.fancifulName, combinedOcr),
     validateOptionalTextField(FIELD_LABELS.producerName, expected.producerName, combinedOcr),
     validateOptionalTextField(FIELD_LABELS.countryOfOrigin, expected.countryOfOrigin, combinedOcr, {
       passThreshold: 0.82,

@@ -6,6 +6,7 @@ export const GOVERNMENT_WARNING_TEXT = `GOVERNMENT WARNING:
 
 export const FIELD_LABELS = {
   brandName: 'Brand Name',
+  fancifulName: 'Fanciful Name',
   classType: 'Class/Type',
   alcoholContent: 'Alcohol Content',
   netContents: 'Net Contents',
@@ -95,6 +96,7 @@ export function createInitialState() {
 export function cloneExpectedFields(fields) {
   return {
     brandName: fields.brandName || '',
+    fancifulName: fields.fancifulName || '',
     classType: fields.classType || '',
     alcoholContent: fields.alcoholContent || '',
     netContents: fields.netContents || '',
