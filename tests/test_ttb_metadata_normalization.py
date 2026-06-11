@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from tools.ttb_collector.common import is_valid_ttb_id, validate_ttb_id
+from tools.ttb_collector.discover_ttb_ids import discover_candidates, main as discover_main
 from tools.ttb_collector.download_assets import duplicate_sha256_assets, sanitize_asset_filename
 from tools.ttb_collector.normalize_metadata import map_product_type, normalize_metadata, parse_abv_percent
 from tools.ttb_collector.parse_cola_detail import parse_detail_file
@@ -83,3 +84,32 @@ def test_duplicate_sha256_detection():
         ]
     )
     assert duplicates == [{"sha256": "same", "files": ["assets/a.jpg", "assets/b.jpg"]}]
+
+
+def test_optional_discovery_parses_saved_html_and_can_return_empty(tmp_path):
+    search_html = tmp_path / "search.html"
+    search_html.write_text(
+        """
+        <table>
+          <tr>
+            <td>Brand Name</td>
+            <td>Hollow Ridge</td>
+            <td>260001</td>
+            <td><a href="/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=ABC12345678901">Detail</a></td>
+          </tr>
+        </table>
+        """,
+        encoding="utf-8",
+    )
+    result = discover_candidates({}, max_results=10, html_file=search_html)
+    assert result["candidates"][0]["ttb_id"] == "ABC12345678901"
+    assert result["candidates"][0]["detail_url"].endswith("ttbid=ABC12345678901")
+
+    empty_html = tmp_path / "empty.html"
+    empty_html.write_text("<html><body>No records found</body></html>", encoding="utf-8")
+    empty_result = discover_candidates({}, max_results=10, html_file=empty_html)
+    assert empty_result["candidates"] == []
+
+    out_json = tmp_path / "empty_candidates.json"
+    assert discover_main(["--html-file", str(empty_html), "--max-results", "10", "--out", str(out_json)]) == 2
+    assert out_json.exists()

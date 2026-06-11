@@ -126,13 +126,14 @@ def collect_one_record(
         raw_html_path.write_text(html, encoding="utf-8")
 
     metadata = parse_detail_html(html, detail_url=final_url, ttb_id_hint=ttb_id)
-    merge_printable_page_assets(metadata, session=session)
-    discovered_assets = metadata.get("assets") or []
     if skip_assets:
+        discovered_assets = metadata.get("assets") or []
         metadata["discovered_assets"] = discovered_assets
         metadata["assets"] = []
         metadata.setdefault("parse_warnings", []).append("Asset download skipped by --skip-assets.")
     else:
+        merge_printable_page_assets(metadata, session=session)
+        discovered_assets = metadata.get("assets") or []
         downloaded_assets, asset_warnings = download_assets_for_record(metadata, record_dir, refresh=refresh, session=session)
         metadata["discovered_assets"] = discovered_assets
         metadata["assets"] = downloaded_assets

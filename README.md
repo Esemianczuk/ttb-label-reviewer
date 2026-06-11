@@ -83,7 +83,13 @@ See [docs/CONSOLE_APP.md](docs/CONSOLE_APP.md) for portal behavior and verificat
 
 ## Quick Checks
 
-Run all currently configured checks from the repository root:
+Set up the local developer environment from the repository root:
+
+```bash
+./scripts/setup-dev.sh
+```
+
+Run the deterministic unit/build checks:
 
 ```bash
 ./scripts/check-all.sh
@@ -92,10 +98,16 @@ Run all currently configured checks from the repository root:
 The script runs:
 
 - `npm test` in `browser-demo`
-- `npm run test:e2e` in `browser-demo`
+- `npm test` in `apps/console`
 - `npm run build` in `browser-demo`
-- `npm test`, `npm run test:e2e`, and `npm run build` in `apps/console`
+- `npm run build` in `apps/console`
 - `python -m pytest -q` for root Python, backend API, and worker tests
+
+Playwright end-to-end checks are opt-in:
+
+```bash
+RUN_E2E=1 ./scripts/check-all.sh
+```
 
 You can also run the browser checks directly:
 

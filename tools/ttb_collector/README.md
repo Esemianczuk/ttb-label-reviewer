@@ -8,6 +8,7 @@ This tool builds a small, legally clean fixture set from public TTB Public COLA 
 
 ## Public-Only Scope
 
+- Official source: [TTB Public COLA Registry](https://www.ttb.gov/regulated-commodities/labeling/cola-public-registry).
 - Use public registry pages and public downloadable/printable resources only.
 - Do not use authenticated systems, private endpoints, or controls bypasses.
 - Keep submitted fixtures small and curated. A practical take-home sample is 25-50 records, not a mirror of the registry.
@@ -43,6 +44,8 @@ python tools/ttb_collector/collect_by_ttb_ids.py \
 ```
 
 The collector validates that IDs are exactly 14 alphanumeric characters. Existing records are skipped unless `--refresh` is supplied.
+
+For the exact real public test-fixture pull used by this repository, including the approved seed IDs, TLS CA bundle setup, collection command, and verification checks, see `tools/ttb_collector/PULL_REAL_TEST_FIXTURES.md`.
 
 ## Endpoint Configuration
 
