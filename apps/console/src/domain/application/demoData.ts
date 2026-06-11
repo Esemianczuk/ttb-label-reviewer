@@ -8,6 +8,7 @@ import type {
   ReviewApplication,
   ReviewField,
   ReviewResult,
+  ReviewStatus,
   Severity,
   WorkerSnapshot
 } from "./types";
@@ -91,7 +92,7 @@ const seeds: FixtureSeed[] = [
     },
     forcedFailures: {
       alcoholContent: {
-        status: "fail",
+        status: "FAIL",
         severity: "critical",
         reason: "The label evidence reads 45% Alc./Vol. while the expected application value is 47% Alc./Vol."
       }
@@ -121,7 +122,7 @@ const seeds: FixtureSeed[] = [
     },
     forcedFailures: {
       governmentWarning: {
-        status: "needs_review",
+        status: "NEEDS_REVIEW",
         severity: "warning",
         reason: "The required government warning is probably present, but the detected line breaks and confidence need reviewer confirmation."
       }
@@ -224,7 +225,7 @@ export function createApplicationFromSeed(seed: FixtureSeed, index = 0): ReviewA
     id: `app-${seed.id}`,
     title: seed.title,
     source: "sample",
-    status: index === 0 ? "queued" : "draft",
+    status: index === 0 ? "SUBMITTED" : "DRAFT",
     expectedOutcome: seed.expectedOutcome,
     expectedFields: seed.expected,
     images: [image],
@@ -243,9 +244,9 @@ export function createApplicationFromSeed(seed: FixtureSeed, index = 0): ReviewA
 export function createReviewForApplication(application: ReviewApplication, mode: ProcessingMode): ReviewResult {
   const seed = seeds.find((candidate) => `app-${candidate.id}` === application.id);
   const fields = createReviewFields(application, seed);
-  const hasFail = fields.some((field) => effectiveStatus(field) === "fail");
-  const hasNeedsReview = fields.some((field) => effectiveStatus(field) === "needs_review");
-  const status = hasFail ? "fail" : hasNeedsReview ? "needs_review" : "pass";
+  const hasFail = fields.some((field) => effectiveStatus(field) === "FAIL");
+  const hasNeedsReview = fields.some((field) => effectiveStatus(field) === "NEEDS_REVIEW");
+  const status: ReviewStatus = hasFail ? "FAIL" : hasNeedsReview ? "NEEDS_REVIEW" : "PASS";
   const now = new Date().toISOString();
 
   return {
@@ -257,9 +258,9 @@ export function createReviewForApplication(application: ReviewApplication, mode:
     completedAt: now,
     fields,
     summary:
-      status === "pass"
+      status === "PASS"
         ? "All required application values matched the detected label evidence."
-        : status === "fail"
+        : status === "FAIL"
           ? "One or more required TTB fields conflict with detected evidence."
           : "The automated review found low-confidence evidence requiring an agent decision.",
     engineTrace: [
@@ -283,7 +284,7 @@ export function createManualApplication(input: {
     id,
     title: input.expectedFields.brandName ? `${input.expectedFields.brandName} manual review` : "Manual label review",
     source: "upload",
-    status: "queued",
+    status: "READY_TO_SUBMIT",
     expectedOutcome: "NEEDS_REVIEW",
     expectedFields: input.expectedFields,
     images: [input.image],
@@ -326,8 +327,8 @@ function createReviewFields(application: ReviewApplication, seed?: FixtureSeed):
       const expected = fieldKey === "governmentWarning" ? warningText : String(application.expectedFields[fieldKey] || "");
       const extracted = seed?.extracted?.[fieldKey] || expected;
       const override = seed?.forcedFailures?.[fieldKey];
-      const status: FieldStatus = override?.status || "pass";
-      const severity: Severity = override?.severity || (status === "pass" ? "info" : "warning");
+      const status: FieldStatus = override?.status || "PASS";
+      const severity: Severity = override?.severity || (status === "PASS" ? "info" : "warning");
       return {
         id: `${application.id}-${fieldKey}`,
         fieldKey,
@@ -336,7 +337,7 @@ function createReviewFields(application: ReviewApplication, seed?: FixtureSeed):
         extracted,
         status,
         severity,
-        confidence: status === "pass" ? 0.98 : status === "fail" ? 0.91 : 0.64,
+        confidence: status === "PASS" ? 0.98 : status === "FAIL" ? 0.91 : 0.64,
         reason:
           override?.reason ||
           `The detected ${fieldLabels[fieldKey].toLowerCase()} evidence matches the expected application value after normalization.`,
@@ -344,7 +345,7 @@ function createReviewFields(application: ReviewApplication, seed?: FixtureSeed):
           {
             sourceImageId: application.images[0]?.id || "",
             excerpt: extracted.length > 180 ? `${extracted.slice(0, 177)}...` : extracted,
-            confidence: status === "pass" ? 0.98 : status === "fail" ? 0.91 : 0.64,
+            confidence: status === "PASS" ? 0.98 : status === "FAIL" ? 0.91 : 0.64,
             pageAnchor: "COLA sheet"
           }
         ]

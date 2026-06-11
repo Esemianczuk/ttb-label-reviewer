@@ -27,7 +27,7 @@ export function ReviewWorkbench() {
   const application = activeApplication;
 
   useEffect(() => {
-    if (application && !application.review && ["draft", "queued"].includes(application.status)) {
+    if (application && !application.review && ["DRAFT", "READY_TO_SUBMIT", "SUBMITTED"].includes(application.status)) {
       queueApplication(application.id);
       autoReviewApplication(application.id, snapshot.processingMode);
     }
@@ -174,9 +174,9 @@ function FieldDecisionTable({ application }: { application: ReviewApplication })
               })
             }
             options={[
-              { label: "Pass", value: "pass" },
-              { label: "Fail", value: "fail" },
-              { label: "Review", value: "needs_review" }
+              { label: "Pass", value: "PASS" },
+              { label: "Fail", value: "FAIL" },
+              { label: "Review", value: "NEEDS_REVIEW" }
             ]}
           />
           <Input.TextArea
@@ -205,7 +205,7 @@ function FieldDecisionTable({ application }: { application: ReviewApplication })
 
 function ReviewNotesPanel({ application }: { application: ReviewApplication }) {
   const [form] = Form.useForm();
-  const status = application.review?.reviewerOverallStatus || application.status;
+  const status = application.review?.reviewerOverallStatus || application.review?.status || "NEEDS_REVIEW";
 
   return (
     <Card title="Agent Decision" size="small">
@@ -226,13 +226,13 @@ function ReviewNotesPanel({ application }: { application: ReviewApplication }) {
       >
         <Form.Item label="Final disposition" name="reviewerOverallStatus">
           <Radio.Group buttonStyle="solid">
-            <Radio.Button value="pass">
+            <Radio.Button value="PASS">
               <CheckCircleOutlined /> Pass
             </Radio.Button>
-            <Radio.Button value="fail">
+            <Radio.Button value="FAIL">
               <StopOutlined /> Fail
             </Radio.Button>
-            <Radio.Button value="needs_review">Needs Review</Radio.Button>
+            <Radio.Button value="NEEDS_REVIEW">Needs Review</Radio.Button>
           </Radio.Group>
         </Form.Item>
         <Form.Item label="Notes and reasoning" name="reviewerNotes">

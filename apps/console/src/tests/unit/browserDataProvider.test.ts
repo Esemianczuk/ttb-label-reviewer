@@ -20,7 +20,7 @@ describe("browser data provider", () => {
     });
     const reviewed = getSnapshot().applications.find((application) => application.id === applicationId);
     expect(reviewed?.review?.fields.length).toBeGreaterThan(5);
-    expect(reviewed?.status).toBe("pass");
+    expect(reviewed?.status).toBe("APPROVED");
   });
 
   it("updates field decisions as reviewer overrides", async () => {
@@ -31,10 +31,10 @@ describe("browser data provider", () => {
     await browserDataProvider.custom?.({
       url: "reviews/field",
       method: "patch",
-      payload: { applicationId, fieldId, status: "fail", reason: "Manual reviewer override." }
+      payload: { applicationId, fieldId, status: "FAIL", reason: "Manual reviewer override." }
     });
     const field = getSnapshot().applications[0].review?.fields[0];
-    expect(field?.reviewerStatus).toBe("fail");
-    expect(getSnapshot().applications[0].status).toBe("fail");
+    expect(field?.reviewerStatus).toBe("FAIL");
+    expect(getSnapshot().applications[0].status).toBe("REJECTED");
   });
 });

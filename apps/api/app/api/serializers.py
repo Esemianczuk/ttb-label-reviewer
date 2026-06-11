@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .. import models
+from ..core.statuses import canonical_application_status, canonical_review_status
 
 
 def application_to_read(application: models.Application):
@@ -9,6 +10,7 @@ def application_to_read(application: models.Application):
         "sessionId": application.session_id,
         "source": application.source,
         "status": application.status,
+        "canonicalStatus": canonical_application_status(application.status),
         "expectedFields": application.expected_fields,
         "metadata": application.metadata_json,
         "createdAt": application.created_at,
@@ -38,6 +40,7 @@ def review_to_read(review: models.Review):
         "applicationId": review.application_id,
         "mode": review.mode,
         "status": review.status,
+        "canonicalStatus": canonical_review_status(review.status),
         "result": review.result_json,
         "createdAt": review.created_at,
         "completedAt": review.completed_at,

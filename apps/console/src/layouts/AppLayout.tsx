@@ -42,7 +42,7 @@ export function AppLayout() {
         </div>
         <Space wrap className="header-actions">
           <ModeSwitcher mode={snapshot.processingMode} onChange={setProcessingMode} />
-          <StatusBadge status={activeApplication?.status || "draft"} />
+          <StatusBadge status={activeApplication?.status || "DRAFT"} />
           <Tooltip title="Reset applications, decisions, notes, and active queue position">
             <Button icon={<ReloadOutlined />} onClick={() => resetSnapshot()}>
               Reset Demo

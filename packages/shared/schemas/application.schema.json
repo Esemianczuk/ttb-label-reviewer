@@ -4,7 +4,7 @@
   "title": "ApplicationPacket",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "source", "expectedFields", "images", "metadata"],
+  "required": ["id", "applicationId", "source", "status", "expectedFields", "images", "metadata"],
   "properties": {
     "id": {
       "type": "string",
@@ -13,9 +13,15 @@
     "applicationId": {
       "type": "string"
     },
+    "ownerUserId": {
+      "type": "string"
+    },
     "source": {
       "type": "string",
       "enum": ["sample", "upload", "public_cola_registry", "manual"]
+    },
+    "status": {
+      "$ref": "#/$defs/ApplicationStatus"
     },
     "expectedFields": {
       "$ref": "#/$defs/ExpectedFields"
@@ -32,6 +38,24 @@
     }
   },
   "$defs": {
+    "ApplicationStatus": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "PRECHECK_RUNNING",
+        "APPLICANT_FIX_REQUIRED",
+        "READY_TO_SUBMIT",
+        "SUBMITTED",
+        "IN_REVIEW",
+        "NEEDS_CORRECTION",
+        "RESUBMITTED",
+        "CONDITIONALLY_APPROVED",
+        "APPROVED",
+        "REJECTED",
+        "WITHDRAWN",
+        "ARCHIVED"
+      ]
+    },
     "ExpectedFields": {
       "type": "object",
       "additionalProperties": false,
@@ -84,7 +108,7 @@
         },
         "role": {
           "type": "string",
-          "enum": ["front", "back", "neck", "carton", "cola_sheet", "unknown"]
+          "enum": ["front", "back", "neck", "carton", "other", "cola_sheet", "unknown"]
         },
         "name": {
           "type": "string",

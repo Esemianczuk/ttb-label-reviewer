@@ -25,6 +25,10 @@
       "type": "string",
       "minLength": 1
     },
+    "applicationId": {
+      "type": "string",
+      "minLength": 1
+    },
     "mode": {
       "type": "string",
       "enum": ["browser", "backend", "distributed"]
@@ -67,12 +71,12 @@
   "$defs": {
     "ReviewStatus": {
       "type": "string",
-      "enum": ["PASS", "FAIL", "WARNING", "NEEDS_REVIEW", "NOT_FOUND", "PASS_WITH_WARNINGS"]
+      "enum": ["PASS", "FAIL", "WARNING", "NEEDS_REVIEW", "NOT_FOUND", "NOT_APPLICABLE", "PASS_WITH_WARNINGS"]
     },
     "FieldReview": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fieldKey", "field", "expected", "status", "severity", "confidence", "reason", "evidence"],
+      "required": ["fieldKey", "field", "expected", "extracted", "status", "severity", "confidence", "reason", "evidence"],
       "properties": {
         "fieldKey": {
           "type": "string"
@@ -111,6 +115,12 @@
           "$ref": "#/$defs/ReviewStatus"
         },
         "agentNote": {
+          "type": "string"
+        },
+        "reviewerStatus": {
+          "$ref": "#/$defs/ReviewStatus"
+        },
+        "reviewerNote": {
           "type": "string"
         }
       }

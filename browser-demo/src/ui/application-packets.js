@@ -1,5 +1,5 @@
 const VALID_PRODUCT_TYPES = new Set(['distilled_spirits', 'wine', 'malt_beverage', 'unknown']);
-const VALID_IMAGE_ROLES = new Set(['front', 'back', 'neck', 'carton', 'cola_sheet', 'unknown']);
+const VALID_IMAGE_ROLES = new Set(['front', 'back', 'neck', 'carton', 'other', 'cola_sheet', 'unknown']);
 
 export function normalizeImageRole(role = '') {
   const normalized = String(role || '')
@@ -63,6 +63,7 @@ export function createApplicationPacketFromSample(packet, expected, images, { cr
     id: packet.id,
     applicationId: expectedFields.applicationId || packet.id,
     source: 'sample',
+    status: 'SUBMITTED',
     expectedFields,
     images: applicationImagesFromEntries(images),
     metadata,

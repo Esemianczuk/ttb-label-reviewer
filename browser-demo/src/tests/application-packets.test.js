@@ -40,13 +40,16 @@ function expectOnlySchemaKeys(object, schemaProperties) {
 describe('shared packet schemas', () => {
   it('defines the canonical contracts needed by browser, backend, and workers', () => {
     expect(applicationSchema.title).toBe('ApplicationPacket');
-    expect(applicationSchema.required).toEqual(['id', 'source', 'expectedFields', 'images', 'metadata']);
+    expect(applicationSchema.required).toEqual(['id', 'applicationId', 'source', 'status', 'expectedFields', 'images', 'metadata']);
     expect(applicationSchema.properties.source.enum).toContain('sample');
+    expect(applicationSchema.$defs.ApplicationStatus.enum).toContain('SUBMITTED');
     expect(applicationSchema.$defs.ApplicationImage.properties.role.enum).toContain('cola_sheet');
     expect(reviewSchema.title).toBe('ReviewResult');
-    expect(reviewSchema.$defs.FieldReview.properties.agentStatus).toBeTruthy();
+    expect(reviewSchema.$defs.ReviewStatus.enum).toContain('NOT_APPLICABLE');
+    expect(reviewSchema.$defs.FieldReview.properties.reviewerStatus).toBeTruthy();
     expect(reviewSchema.$defs.EvidenceCandidate.required).toEqual(['text', 'method']);
     expect(jobSchema.title).toBe('ReviewJob');
+    expect(jobSchema.required).toContain('updatedAt');
     expect(jobSchema.properties.jobType.enum).toContain('ocr');
   });
 });
@@ -77,6 +80,7 @@ describe('ApplicationPacket sample adapter', () => {
       seenIds.add(applicationPacket.id);
       expect(sourceEnum).toContain(applicationPacket.source);
       expect(applicationPacket.source).toBe('sample');
+      expect(applicationPacket.status).toBe('SUBMITTED');
       expect(applicationPacket.expectedFields.brandName).toBe(expected.brandName);
       expect(applicationPacket.expectedFields.classType).toBe(expected.classType);
       expect(applicationPacket.expectedFields.alcoholContent).toBe(expected.alcoholContent);

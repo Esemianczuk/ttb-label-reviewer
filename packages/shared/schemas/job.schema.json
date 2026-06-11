@@ -4,7 +4,7 @@
   "title": "ReviewJob",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "sessionId", "jobType", "status", "priority", "payload", "createdAt"],
+  "required": ["id", "applicationId", "sessionId", "jobType", "status", "priority", "payload", "createdAt", "updatedAt"],
   "properties": {
     "id": {
       "type": "string",

@@ -3,15 +3,30 @@ export type UserRole = "applicant" | "reviewer" | "admin";
 export type ProcessingMode = "browser" | "backend" | "cluster";
 
 export type ApplicationStatus =
-  | "draft"
-  | "queued"
-  | "processing"
-  | "needs_review"
-  | "pass"
-  | "fail"
-  | "submitted";
+  | "DRAFT"
+  | "PRECHECK_RUNNING"
+  | "APPLICANT_FIX_REQUIRED"
+  | "READY_TO_SUBMIT"
+  | "SUBMITTED"
+  | "IN_REVIEW"
+  | "NEEDS_CORRECTION"
+  | "RESUBMITTED"
+  | "CONDITIONALLY_APPROVED"
+  | "APPROVED"
+  | "REJECTED"
+  | "WITHDRAWN"
+  | "ARCHIVED";
 
-export type FieldStatus = "pass" | "fail" | "needs_review" | "not_applicable";
+export type ReviewStatus =
+  | "PASS"
+  | "FAIL"
+  | "WARNING"
+  | "NEEDS_REVIEW"
+  | "NOT_FOUND"
+  | "NOT_APPLICABLE"
+  | "PASS_WITH_WARNINGS";
+
+export type FieldStatus = ReviewStatus;
 
 export type Severity = "info" | "warning" | "critical";
 
@@ -65,12 +80,12 @@ export type ReviewResult = {
   id: string;
   applicationId: string;
   mode: ProcessingMode;
-  status: ApplicationStatus;
+  status: ReviewStatus;
   startedAt: string;
   completedAt?: string;
   fields: ReviewField[];
   summary: string;
-  reviewerOverallStatus?: "pass" | "fail" | "needs_review";
+  reviewerOverallStatus?: ReviewStatus;
   reviewerNotes?: string;
   engineTrace: string[];
 };

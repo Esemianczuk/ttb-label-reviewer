@@ -12,7 +12,7 @@ export function AdminPortal() {
   const { snapshot, activeApplication } = useConsoleStore();
   const { health } = useBackendHealth();
   const completed = snapshot.applications.filter((application) => application.review).length;
-  const failures = snapshot.applications.filter((application) => application.status === "fail").length;
+  const failures = snapshot.applications.filter((application) => application.status === "REJECTED").length;
 
   return (
     <Space orientation="vertical" className="full-width" size={16}>

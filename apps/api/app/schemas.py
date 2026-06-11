@@ -47,6 +47,7 @@ class ApplicationRead(BaseModel):
     sessionId: str
     source: str
     status: str
+    canonicalStatus: str
     expectedFields: dict[str, Any]
     metadata: dict[str, Any]
     createdAt: datetime
@@ -77,6 +78,7 @@ class ReviewRead(BaseModel):
     applicationId: str
     mode: str
     status: str
+    canonicalStatus: str
     result: dict[str, Any] | None = None
     createdAt: datetime
     completedAt: datetime | None = None
