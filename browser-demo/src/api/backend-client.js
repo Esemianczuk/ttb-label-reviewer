@@ -6,6 +6,7 @@ export const BACKEND_URL_STORAGE_KEY = 'ttb-reviewer-backend-url';
 
 const COMPLETE_REVIEW_STATUSES = new Set(['pass', 'fail', 'pass_with_warnings', 'needs_review', 'completed']);
 const TERMINAL_ERROR_STATUSES = new Set(['failed', 'cancelled']);
+const demoAuthCache = new Map();
 
 export function getStoredBackendUrl(storage = globalThis.localStorage) {
   try {
@@ -49,10 +50,11 @@ function timeoutSignal(ms) {
   };
 }
 
-async function requestJson(path, { backendUrl, sessionId, method = 'GET', body, signal } = {}) {
+async function requestJson(path, { backendUrl, sessionId, method = 'GET', body, signal, authRole = 'applicant' } = {}) {
   const headers = { Accept: 'application/json' };
   if (sessionId) headers['X-Session-Id'] = sessionId;
   if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (authRole) headers.Authorization = `Bearer ${await getDemoToken({ backendUrl, role: authRole, signal })}`;
   const response = await fetch(`${normalizeBackendUrl(backendUrl)}${path}`, {
     method,
     headers,
@@ -77,7 +79,7 @@ async function responseErrorMessage(response) {
 export async function checkBackendHealth(backendUrl, { timeoutMs = 1400 } = {}) {
   const timeout = timeoutSignal(timeoutMs);
   try {
-    return await requestJson('/api/health', { backendUrl, signal: timeout.signal });
+    return await requestJson('/api/health', { backendUrl, signal: timeout.signal, authRole: null });
   } finally {
     timeout.cancel();
   }
@@ -85,9 +87,9 @@ export async function checkBackendHealth(backendUrl, { timeoutMs = 1400 } = {}) 
 
 export async function fetchClusterSnapshot(backendUrl, { sessionId } = {}) {
   const [workers, events, clusterStatus] = await Promise.all([
-    requestJson('/api/workers', { backendUrl, sessionId }),
-    requestJson('/api/workers/events?limit=20', { backendUrl, sessionId }),
-    requestJson('/api/cluster/status', { backendUrl, sessionId }).catch(() => null),
+    requestJson('/api/workers', { backendUrl, sessionId, authRole: 'admin' }),
+    requestJson('/api/workers/events?limit=20', { backendUrl, sessionId, authRole: 'admin' }),
+    requestJson('/api/cluster/status', { backendUrl, sessionId, authRole: 'admin' }).catch(() => null),
   ]);
   return { workers, events, clusterStatus };
 }
@@ -127,11 +129,34 @@ export async function uploadRemoteImage({ backendUrl, sessionId, applicationId, 
   formData.set('file', blob, image.name || 'application-image.png');
   const response = await fetch(`${normalizeBackendUrl(backendUrl)}/api/applications/${applicationId}/images`, {
     method: 'POST',
-    headers: sessionId ? { 'X-Session-Id': sessionId } : {},
+    headers: {
+      ...(sessionId ? { 'X-Session-Id': sessionId } : {}),
+      Authorization: `Bearer ${await getDemoToken({ backendUrl, role: 'applicant' })}`,
+    },
     body: formData,
   });
   if (!response.ok) throw new Error(await responseErrorMessage(response));
   return response.json();
+}
+
+export async function getDemoToken({ backendUrl, role = 'applicant', signal } = {}) {
+  const key = `${normalizeBackendUrl(backendUrl)}:${role}`;
+  const cached = demoAuthCache.get(key);
+  if (cached && Date.parse(cached.expiresAt) - Date.now() > 60_000) return cached.token;
+
+  const response = await fetch(`${normalizeBackendUrl(backendUrl)}/api/auth/demo-login`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ role }),
+    signal,
+  });
+  if (!response.ok) throw new Error(await responseErrorMessage(response));
+  const payload = await response.json();
+  demoAuthCache.set(key, { token: payload.token, expiresAt: payload.expiresAt });
+  return payload.token;
 }
 
 export async function startRemoteReview({ backendUrl, sessionId, applicationId, mode }) {

@@ -3,6 +3,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
+from .. import models
+from ..api.deps import get_current_user, require_permission
 from ..core.join_tokens import create_join_token
 from ..core.mdns import SERVICE_TYPE
 from ..db import get_session
@@ -12,7 +14,8 @@ router = APIRouter(prefix="/api/cluster", tags=["cluster"])
 
 
 @router.get("/status", response_model=ClusterStatusRead)
-def cluster_status(request: Request):
+def cluster_status(request: Request, current_user: models.User = Depends(get_current_user), session: Session = Depends(get_session)):
+    require_permission(session, current_user, resource="workers", action="manage")
     settings = request.app.state.settings
     coordinator_url = coordinator_url_for(request)
     return {
@@ -25,7 +28,13 @@ def cluster_status(request: Request):
 
 
 @router.post("/join-token", response_model=JoinTokenRead, status_code=201)
-def issue_join_token(payload: JoinTokenCreate, request: Request, session: Session = Depends(get_session)):
+def issue_join_token(
+    payload: JoinTokenCreate,
+    request: Request,
+    session: Session = Depends(get_session),
+    current_user: models.User = Depends(get_current_user),
+):
+    require_permission(session, current_user, resource="workers", action="manage")
     settings = request.app.state.settings
     ttl_seconds = payload.ttlSeconds or settings.join_token_ttl_seconds
     coordinator_url = payload.coordinatorUrl or coordinator_url_for(request)

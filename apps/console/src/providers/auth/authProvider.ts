@@ -12,20 +12,20 @@ export type ConsoleIdentity = {
 
 const identities: Record<UserRole, ConsoleIdentity> = {
   applicant: {
-    id: "user-applicant",
-    name: "Application Submitter",
+    id: "00000000-0000-0000-0000-000000000001",
+    name: "Demo Applicant",
     role: "applicant",
-    email: "submitter@example.local"
+    email: "applicant@example.local"
   },
   reviewer: {
-    id: "user-reviewer",
-    name: "Review Agent",
+    id: "00000000-0000-0000-0000-000000000002",
+    name: "Demo Reviewer",
     role: "reviewer",
     email: "reviewer@example.local"
   },
   admin: {
-    id: "user-admin",
-    name: "Coordinator Admin",
+    id: "00000000-0000-0000-0000-000000000003",
+    name: "Demo Admin",
     role: "admin",
     email: "admin@example.local"
   }

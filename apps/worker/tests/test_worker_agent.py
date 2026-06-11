@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from apps.api.app.config import Settings
 from apps.api.app.main import create_app
+from apps.api.app.tests.helpers import auth_headers
 from ttb_worker.agent import WorkerAgent, WorkerConfig, resolve_concurrency
 from ttb_worker.engines.null_engine import NullOcrEngine
 from ttb_worker.transport import CoordinatorClient
@@ -27,14 +28,9 @@ def api_client(tmp_path):
         yield client
 
 
-def headers(session_id: str = "worker-session") -> dict[str, str]:
-    return {"X-Session-Id": session_id}
-
-
 def create_review(api_client: TestClient) -> dict:
     application_response = api_client.post(
         "/api/applications",
-        headers=headers(),
         json={
             "source": "upload",
             "expectedFields": {
@@ -50,25 +46,30 @@ def create_review(api_client: TestClient) -> dict:
             },
             "metadata": {"notes": "worker integration test"},
         },
+        headers=auth_headers(api_client, "applicant", "worker-session"),
     )
     assert application_response.status_code == 201, application_response.text
     application = application_response.json()
 
     image_response = api_client.post(
         f"/api/applications/{application['id']}/images",
-        headers=headers(),
+        headers=auth_headers(api_client, "applicant", "worker-session"),
         data={"role": "front"},
         files={"file": ("front.png", PNG_BYTES, "image/png")},
     )
     assert image_response.status_code == 201, image_response.text
 
-    review_response = api_client.post(f"/api/applications/{application['id']}/review", headers=headers(), json={"mode": "distributed"})
+    review_response = api_client.post(
+        f"/api/applications/{application['id']}/review",
+        headers=auth_headers(api_client, "reviewer", "worker-session"),
+        json={"mode": "distributed"},
+    )
     assert review_response.status_code == 201, review_response.text
     return review_response.json()
 
 
 def create_join_token(api_client: TestClient) -> str:
-    response = api_client.post("/api/cluster/join-token", json={"ttlSeconds": 300})
+    response = api_client.post("/api/cluster/join-token", headers=auth_headers(api_client, "admin"), json={"ttlSeconds": 300})
     assert response.status_code == 201, response.text
     return response.json()["token"]
 
@@ -118,16 +119,16 @@ def test_worker_processes_fake_review_end_to_end(api_client: TestClient, tmp_pat
     assert recalibrate.json()["calibration"]["recalibrationStatus"] == "requested"
 
     assert agent.run_once() is True
-    assert api_client.get(f"/api/reviews/{review['id']}", headers=headers()).json()["status"] == "processing"
+    assert api_client.get(f"/api/reviews/{review['id']}", headers=auth_headers(api_client, "reviewer", "worker-session")).json()["status"] == "processing"
     assert agent.run_once() is True
     assert agent.run_once() is True
 
-    completed = api_client.get(f"/api/reviews/{review['id']}", headers=headers()).json()
+    completed = api_client.get(f"/api/reviews/{review['id']}", headers=auth_headers(api_client, "reviewer", "worker-session")).json()
     assert completed["status"] == "pass"
     assert completed["result"]["overallStatus"] == "PASS"
     assert {field["fieldKey"] for field in completed["result"]["fields"]} >= {"brandName", "classType", "alcoholContent"}
 
-    report = api_client.get(f"/api/reports/{review['id']}.json", headers=headers()).json()
+    report = api_client.get(f"/api/reports/{review['id']}.json", headers=auth_headers(api_client, "reviewer", "worker-session")).json()
     assert report["result"]["workersUsed"] == [{"id": "worker-pytest"}]
     assert agent.run_once() is False
 

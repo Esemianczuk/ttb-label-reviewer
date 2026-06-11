@@ -8,6 +8,24 @@ export const backendHandlers = [
       assetRoot: "data/assets"
     })
   ),
+  http.post("http://127.0.0.1:8000/api/auth/demo-login", async ({ request }) => {
+    const body = (await request.json()) as { role?: "applicant" | "reviewer" | "admin" };
+    const role = body.role || "reviewer";
+    return HttpResponse.json({
+      token: `ttb_demo_msw_${role}`,
+      expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+      user: {
+        id: `msw-${role}`,
+        email: `${role}@example.local`,
+        displayName: `MSW ${role}`,
+        role,
+        status: "active",
+        organizationId: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    });
+  }),
   http.get("http://127.0.0.1:8000/api/workers", () =>
     HttpResponse.json([
       {

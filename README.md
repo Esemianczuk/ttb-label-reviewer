@@ -36,7 +36,7 @@ export TTB_API_DATABASE_URL="postgresql+psycopg://user:password@localhost:5432/t
 
 The backend serves `browser-demo/dist` from `/` when a production browser build exists.
 
-In the browser, choose **Local Backend** from Processing Mode. The app probes the configured URL, uploads the one-image application packet, starts a backend review, listens to the session WebSocket, and polls the review until the worker result is available. If the backend is unavailable, the same Auto Review button falls back to Browser Only.
+In the browser, choose **Local Backend** from Processing Mode. The app probes the configured URL, logs in as the demo applicant, uploads the one-image application packet, starts a backend review, listens to the session WebSocket, and polls the review until the worker result is available. If the backend is unavailable, the same Auto Review button falls back to Browser Only.
 
 ### Distributed Cluster Mode
 
@@ -51,7 +51,7 @@ JOIN_TOKEN="$(curl -sS -X POST http://127.0.0.1:8000/api/cluster/join-token \
 
 The worker always includes a deterministic null OCR engine for demos and tests. If local OCR tooling such as Tesseract is installed, the worker advertises and can use it without making those packages mandatory.
 Manual join tokens are short-lived; the worker receives and stores a persistent secret after registration.
-Cluster mode uses the same backend review API while the browser shows worker cards, throughput counters, and recent scheduler assignment reasons from `/api/workers/events`.
+Cluster mode uses the same backend review API while the browser uses demo admin auth to show worker cards, throughput counters, and recent scheduler assignment reasons from `/api/workers/events`.
 
 ## Current Repository Layout
 
@@ -72,7 +72,7 @@ The requested future `apps/browser` and `apps/worker` structure will be introduc
 
 ## Refine Console
 
-`apps/console` adds an enterprise-style reviewer console without removing the V1 browser demo. It includes applicant, reviewer, and admin portals; role-based access rules; browser/backend/cluster mode controls; one-image upload intake; immediate sample queue processing; preserved reviewer overrides; detached image zoom/pan; audit tables; worker telemetry; Orval client generation config; PDF exports; Vitest unit tests; and Playwright desktop/mobile accessibility coverage.
+`apps/console` adds an enterprise-style reviewer console without removing the V1 browser demo. It includes applicant, reviewer, and admin portals; role-based access rules; demo bearer auth for backend calls; browser/backend/cluster mode controls; one-image upload intake; immediate sample queue processing; preserved reviewer overrides; detached image zoom/pan; audit tables; worker telemetry; Orval client generation config; PDF exports; Vitest unit tests; and Playwright desktop/mobile accessibility coverage.
 
 ```bash
 npm install --prefix apps/console
@@ -174,6 +174,7 @@ The V1 app remains in `browser-demo/`. New shared contracts start in `packages/s
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/DISTRIBUTED_MODE.md](docs/DISTRIBUTED_MODE.md), and [docs/EVALUATOR_GUIDE.md](docs/EVALUATOR_GUIDE.md) for the coordinator and worker shape.
 The Phase 4 enterprise backend tables are documented in [docs/BACKEND_ENTERPRISE_MODEL.md](docs/BACKEND_ENTERPRISE_MODEL.md).
+Demo auth and RBAC enforcement are documented in [docs/AUTH_RBAC.md](docs/AUTH_RBAC.md).
 The Phase 5 hardware-aware scheduler is documented in [docs/SCHEDULER.md](docs/SCHEDULER.md).
 Phase 6 worker join/discovery is documented in [docs/DISTRIBUTED_MODE.md](docs/DISTRIBUTED_MODE.md).
 Phase 7 frontend backend/cluster mode is documented in [docs/EVALUATOR_GUIDE.md](docs/EVALUATOR_GUIDE.md).

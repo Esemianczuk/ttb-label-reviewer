@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .. import models
-from ..api.deps import get_session_id
+from ..api.deps import get_current_user, get_session_id, require_permission
 from ..api.serializers import application_to_read, asset_to_read, review_to_read
 from ..core.object_store import ObjectStore
 from ..db import get_session
@@ -17,9 +17,28 @@ router = APIRouter(prefix="/api/applications", tags=["applications"])
 REVIEW_JOB_TYPES = ("ocr", "evidence_crop", "validation")
 
 
-def require_application(session: Session, application_id: str, session_id: str) -> models.Application:
+def require_application(
+    session: Session,
+    application_id: str,
+    session_id: str,
+    current_user: models.User | None = None,
+    *,
+    action: str = "read",
+) -> models.Application:
     application = session.get(models.Application, application_id)
-    if not application or application.session_id != session_id:
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found.")
+    if current_user:
+        require_permission(
+            session,
+            current_user,
+            resource="applications",
+            action=action,
+            entity=application,
+            entity_id=application_id,
+            not_found_for_applicant=True,
+        )
+    elif application.session_id != session_id:
         raise HTTPException(status_code=404, detail="Application not found.")
     return application
 
@@ -86,7 +105,9 @@ def create_application(
     payload: ApplicationCreate,
     session: Session = Depends(get_session),
     session_id: str = Depends(get_session_id),
+    current_user: models.User = Depends(get_current_user),
 ):
+    require_permission(session, current_user, resource="applications", action="create")
     metadata = payload.metadata.model_dump(mode="json", exclude_none=True)
     if payload.applicationId:
         metadata.setdefault("applicationId", payload.applicationId)
@@ -96,6 +117,8 @@ def create_application(
         session_id=session_id,
         source=payload.source,
         status="created",
+        owner_user_id=current_user.id,
+        organization_id=current_user.organization_id,
         expected_fields=expected_fields,
         metadata_json=metadata,
     )
@@ -113,16 +136,29 @@ def create_application(
 
 
 @router.get("", response_model=list[ApplicationRead])
-def list_applications(session: Session = Depends(get_session), session_id: str = Depends(get_session_id)):
-    applications = session.scalars(
-        select(models.Application).where(models.Application.session_id == session_id).order_by(models.Application.created_at.desc())
-    ).all()
+def list_applications(
+    session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
+    current_user: models.User = Depends(get_current_user),
+):
+    require_permission(session, current_user, resource="applications", action="list")
+    query = select(models.Application).order_by(models.Application.created_at.desc())
+    if current_user.role == "applicant":
+        query = query.where(models.Application.owner_user_id == current_user.id)
+    elif current_user.role != "admin":
+        query = query.where(models.Application.session_id == session_id)
+    applications = session.scalars(query).all()
     return [application_to_read(application) for application in applications]
 
 
 @router.get("/{application_id}", response_model=ApplicationRead)
-def get_application(application_id: str, session: Session = Depends(get_session), session_id: str = Depends(get_session_id)):
-    return application_to_read(require_application(session, application_id, session_id))
+def get_application(
+    application_id: str,
+    session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
+    current_user: models.User = Depends(get_current_user),
+):
+    return application_to_read(require_application(session, application_id, session_id, current_user))
 
 
 @router.post("/{application_id}/images", response_model=AssetRead, status_code=201)
@@ -133,8 +169,9 @@ async def upload_image(
     role: str = Form("unknown"),
     session: Session = Depends(get_session),
     session_id: str = Depends(get_session_id),
+    current_user: models.User = Depends(get_current_user),
 ):
-    application = require_application(session, application_id, session_id)
+    application = require_application(session, application_id, session_id, current_user, action="upload")
     store = ObjectStore(request.app.state.settings.asset_root, request.app.state.settings.max_upload_bytes)
     try:
         stored = await store.store_upload(file)
@@ -174,8 +211,17 @@ def create_review(
     payload: ReviewCreate,
     session: Session = Depends(get_session),
     session_id: str = Depends(get_session_id),
+    current_user: models.User = Depends(get_current_user),
 ):
-    application = require_application(session, application_id, session_id)
+    application = require_application(
+        session,
+        application_id,
+        session_id,
+        current_user,
+        action="run_precheck" if current_user.role == "applicant" else "read",
+    )
+    if current_user.role != "applicant":
+        require_permission(session, current_user, resource="reviews", action="create", entity=application, entity_id=application_id)
     assets = list(application.assets)
     if not assets:
         raise HTTPException(status_code=400, detail="Application has no uploaded images.")

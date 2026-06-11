@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cloneExpectedFields, createInitialState } from '../app-state.js';
-import { checkBackendHealth, remoteReviewToFrontendReview } from '../api/backend-client.js';
+import { checkBackendHealth, createRemoteApplication, fetchClusterSnapshot, remoteReviewToFrontendReview } from '../api/backend-client.js';
 import { renderApp } from '../ui/render.js';
 import { STATUS } from '../validation/status.js';
 
@@ -20,6 +20,66 @@ describe('hybrid backend client', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(checkBackendHealth('http://localhost:8000/')).resolves.toMatchObject({ ok: true });
+  });
+
+  it('logs in as the demo applicant before mutating backend applications', async () => {
+    const fetchMock = vi.fn(async (url, init = {}) => {
+      if (url === 'http://backend.test/api/auth/demo-login') {
+        expect(JSON.parse(init.body)).toEqual({ role: 'applicant' });
+        return {
+          ok: true,
+          json: async () => ({ token: 'ttb_demo_applicant_test', expiresAt: new Date(Date.now() + 3600_000).toISOString() }),
+        };
+      }
+      expect(url).toBe('http://backend.test/api/applications');
+      expect(init.headers.Authorization).toBe('Bearer ttb_demo_applicant_test');
+      expect(init.headers['X-Session-Id']).toBe('browser-test');
+      return {
+        ok: true,
+        json: async () => ({ id: 'app-1', status: 'created' }),
+      };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      createRemoteApplication({
+        backendUrl: 'http://backend.test',
+        sessionId: 'browser-test',
+        expected: {
+          productType: 'distilled_spirits',
+          brandName: 'Hollow Ridge',
+          classType: 'Bourbon Whiskey',
+          alcoholContent: '45% alc/vol',
+          netContents: '750 mL',
+          governmentWarningRequired: true,
+        },
+        application: { packetId: 'packet-1', mode: 'samples', title: 'Hollow Ridge' },
+      }),
+    ).resolves.toMatchObject({ id: 'app-1' });
+  });
+
+  it('uses admin auth for cluster telemetry', async () => {
+    const fetchMock = vi.fn(async (url, init = {}) => {
+      if (url === 'http://cluster.test/api/auth/demo-login') {
+        expect(JSON.parse(init.body)).toEqual({ role: 'admin' });
+        return {
+          ok: true,
+          json: async () => ({ token: 'ttb_demo_admin_test', expiresAt: new Date(Date.now() + 3600_000).toISOString() }),
+        };
+      }
+      expect(init.headers.Authorization).toBe('Bearer ttb_demo_admin_test');
+      if (url.endsWith('/api/workers')) return { ok: true, json: async () => [] };
+      if (url.endsWith('/api/workers/events?limit=20')) return { ok: true, json: async () => [] };
+      if (url.endsWith('/api/cluster/status')) return { ok: true, json: async () => ({ mdnsService: '_ttb-label-reviewer._tcp.local.' }) };
+      throw new Error(`Unexpected URL ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchClusterSnapshot('http://cluster.test', { sessionId: 'browser-test' })).resolves.toMatchObject({
+      workers: [],
+      events: [],
+      clusterStatus: { mdnsService: '_ttb-label-reviewer._tcp.local.' },
+    });
   });
 
   it('adapts backend review results to the browser reviewer shape', () => {

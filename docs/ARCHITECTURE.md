@@ -66,6 +66,12 @@ Workers now join the coordinator through a short-lived manual token:
 
 mDNS discovery is optional through `zeroconf`. The coordinator does not bind beyond localhost unless `TTB_API_HOST=0.0.0.0` or another explicit host is supplied, and the scripts print a LAN warning in that mode.
 
+## Demo Auth And RBAC
+
+The backend coordinator now protects human API routes with signed demo bearer tokens. `POST /api/auth/demo-login` issues role-scoped tokens for applicant, reviewer, and admin demo users; `GET /api/auth/me`, `POST /api/auth/logout`, and `POST /api/authz/can` provide the small auth surface needed by the browser demo and console.
+
+RBAC is enforced in the API, not only in UI controls. Applicants are scoped to applications they own, reviewers cannot manage workers, admins can manage all coordinator resources, and worker secrets cannot call human endpoints. See [AUTH_RBAC.md](AUTH_RBAC.md) for the route contract and verification checks.
+
 ## Phase 4 Worker Agent
 
 `apps/worker` contains a Python worker package runnable with:
@@ -90,7 +96,8 @@ The current worker intentionally avoids bundling model weights or requiring nati
 ## Security Boundaries
 
 - Browser-only mode never sends images to another browser.
-- Backend assets and reports are session-scoped through `X-Session-Id`.
+- Backend human routes require signed demo bearer tokens; `X-Session-Id` is retained as a session/work queue hint.
+- Applicant assets and reports are scoped by application ownership.
 - Uploaded filenames are sanitized and never used as storage paths.
 - MIME type and upload size are validated before object-store writes.
 - The object store is content-addressed as `data/assets/{sha256[:2]}/{sha256}.ext`.

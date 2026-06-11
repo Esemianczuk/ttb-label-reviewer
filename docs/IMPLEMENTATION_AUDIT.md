@@ -33,6 +33,7 @@ This audit reconciles the take-home prompt, the project phase plan, and the impl
 - JSON report export now preserves review mode, timings, engines, workers, reviewer overrides, notes, and field history.
 - Added explicit field history to the application detail table and export payload.
 - Added Playwright coverage for CSV manifest batching and reviewer override/export flow.
+- Added signed demo bearer auth, seeded applicant/reviewer/admin users, API-enforced RBAC, ownership checks, worker-token isolation, authz audit events, and frontend demo-token handoff.
 
 ## Verification Commands
 
@@ -44,6 +45,7 @@ Targeted checks added or rerun during this audit:
 
 ```bash
 python -m pytest apps/api/app/tests/test_phase3_api.py -q
+python -m pytest apps/api/app/tests/test_phase5_auth_rbac.py -q
 cd browser-demo && node ./node_modules/vitest/vitest.mjs run src/tests/export-report.test.js src/tests/hybrid-mode.test.js
 cd browser-demo && node ./node_modules/@playwright/test/cli.js test tests/e2e/phase7.spec.js --project=chromium-desktop
 ```

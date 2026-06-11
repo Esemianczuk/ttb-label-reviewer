@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from apps.api.app.config import Settings
 from apps.api.app.main import create_app
+from apps.api.app.tests.helpers import auth_headers
 
 
 @pytest.fixture()
@@ -36,7 +37,11 @@ def worker_payload(join_token: str | None = None) -> dict:
 
 
 def issue_join_token(client: TestClient, ttl_seconds: int = 300) -> dict:
-    response = client.post("/api/cluster/join-token", json={"ttlSeconds": ttl_seconds, "coordinatorUrl": "http://127.0.0.1:8000"})
+    response = client.post(
+        "/api/cluster/join-token",
+        headers=auth_headers(client, "admin"),
+        json={"ttlSeconds": ttl_seconds, "coordinatorUrl": "http://127.0.0.1:8000"},
+    )
     assert response.status_code == 201, response.text
     body = response.json()
     assert body["token"].startswith("ttb_join_")
@@ -49,7 +54,7 @@ def auth(secret: str) -> dict[str, str]:
 
 
 def test_manual_join_token_registers_worker_and_returns_secret(client: TestClient):
-    assert client.get("/api/cluster/status").json()["mdnsService"] == "_ttb-label-reviewer._tcp.local."
+    assert client.get("/api/cluster/status", headers=auth_headers(client, "admin")).json()["mdnsService"] == "_ttb-label-reviewer._tcp.local."
 
     no_token = client.post("/api/workers/register", json=worker_payload())
     assert no_token.status_code == 401

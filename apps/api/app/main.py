@@ -10,6 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 from .api import (
     routes_applications,
+    routes_auth,
     routes_assets,
     routes_cluster,
     routes_health,
@@ -69,6 +70,8 @@ def create_app(settings: Settings | None = None, session_factory: sessionmaker |
     app.dependency_overrides[db.get_session] = override_get_session
 
     app.include_router(routes_health.router)
+    app.include_router(routes_auth.router)
+    app.include_router(routes_auth.authz_router)
     app.include_router(routes_cluster.router)
     app.include_router(routes_applications.router)
     app.include_router(routes_jobs.router)

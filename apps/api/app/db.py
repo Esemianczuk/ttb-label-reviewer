@@ -33,8 +33,12 @@ SessionLocal = make_session_factory(settings)
 
 def init_db(session_factory: sessionmaker[Session] = SessionLocal) -> None:
     from . import models  # noqa: F401
+    from .core.demo_identity import seed_demo_identity
 
     Base.metadata.create_all(bind=session_factory.kw["bind"])
+    with session_factory() as session:
+        seed_demo_identity(session)
+        session.commit()
 
 
 def get_session() -> Generator[Session, None, None]:
@@ -56,4 +60,3 @@ def session_scope(session_factory: sessionmaker[Session] = SessionLocal):
         raise
     finally:
         session.close()
-

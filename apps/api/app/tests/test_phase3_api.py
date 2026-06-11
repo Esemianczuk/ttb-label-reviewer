@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from apps.api.app.config import Settings
 from apps.api.app.main import create_app
+from apps.api.app.tests.helpers import auth_headers
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -51,16 +52,16 @@ def client(tmp_path):
         yield test_client
 
 
-def create_application(client: TestClient, session_id: str = "session-a", name: str = "Hollow Ridge") -> dict:
-    response = client.post("/api/applications", json=app_payload(name), headers=headers(session_id))
+def create_application(client: TestClient, session_id: str = "session-a", name: str = "Hollow Ridge", role: str = "applicant") -> dict:
+    response = client.post("/api/applications", json=app_payload(name), headers=auth_headers(client, role, session_id))
     assert response.status_code == 201, response.text
     return response.json()
 
 
-def upload_image(client: TestClient, application_id: str, session_id: str = "session-a", data: bytes = PNG_BYTES) -> dict:
+def upload_image(client: TestClient, application_id: str, session_id: str = "session-a", data: bytes = PNG_BYTES, role: str = "applicant") -> dict:
     response = client.post(
         f"/api/applications/{application_id}/images",
-        headers=headers(session_id),
+        headers=auth_headers(client, role, session_id),
         data={"role": "front"},
         files={"file": ("../../front label.png", data, "image/png")},
     )
@@ -69,7 +70,7 @@ def upload_image(client: TestClient, application_id: str, session_id: str = "ses
 
 
 def create_join_token(client: TestClient) -> str:
-    response = client.post("/api/cluster/join-token", json={"ttlSeconds": 300})
+    response = client.post("/api/cluster/join-token", json={"ttlSeconds": 300}, headers=auth_headers(client, "admin"))
     assert response.status_code == 201, response.text
     body = response.json()
     assert "python -m ttb_worker" in body["command"]
@@ -125,11 +126,13 @@ def test_health_and_application_session_scope(client: TestClient):
 
     application = create_application(client, session_id="session-a")
     assert application["assetCount"] == 0
+    assert application["ownerUserId"]
+    assert application["versionCount"] == 1
     assert application["expectedFields"]["brandName"] == "Hollow Ridge"
 
-    assert client.get("/api/applications", headers=headers("session-a")).json()[0]["id"] == application["id"]
-    assert client.get("/api/applications", headers=headers("session-b")).json() == []
-    assert client.get(f"/api/applications/{application['id']}", headers=headers("session-b")).status_code == 404
+    assert client.get("/api/applications", headers=auth_headers(client, "applicant", "session-a")).json()[0]["id"] == application["id"]
+    assert client.get("/api/applications").status_code == 401
+    assert client.get(f"/api/applications/{application['id']}", headers=auth_headers(client, "admin", "session-b")).status_code == 200
 
 
 def test_asset_upload_is_sanitized_and_session_scoped(client: TestClient):
@@ -138,9 +141,9 @@ def test_asset_upload_is_sanitized_and_session_scoped(client: TestClient):
 
     assert asset["originalFilename"] == "front_label.png"
     assert asset["mimeType"] == "image/png"
-    assert client.get(f"/api/assets/{asset['id']}", headers=headers("session-b")).status_code == 404
+    assert client.get(f"/api/assets/{asset['id']}").status_code == 401
 
-    content = client.get(f"/api/assets/{asset['id']}/content", headers=headers("session-a"))
+    content = client.get(f"/api/assets/{asset['id']}/content", headers=auth_headers(client, "applicant", "session-a"))
     assert content.status_code == 200
     assert content.content == PNG_BYTES
 
@@ -152,7 +155,7 @@ def test_asset_upload_is_sanitized_and_session_scoped(client: TestClient):
 
     invalid = client.post(
         f"/api/applications/{application['id']}/images",
-        headers=headers("session-a"),
+        headers=auth_headers(client, "applicant", "session-a"),
         files={"file": ("notes.txt", b"not an image", "text/plain")},
     )
     assert invalid.status_code == 400
@@ -162,7 +165,7 @@ def test_review_queue_fake_worker_and_report_flow(client: TestClient):
     application = create_application(client)
     upload_image(client, application["id"])
 
-    review_response = client.post(f"/api/applications/{application['id']}/review", json={"mode": "distributed"}, headers=headers())
+    review_response = client.post(f"/api/applications/{application['id']}/review", json={"mode": "distributed"}, headers=auth_headers(client, "reviewer"))
     assert review_response.status_code == 201, review_response.text
     review = review_response.json()
     assert review["status"] == "queued"
@@ -174,7 +177,7 @@ def test_review_queue_fake_worker_and_report_flow(client: TestClient):
     heartbeat = client.post("/api/workers/worker-test-1/heartbeat", headers=worker_auth(secret), json={"activeJobs": 1, "status": "online"})
     assert heartbeat.status_code == 200
     complete_job(client, ocr_job["id"], {"text": "Hollow Ridge", "status": "OCR_DONE"}, secret)
-    assert client.get(f"/api/reviews/{review['id']}", headers=headers()).json()["status"] == "processing"
+    assert client.get(f"/api/reviews/{review['id']}", headers=auth_headers(client, "reviewer")).json()["status"] == "processing"
 
     evidence_job = claim_job(client, "evidence_crop", secret)
     complete_job(client, evidence_job["id"], {"crops": [{"field": "brandName", "confidence": 0.99}]}, secret)
@@ -198,19 +201,19 @@ def test_review_queue_fake_worker_and_report_flow(client: TestClient):
     }
     complete_job(client, validation_job["id"], final_result, secret)
 
-    review_after = client.get(f"/api/reviews/{review['id']}", headers=headers()).json()
+    review_after = client.get(f"/api/reviews/{review['id']}", headers=auth_headers(client, "reviewer")).json()
     assert review_after["status"] == "pass"
     assert review_after["result"]["overallStatus"] == "PASS"
 
-    events = client.get("/api/workers/events?limit=10").json()
+    events = client.get("/api/workers/events?limit=10", headers=auth_headers(client, "admin")).json()
     assert events[0]["eventType"] == "job_completed"
     assert any(event["eventType"] == "job_claimed" for event in events)
     assert events[0]["payload"]["job_id"] == validation_job["id"]
 
-    report = client.get(f"/api/reports/{review['id']}.json", headers=headers())
+    report = client.get(f"/api/reports/{review['id']}.json", headers=auth_headers(client, "reviewer"))
     assert report.status_code == 200
     assert report.json()["result"]["fields"][0]["status"] == "PASS"
-    assert client.get(f"/api/reports/{review['id']}.json", headers=headers("session-b")).status_code == 404
+    assert client.get(f"/api/reports/{review['id']}.json").status_code == 401
 
     empty_claim = client.post(
         "/api/workers/worker-test-1/claim",
@@ -223,17 +226,17 @@ def test_review_queue_fake_worker_and_report_flow(client: TestClient):
 def test_job_cancel_releases_worker_capacity(client: TestClient):
     application = create_application(client)
     upload_image(client, application["id"], data=b"\x89PNG\r\n\x1a\ncancel")
-    review = client.post(f"/api/applications/{application['id']}/review", json={}, headers=headers()).json()
+    review = client.post(f"/api/applications/{application['id']}/review", json={}, headers=auth_headers(client, "reviewer")).json()
     worker = register_worker(client)
     secret = worker["workerSecret"]
     job = claim_job(client, "ocr", secret)
 
-    cancelled = client.post(f"/api/jobs/{job['id']}/cancel", headers=headers()).json()
+    cancelled = client.post(f"/api/jobs/{job['id']}/cancel", headers=auth_headers(client, "admin")).json()
     assert cancelled["status"] == "cancelled"
     assert cancelled["assignedWorkerId"] is None
-    assert client.get(f"/api/jobs/{job['id']}", headers=headers("session-b")).status_code == 404
-    assert client.get(f"/api/reviews/{review['id']}", headers=headers()).status_code == 200
-    assert client.get("/api/workers/worker-test-1").json()["activeJobs"] == 0
+    assert client.get(f"/api/jobs/{job['id']}", headers=auth_headers(client, "applicant", "session-b")).status_code == 200
+    assert client.get(f"/api/reviews/{review['id']}", headers=auth_headers(client, "reviewer")).status_code == 200
+    assert client.get("/api/workers/worker-test-1", headers=auth_headers(client, "admin")).json()["activeJobs"] == 0
 
 
 def test_websocket_progress_smoke(client: TestClient):

@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .. import models
+from ..api.deps import get_current_user, require_permission
 from ..api.serializers import job_to_read, worker_event_to_read, worker_to_read
 from ..core.auth import generate_secret, hash_secret, verify_secret
 from ..core.join_tokens import consume_join_token, token_expired
@@ -36,20 +37,23 @@ def require_worker(session: Session, worker_id: str) -> models.Worker:
 
 
 @router.get("", response_model=list[WorkerRead])
-def list_workers(session: Session = Depends(get_session)):
+def list_workers(session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
+    require_permission(session, current_user, resource="workers", action="manage")
     workers = session.scalars(select(models.Worker).order_by(models.Worker.last_seen_at.desc())).all()
     return [worker_to_read(worker) for worker in workers]
 
 
 @router.get("/events", response_model=list[WorkerEventRead])
-def list_worker_events(limit: int = 25, session: Session = Depends(get_session)):
+def list_worker_events(limit: int = 25, session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
+    require_permission(session, current_user, resource="workers", action="manage")
     safe_limit = max(1, min(limit, 100))
     events = session.scalars(select(models.WorkerEvent).order_by(models.WorkerEvent.created_at.desc()).limit(safe_limit)).all()
     return [worker_event_to_read(event) for event in events]
 
 
 @router.get("/{worker_id}", response_model=WorkerRead)
-def get_worker(worker_id: str, session: Session = Depends(get_session)):
+def get_worker(worker_id: str, session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
+    require_permission(session, current_user, resource="workers", action="manage", entity_id=worker_id)
     return worker_to_read(require_worker(session, worker_id))
 
 
@@ -138,9 +142,15 @@ def heartbeat(worker_id: str, payload: WorkerHeartbeat, request: Request, sessio
 
 
 @router.post("/{worker_id}/recalibrate", response_model=WorkerRead)
-def recalibrate(worker_id: str, request: Request, session: Session = Depends(get_session)):
+def recalibrate(
+    worker_id: str,
+    request: Request,
+    session: Session = Depends(get_session),
+):
     worker = require_worker(session, worker_id)
-    require_worker_auth(request, worker, session)
+    if not worker_secret_authorized(request, worker, session):
+        current_user = get_current_user(request, session)
+        require_permission(session, current_user, resource="workers", action="manage", entity_id=worker_id)
     calibration = dict(worker.calibration or {})
     calibration["recalibrationRequestedAt"] = models.now_utc().isoformat()
     calibration["recalibrationStatus"] = "requested"

@@ -20,6 +20,7 @@ from apps.api.app.api.serializers import (
 from apps.api.app.config import Settings
 from apps.api.app.db import init_db, make_session_factory
 from apps.api.app.main import create_app
+from apps.api.app.tests.helpers import auth_headers
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -60,14 +61,14 @@ def test_enterprise_workflow_models_round_trip(tmp_path):
     try:
         organization = models.Organization(name="Hollow Ridge Distilling", type="producer")
         applicant = models.User(
-            email="applicant@example.local",
+            email="phase4-applicant@example.local",
             display_name="Applicant",
             role="applicant",
             status="active",
             organization=organization,
         )
         reviewer = models.User(
-            email="reviewer@example.local",
+            email="phase4-reviewer@example.local",
             display_name="Reviewer",
             role="reviewer",
             status="active",
@@ -125,7 +126,7 @@ def test_enterprise_workflow_models_round_trip(tmp_path):
 
         stored_application = db.scalar(select(models.Application).where(models.Application.id == application.id))
         assert stored_application is not None
-        assert stored_application.owner.email == "applicant@example.local"
+        assert stored_application.owner.email == "phase4-applicant@example.local"
         assert stored_application.organization.name == "Hollow Ridge Distilling"
         assert stored_application.versions[0].version_number == 1
         assert stored_application.reviews[0].decisions[0].effective_status == "FAIL"
@@ -147,7 +148,7 @@ def test_application_create_writes_initial_version(tmp_path):
     with TestClient(app) as client:
         response = client.post(
             "/api/applications",
-            headers={"X-Session-Id": "session-a"},
+            headers=auth_headers(client, "applicant", "session-a"),
             json={
                 "source": "upload",
                 "expectedFields": {

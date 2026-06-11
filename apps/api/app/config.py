@@ -37,6 +37,10 @@ def _join_token_ttl_seconds() -> int:
     return int(os.environ.get("TTB_JOIN_TOKEN_TTL_SECONDS", "900"))
 
 
+def _demo_token_ttl_seconds() -> int:
+    return int(os.environ.get("TTB_DEMO_TOKEN_TTL_SECONDS", str(12 * 60 * 60)))
+
+
 @dataclass(frozen=True)
 class Settings:
     app_name: str = "TTB Label Reviewer API"
@@ -50,6 +54,8 @@ class Settings:
     port: int = field(default_factory=_port)
     coordinator_public_url: str | None = field(default_factory=lambda: os.environ.get("TTB_COORDINATOR_URL"))
     join_token_ttl_seconds: int = field(default_factory=_join_token_ttl_seconds)
+    demo_token_secret: str = field(default_factory=lambda: os.environ.get("TTB_DEMO_TOKEN_SECRET", "local-dev-demo-token-secret"))
+    demo_token_ttl_seconds: int = field(default_factory=_demo_token_ttl_seconds)
     require_worker_join_token: bool = field(default_factory=lambda: os.environ.get("TTB_REQUIRE_WORKER_JOIN_TOKEN", "1") != "0")
     enable_mdns: bool = field(default_factory=lambda: os.environ.get("TTB_ENABLE_MDNS", "0") == "1")
     lan_mode: bool = field(default_factory=lambda: os.environ.get("TTB_API_HOST", "127.0.0.1") in {"0.0.0.0", "::"})

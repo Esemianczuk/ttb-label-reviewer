@@ -1,6 +1,6 @@
 # Backend Enterprise Model
 
-Phase 4 adds the database layer for the enterprise workflow while preserving the current session-scoped API behavior.
+Phase 4 adds the database layer for the enterprise workflow. Phase 5 uses those tables for demo authentication and API-enforced RBAC.
 
 ## Migration
 
@@ -16,6 +16,14 @@ The migration is additive. It creates the enterprise workflow tables and adds nu
 - `organization_id`
 
 Fresh evaluator databases still work through `Base.metadata.create_all`. Existing databases should run Alembic to head.
+
+Phase 5 seed migration:
+
+```text
+apps/api/alembic/versions/0005_seed_demo_auth_users.py
+```
+
+It inserts the demo organization and users used by `/api/auth/demo-login`.
 
 ## Tables
 
@@ -52,14 +60,16 @@ Fresh evaluator databases still work through `Base.metadata.create_all`. Existin
 
 ## Compatibility
 
-Existing routes remain session-scoped and continue to pass the same request contracts. `ApplicationRead` now also returns:
+Human routes now require `Authorization: Bearer <demo token>`. `X-Session-Id` is still accepted for compatibility and worker/session routing, but applicant access is enforced through `owner_user_id`.
+
+`ApplicationRead` also returns:
 
 - `ownerUserId`
 - `organizationId`
 - `versionCount`
 - `currentVersionNumber`
 
-These fields are nullable or derived and do not require auth yet.
+These fields are nullable or derived, but new application creates set owner and organization from the authenticated user.
 
 ## Verification
 
@@ -67,6 +77,7 @@ Focused Phase 4 checks:
 
 ```bash
 python -m pytest apps/api/app/tests/test_phase4_enterprise_models.py -q
+python -m pytest apps/api/app/tests/test_phase5_auth_rbac.py -q
 ```
 
 Full backend and repo checks:

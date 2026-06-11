@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 ApplicationSource = Literal["sample", "upload", "public_cola_registry", "manual"]
 ImageRole = Literal["front", "back", "neck", "carton", "cola_sheet", "unknown"]
 JobStatus = Literal["queued", "leased", "running", "completed", "failed", "cancelled"]
+UserRole = Literal["applicant", "reviewer", "admin"]
 
 
 class ExpectedFields(BaseModel):
@@ -220,6 +221,33 @@ class UserRead(BaseModel):
     organizationId: str | None = None
     createdAt: datetime
     updatedAt: datetime
+
+
+class DemoLoginRequest(BaseModel):
+    role: UserRole
+
+
+class DemoLoginResponse(BaseModel):
+    user: UserRead
+    token: str
+    tokenType: str = "bearer"
+    expiresAt: datetime
+
+
+class LogoutResponse(BaseModel):
+    ok: bool = True
+
+
+class AuthzCanRequest(BaseModel):
+    resource: str
+    action: str
+    entityId: str | None = None
+    params: dict[str, Any] = Field(default_factory=dict)
+
+
+class AuthzCanResponse(BaseModel):
+    can: bool
+    reason: str | None = None
 
 
 class ApplicationVersionRead(BaseModel):
