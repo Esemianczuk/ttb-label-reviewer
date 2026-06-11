@@ -4,18 +4,23 @@ import type { ColumnsType } from "antd/es/table";
 import { useList } from "@refinedev/core";
 import { NavLink, useParams } from "react-router";
 import { useMemo } from "react";
+import { useCurrentRole } from "../../hooks/useCurrentRole";
+import { canAccess } from "../../providers/access/permissionMatrix";
+import { AccessDeniedPage } from "../public/AccessDeniedPage";
 import { useProcessingMode } from "../../hooks/useProcessingMode";
 import { consoleResourceNames, isConsoleResourceName, resourceLabels } from "../../resources";
 
 export function ResourceIndexPage() {
   const { resourceName } = useParams();
   const { mode, provider, backendUnavailable, fallbackToBrowser } = useProcessingMode();
+  const { role } = useCurrentRole();
   const validResource = isConsoleResourceName(resourceName) ? resourceName : undefined;
+  const allowed = Boolean(validResource && canAccess(role, validResource, "list"));
   const list = useList<Record<string, unknown>>({
     resource: validResource,
     pagination: { mode: "off" },
     queryOptions: {
-      enabled: Boolean(validResource) && !backendUnavailable,
+      enabled: allowed && !backendUnavailable,
       retry: false
     },
     errorNotification: false
@@ -31,6 +36,10 @@ export function ResourceIndexPage() {
         <ResourceLinks />
       </Card>
     );
+  }
+
+  if (!allowed) {
+    return <AccessDeniedPage />;
   }
 
   return (
@@ -77,10 +86,13 @@ export function ResourceIndexPage() {
 }
 
 function ResourceLinks() {
+  const { role } = useCurrentRole();
+  const visibleResources = consoleResourceNames.filter((name) => canAccess(role, name, "list"));
+
   return (
     <Card size="small" title="Registered Resources">
       <Space wrap>
-        {consoleResourceNames.map((name) => (
+        {visibleResources.map((name) => (
           <NavLink key={name} to={`/resources/${name}`}>
             {resourceLabels[name]}
           </NavLink>

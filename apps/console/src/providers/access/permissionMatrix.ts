@@ -9,8 +9,13 @@ type Rule = {
 
 export const permissionMatrix: Record<UserRole, Rule[]> = {
   applicant: [
-    { resource: "applications", actions: ["list", "show", "create", "submit", "upload", "download"] },
-    { resource: "reviews", actions: ["show", "download"] }
+    { resource: "applications", actions: ["list", "show", "create", "submit", "upload", "download", "withdraw"] },
+    { resource: "applicationVersions", actions: ["list", "show", "create"] },
+    { resource: "labelAssets", actions: ["list", "show", "create"] },
+    { resource: "reviews", actions: ["show", "download"] },
+    { resource: "correctionRequests", actions: ["list", "show", "respond"] },
+    { resource: "auditEvents", actions: ["list"] },
+    { resource: "reports", actions: ["download"] }
   ],
   reviewer: [
     { resource: "applications", actions: ["list", "show", "update", "review", "download"] },

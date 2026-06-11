@@ -92,6 +92,14 @@ The Refine console now registers the core operational resources up front: applic
 
 The console also includes `mockDataProvider` for isolated tests and demos. The generated Orval client in `apps/console/src/api/generated/ttbApi.ts` is produced from the FastAPI OpenAPI schema by `npm --prefix apps/console run generate:api`.
 
+## Phase 9 Applicant Portal
+
+The applicant console now has guarded routes for onboarding, new application intake, application detail, pre-check, corrections, and timeline views. Applicants can create multi-image packets with up to 10 label images, assign each image a role, run deterministic pre-checks, submit ready packets, withdraw submissions, and respond to correction requests.
+
+Browser-only applicant state is stored in the same console snapshot as reviewer/admin state. Applicant actions create audit events, preserve correction messages/responses in application metadata, and reuse the shared workflow statuses (`DRAFT`, `PRECHECK_RUNNING`, `APPLICANT_FIX_REQUIRED`, `READY_TO_SUBMIT`, `SUBMITTED`, `NEEDS_CORRECTION`, `RESUBMITTED`, `APPROVED`, `REJECTED`, and related terminal states).
+
+Route guards enforce the role boundary in the console: applicant role can open applicant routes and correction/timeline resources, but cannot open reviewer or admin workspaces.
+
 ## Phase 4 Worker Agent
 
 `apps/worker` contains a Python worker package runnable with:

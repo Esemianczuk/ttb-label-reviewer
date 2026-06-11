@@ -72,7 +72,7 @@ The requested future `apps/browser` and `apps/worker` structure will be introduc
 
 ## Refine Console
 
-`apps/console` adds an enterprise-style reviewer console without removing the V1 browser demo. It includes applicant, reviewer, and admin portals; role-based access rules; demo bearer auth for backend calls; browser/backend/cluster mode controls; a Refine resource registry; browser/API/mock data providers; one-image upload intake; immediate sample queue processing; preserved reviewer overrides; detached image zoom/pan; audit tables; worker telemetry; generated Orval API client; PDF exports; Vitest unit tests; and Playwright desktop/mobile accessibility coverage.
+`apps/console` adds an enterprise-style reviewer console without removing the V1 browser demo. It includes applicant, reviewer, and admin portals; role-based access rules; demo bearer auth for backend calls; browser/backend/cluster mode controls; a Refine resource registry; browser/API/mock data providers; a full applicant workflow with onboarding, multi-image intake, pre-check, submission, corrections, resubmission, and timeline routes; immediate reviewer sample queue processing; preserved reviewer overrides; detached image zoom/pan; audit tables; worker telemetry; generated Orval API client; PDF exports; Vitest unit tests; and Playwright desktop/mobile accessibility coverage.
 
 ```bash
 npm install --prefix apps/console

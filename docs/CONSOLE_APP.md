@@ -15,9 +15,23 @@ Open `http://127.0.0.1:5174/`.
 
 ## Portals
 
-- Applicant: one-image upload, expected TTB field entry, submit-and-auto-review, submission PDF export.
+- Applicant: dashboard, onboarding, five-step new-application wizard, multi-image upload with per-image roles, readiness/pre-check page, correction response, timeline, withdrawal, resubmission, and packet PDF export.
 - Reviewer: queue-driven workbench that immediately processes the first sample, next/previous navigation with preserved reviewer decisions, field-level pass/fail/review overrides, notes, detached image viewer with zoom and pan, PDF export.
 - Admin: coordinator health, worker dashboard, fixture registry, audit log, access matrix, active-packet PDF export.
+
+## Applicant Routes
+
+- `/applicant`
+- `/applicant/onboarding`
+- `/applicant/applications/new`
+- `/applicant/applications/:id`
+- `/applicant/applications/:id/precheck`
+- `/applicant/applications/:id/corrections`
+- `/applicant/applications/:id/timeline`
+
+The wizard accepts up to 10 JPG/JPEG/PNG/WebP images in the demo. Each image gets a role: front, back, neck, carton, other, or COLA sheet. The UI flags file-size, dimension, aspect-ratio, and crop/context warnings without blocking submission unless required application data or images are missing.
+
+The applicant correction flow starts from `NEEDS_CORRECTION`, captures a response, marks the packet `RESUBMITTED`, and preserves the correction message, requested fields, and response on the application timeline.
 
 ## Processing Modes
 
@@ -61,5 +75,5 @@ npm --prefix apps/console run test:e2e
 npm --prefix apps/console run build
 ```
 
-The Playwright suite runs against desktop Chromium and Pixel 7 viewports. It checks first-sample processing, preserved reviewer overrides across previous/next navigation, detached image zoom controls, one-image applicant upload, and an axe accessibility smoke on the reviewer surface.
+The Playwright suite runs against desktop Chromium and Pixel 7 viewports. It checks first-sample processing, preserved reviewer overrides across previous/next navigation, detached image zoom controls, multi-image applicant submission, applicant correction/resubmission, applicant route access boundaries, and an axe accessibility smoke on the reviewer surface.
 It also checks that registered resources render through the Browser provider and that Backend mode presents an offline fallback when the configured coordinator is unavailable.

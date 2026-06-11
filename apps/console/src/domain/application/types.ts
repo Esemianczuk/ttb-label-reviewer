@@ -46,11 +46,14 @@ export type ExpectedFields = {
 
 export type LabelImage = {
   id: string;
-  role: "cola_sheet" | "front" | "back" | "neck" | "carton" | "unknown";
+  role: "cola_sheet" | "front" | "back" | "neck" | "carton" | "other" | "unknown";
   name: string;
   url: string;
   mimeType: string;
   sizeBytes?: number;
+  width?: number;
+  height?: number;
+  qualityWarnings?: string[];
   source: "sample" | "upload" | "api";
 };
 
@@ -110,6 +113,15 @@ export type ReviewApplication = {
     fixtureId?: string;
     packetPath?: string;
     notes?: string;
+    correctionMessage?: string;
+    correctionFields?: string[];
+    correctionResponse?: string;
+    precheckSettings?: {
+      runOcr: boolean;
+      validateGovernmentWarning: boolean;
+      requireAtLeastOneImage: boolean;
+      autoSubmitWhenReady: boolean;
+    };
   };
 };
 

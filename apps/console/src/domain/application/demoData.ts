@@ -24,6 +24,11 @@ type FixtureSeed = {
   expected: ExpectedFields;
   extracted?: Partial<Record<keyof ExpectedFields | "governmentWarning", string>>;
   forcedFailures?: Partial<Record<keyof ExpectedFields | "governmentWarning", { status: FieldStatus; reason: string; severity?: Severity }>>;
+  initialStatus?: ReviewApplication["status"];
+  correction?: {
+    message: string;
+    fields: string[];
+  };
 };
 
 const warningText =
@@ -126,6 +131,11 @@ const seeds: FixtureSeed[] = [
         severity: "warning",
         reason: "The required government warning is probably present, but the detected line breaks and confidence need reviewer confirmation."
       }
+    },
+    initialStatus: "NEEDS_CORRECTION",
+    correction: {
+      message: "Clarify the government warning placement and confirm the hard seltzer variety-pack label panel.",
+      fields: ["governmentWarning", "labelImages"]
     }
   },
   {
@@ -225,7 +235,7 @@ export function createApplicationFromSeed(seed: FixtureSeed, index = 0): ReviewA
     id: `app-${seed.id}`,
     title: seed.title,
     source: "sample",
-    status: index === 0 ? "SUBMITTED" : "DRAFT",
+    status: seed.initialStatus || (index === 0 ? "SUBMITTED" : "DRAFT"),
     expectedOutcome: seed.expectedOutcome,
     expectedFields: seed.expected,
     images: [image],
@@ -236,7 +246,9 @@ export function createApplicationFromSeed(seed: FixtureSeed, index = 0): ReviewA
     metadata: {
       description: seed.description,
       fixtureId: seed.id,
-      packetPath: seed.imagePath
+      packetPath: seed.imagePath,
+      correctionMessage: seed.correction?.message,
+      correctionFields: seed.correction?.fields
     }
   };
 }
@@ -278,23 +290,41 @@ export function createManualApplication(input: {
   submitter?: string;
   notes?: string;
 }): ReviewApplication {
+  return createApplicantApplication({
+    expectedFields: input.expectedFields,
+    images: [input.image],
+    submitter: input.submitter,
+    notes: input.notes,
+    description: "Manual one-image application created in the Refine console."
+  });
+}
+
+export function createApplicantApplication(input: {
+  expectedFields: ExpectedFields;
+  images: LabelImage[];
+  submitter?: string;
+  notes?: string;
+  description?: string;
+  precheckSettings?: ReviewApplication["metadata"]["precheckSettings"];
+}): ReviewApplication {
   const id = `app-manual-${Date.now()}`;
   const now = new Date().toISOString();
   return {
     id,
-    title: input.expectedFields.brandName ? `${input.expectedFields.brandName} manual review` : "Manual label review",
+    title: input.expectedFields.brandName ? `${input.expectedFields.brandName} application` : "Draft label application",
     source: "upload",
-    status: "READY_TO_SUBMIT",
+    status: "DRAFT",
     expectedOutcome: "NEEDS_REVIEW",
     expectedFields: input.expectedFields,
-    images: [input.image],
+    images: input.images,
     submitter: input.submitter || "Evaluator upload",
     assignedTo: "Review Agent",
     createdAt: now,
     updatedAt: now,
     metadata: {
-      description: "Manual one-image application created in the Refine console.",
-      notes: input.notes
+      description: input.description || "Applicant-created multi-image label packet.",
+      notes: input.notes,
+      precheckSettings: input.precheckSettings
     }
   };
 }

@@ -150,6 +150,25 @@ body {
   display: block;
 }
 
+.wizard-alert {
+  margin-bottom: 12px;
+}
+
+.image-thumb {
+  object-fit: contain;
+  background: #f8fafc;
+  border: 1px solid #d9e2ef;
+  border-radius: 6px;
+}
+
+.status-pass {
+  color: #16794c;
+}
+
+.status-fail {
+  color: #b42318;
+}
+
 .image-card {
   overflow: hidden;
   background: #ffffff;

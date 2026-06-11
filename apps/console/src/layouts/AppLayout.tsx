@@ -16,6 +16,7 @@ import { useCurrentRole } from "../hooks/useCurrentRole";
 import { resetSnapshot } from "../providers/data/browserStore";
 import { ModeTag, StatusBadge } from "../components/common/StatusTag";
 import { useProcessingMode } from "../hooks/useProcessingMode";
+import { canAccess } from "../providers/access/permissionMatrix";
 
 export function AppLayout() {
   const { Header, Sider, Content } = Layout;
@@ -96,7 +97,12 @@ export function AppLayout() {
                 icon: <AuditOutlined />,
                 label: <NavLink to="/admin">Admin Portal</NavLink>
               }
-            ]}
+            ].filter((item) => {
+              if (item.key === "reviewer") return canAccess(role, "reviews", "list");
+              if (item.key === "applicant") return canAccess(role, "applications", "list");
+              if (item.key === "admin") return canAccess(role, "workers", "manage");
+              return true;
+            })}
           />
           <div className="sider-status">
             <Space orientation="vertical" className="full-width" size={10}>

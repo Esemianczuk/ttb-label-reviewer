@@ -3,7 +3,8 @@ import AxeBuilder from "@axe-core/playwright";
 import path from "node:path";
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => window.localStorage.clear());
+  await page.goto("/");
+  await page.evaluate(() => window.localStorage.clear());
   await page.goto("/");
 });
 
@@ -28,21 +29,60 @@ test("expanded image viewer supports zoom and close controls", async ({ page }) 
   await expect(page.getByRole("dialog", { name: "Expanded label image viewer" })).toBeHidden();
 });
 
-test("applicant can upload one image, enter TTB fields, and auto review", async ({ page }) => {
-  await page.goto("/applicant");
-  await expect(page.getByText("One-Image Application Intake")).toBeVisible();
+test("applicant happy path creates a multi-image packet and submits it", async ({ page }) => {
+  await page.evaluate(() => window.localStorage.setItem("ttb-console-role", "applicant"));
+  await page.goto("/applicant/applications/new");
+  await expect(page.getByText("New Application")).toBeVisible();
+
+  await page.getByRole("button", { name: "Next" }).click();
 
   await page.getByLabel("Brand name").fill("EVALUATOR TEST");
-  await page.getByLabel("Fanciful name").fill("Console Smoke");
+  await page.getByLabel("Fanciful name").fill("Phase Nine Console Smoke");
   await page.getByLabel("Class / type").fill("Distilled Spirits Specialty");
   await page.getByLabel("Alcohol content").fill("40% Alc./Vol.");
   await page.getByLabel("Net contents").fill("750 mL");
+  await page.getByLabel("Producer / importer").fill("Evaluator Spirits");
+  await page.getByLabel("Country of origin").fill("United States");
+  await page.getByLabel("TTB application ID").fill("PHASE-9-E2E");
+  await page.getByRole("button", { name: "Next" }).click();
+
   await page
     .locator('input[type="file"]')
-    .setInputFiles(path.resolve(process.cwd(), "../../browser-demo/public/label-packets/hollow-ridge-bourbon/cola-sheet.png"));
-  await page.getByRole("button", { name: /Submit And Auto Review/i }).click();
-  await expect(page.getByText("Application created and sent to auto review.")).toBeVisible();
-  await expect(page.getByText("EVALUATOR TEST manual review")).toBeVisible();
+    .setInputFiles([
+      path.resolve(process.cwd(), "../../browser-demo/public/label-packets/hollow-ridge-bourbon/cola-sheet.png"),
+      path.resolve(process.cwd(), "../../browser-demo/public/label-packets/highland-coast-lightkeeper-gin/cola-sheet.png")
+    ]);
+  await expect(page.getByRole("row", { name: /cola-sheet\.png Front/i })).toBeVisible();
+  await expect(page.getByRole("row", { name: /cola-sheet\.png Back/i })).toBeVisible();
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(page.getByText("2 label images")).toBeVisible();
+  await page.getByRole("button", { name: /Submit Application/i }).click();
+  await expect(page.getByText("Application submitted.")).toBeVisible();
+  await expect(page.getByText("EVALUATOR TEST application")).toBeVisible();
+  await expect(page.getByText("Submitted").first()).toBeVisible();
+});
+
+test("applicant can respond to a correction and resubmit", async ({ page }) => {
+  await page.evaluate(() => window.localStorage.setItem("ttb-console-role", "applicant"));
+  await page.goto("/applicant/applications/app-sundaze-hard-seltzer/corrections");
+  await expect(page.getByText("Correction requested")).toBeVisible();
+  await page.getByLabel("Response to reviewer").fill("Confirmed the warning panel and updated the back label image.");
+  await page.getByRole("button", { name: "Resubmit" }).click();
+  await expect(page.getByText("Correction response submitted.")).toBeVisible();
+  await expect(page.getByText("Current response: Confirmed the warning panel")).toBeVisible();
+});
+
+test("applicant role cannot open reviewer or admin workspaces", async ({ page }) => {
+  await page.evaluate(() => window.localStorage.setItem("ttb-console-role", "applicant"));
+  await page.goto("/reviewer");
+  await expect(page.getByText("Access denied")).toBeVisible();
+  await page.goto("/admin");
+  await expect(page.getByText("Access denied")).toBeVisible();
+  await page.goto("/resources/workers");
+  await expect(page.getByText("Access denied")).toBeVisible();
+  await page.goto("/applicant");
+  await expect(page.getByText("Applicant Workspace")).toBeVisible();
 });
 
 test("reviewer surface has no critical axe accessibility violations", async ({ page }) => {
@@ -51,6 +91,7 @@ test("reviewer surface has no critical axe accessibility violations", async ({ p
 });
 
 test("registered resources render through the active browser provider", async ({ page }) => {
+  await page.evaluate(() => window.localStorage.setItem("ttb-console-role", "admin"));
   await page.goto("/resources/applications");
   await expect(page.getByText("Applications").first()).toBeVisible();
   await expect(page.getByRole("main").getByText("Browser Only")).toBeVisible();
@@ -60,7 +101,7 @@ test("registered resources render through the active browser provider", async ({
 });
 
 test("backend mode warns and falls back when coordinator is unavailable", async ({ page }) => {
-  await page.addInitScript(() => window.localStorage.setItem("ttb-console-backend-url", "http://127.0.0.1:59999"));
+  await page.evaluate(() => window.localStorage.setItem("ttb-console-backend-url", "http://127.0.0.1:59999"));
   await page.goto("/");
   await page.getByLabel("Processing mode").getByText("Backend").click();
   await expect(page.getByText("Backend coordinator unavailable").first()).toBeVisible({ timeout: 5000 });

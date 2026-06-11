@@ -26,6 +26,7 @@ This audit reconciles the take-home prompt, the project phase plan, and the impl
 | 6 worker discovery and join | Complete | Join-token flow, persistent worker secrets, optional mDNS, LAN warning, lab-host docs. |
 | 7 frontend backend/hybrid mode | Complete | Browser/Backend/Cluster mode selector, fallback, backend client, session WebSocket snapshots, cluster dashboard, batch queue, Playwright coverage. |
 | 8 console routing and provider consolidation | Complete | Full Refine resource registry, Browser/API/Mock provider registry, mode-selected data/live providers, offline backend fallback, generated Orval API client, unit and Playwright coverage. |
+| 9 applicant portal expansion | Complete | Guarded applicant routes, five-step intake wizard, multi-image upload roles/warnings, readiness/pre-check flow, correction response/resubmission, timeline, export actions, and applicant access tests. |
 
 ## Audit Fixes Applied
 
@@ -38,6 +39,7 @@ This audit reconciles the take-home prompt, the project phase plan, and the impl
 - Added canonical application workflow transitions with guards, correction/version side effects, audit events, and console progress tracking.
 - Replaced worker substring validation with shared deterministic Python validators, shared JS/Python golden fixtures, schema-shaped worker review results, and OCR evidence candidate preservation.
 - Added phase 8 console provider consolidation: registered all operational resources, introduced Browser/API/Mock data providers, selected providers through `ProcessingModeProvider`, generated the Orval FastAPI client, and added resource/fallback tests.
+- Replaced the console applicant one-image intake with a browser-snapshot applicant workflow: dashboard, onboarding, five-step new-application wizard, up to 10 image uploads with roles/warnings, readiness/pre-check, submit/withdraw, correction response, resubmission, timeline, and applicant route guards.
 
 ## Verification Commands
 
@@ -57,6 +59,7 @@ cd browser-demo && node ./node_modules/@playwright/test/cli.js test tests/e2e/ph
 npm --prefix apps/console run generate:api
 npm --prefix apps/console test
 npm --prefix apps/console run test:e2e
+npm --prefix apps/console run build
 ```
 
 Live repeatability check:
@@ -70,6 +73,7 @@ TTB_E2E_BACKEND_URL=http://127.0.0.1:8011 \
 ## Known Limits
 
 - Fresh evaluator databases include the duplicate-image upload fix. If reusing an older SQLite database, recreate it or run the Alembic migrations before testing repeat uploads.
-- Phase 9+ items are not fully implemented: applicant portal expansion, persisted agent decision audit events, retention/purge UI, benchmarking scripts, and final Phase 14/15 documentation polish remain future work.
+- The phase 9 applicant workflow is implemented for the console Browser provider. Backend/Cluster modes still need matching backend endpoints for the applicant wizard's draft, pre-check, correction response, and packet export actions.
+- Phase 10+ items are not fully implemented: persisted agent decision audit events, retention/purge UI, benchmarking scripts, and final Phase 14/15 documentation polish remain future work.
 - Backend WebSocket currently streams session snapshots rather than per-event push notifications. It is sufficient for dashboard progress but can be made more granular later.
 - The cluster dashboard uses compact throughput counters rather than a full charting library.

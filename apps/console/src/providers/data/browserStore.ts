@@ -1,10 +1,12 @@
 import {
+  createApplicantApplication,
   createAudit,
   createDemoSnapshot,
   createManualApplication,
   createReviewForApplication
 } from "../../domain/application/demoData";
 import type {
+  ApplicationStatus,
   ConsoleSnapshot,
   ExpectedFields,
   FieldStatus,
@@ -223,6 +225,149 @@ export function addManualUpload(params: {
   });
 }
 
+export function createApplicantDraft(params: {
+  expectedFields: ExpectedFields;
+  images: LabelImage[];
+  submitter?: string;
+  notes?: string;
+  precheckSettings?: ReviewApplication["metadata"]["precheckSettings"];
+}): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => {
+    const application = createApplicantApplication(params);
+    return {
+      ...snapshot,
+      activeApplicationId: application.id,
+      applications: [application, ...snapshot.applications],
+      auditEvents: [
+        createAudit(
+          `audit-${Date.now()}`,
+          params.submitter || "Applicant",
+          "applicant",
+          "application.save_draft",
+          "applications",
+          `Saved draft application ${application.id} with ${params.images.length} label image${params.images.length === 1 ? "" : "s"}.`,
+          { applicationId: application.id, imageCount: params.images.length }
+        ),
+        ...snapshot.auditEvents
+      ]
+    };
+  });
+}
+
+export function runApplicantPrecheck(applicationId: string, mode?: ProcessingMode): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => {
+    const processingMode = mode || snapshot.processingMode;
+    let auditSummary = `Pre-check queued for ${applicationId}.`;
+    const applications = snapshot.applications.map((application) => {
+      if (application.id !== applicationId) return application;
+      const review = createReviewForApplication(application, processingMode);
+      const hasCriticalReview = review.fields.some((field) => field.severity === "critical" && field.status === "FAIL");
+      const nextStatus: ApplicationStatus =
+        !application.images.length || hasCriticalReview || review.status === "FAIL" ? "APPLICANT_FIX_REQUIRED" : "READY_TO_SUBMIT";
+      auditSummary =
+        nextStatus === "READY_TO_SUBMIT"
+          ? `Pre-check passed for ${applicationId}.`
+          : `Pre-check found applicant fixes for ${applicationId}.`;
+      return {
+        ...application,
+        status: nextStatus,
+        review,
+        updatedAt: new Date().toISOString()
+      };
+    });
+    return {
+      ...snapshot,
+      applications,
+      auditEvents: [
+        createAudit(`audit-${Date.now()}`, "Applicant", "applicant", "application.precheck", "applications", auditSummary, {
+          applicationId,
+          processingMode
+        }),
+        ...snapshot.auditEvents
+      ]
+    };
+  });
+}
+
+export function submitApplicantApplication(applicationId: string): ConsoleSnapshot {
+  return setApplicationStatus(applicationId, "SUBMITTED", "application.submit", "Submitted application for TTB label review.");
+}
+
+export function withdrawApplicantApplication(applicationId: string): ConsoleSnapshot {
+  return setApplicationStatus(applicationId, "WITHDRAWN", "application.withdraw", "Withdrew application from review.");
+}
+
+export function requestApplicantCorrection(params: { applicationId: string; message: string; fields: string[]; actor?: string }): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => ({
+    ...snapshot,
+    applications: snapshot.applications.map((application) =>
+      application.id === params.applicationId
+        ? {
+            ...application,
+            status: "NEEDS_CORRECTION",
+            updatedAt: new Date().toISOString(),
+            metadata: {
+              ...application.metadata,
+              correctionMessage: params.message,
+              correctionFields: params.fields
+            }
+          }
+        : application
+    ),
+    auditEvents: [
+      createAudit(
+        `audit-${Date.now()}`,
+        params.actor || "Review Agent",
+        "reviewer",
+        "correction.request",
+        "correctionRequests",
+        `Requested applicant correction for ${params.applicationId}.`,
+        { applicationId: params.applicationId, fields: params.fields }
+      ),
+      ...snapshot.auditEvents
+    ]
+  }));
+}
+
+export function respondToApplicantCorrection(params: {
+  applicationId: string;
+  response: string;
+  expectedFields?: Partial<ExpectedFields>;
+  images?: LabelImage[];
+}): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => ({
+    ...snapshot,
+    activeApplicationId: params.applicationId,
+    applications: snapshot.applications.map((application) =>
+      application.id === params.applicationId
+        ? {
+            ...application,
+            status: "RESUBMITTED",
+            expectedFields: { ...application.expectedFields, ...params.expectedFields },
+            images: params.images?.length ? params.images : application.images,
+            updatedAt: new Date().toISOString(),
+            metadata: {
+              ...application.metadata,
+              correctionResponse: params.response
+            }
+          }
+        : application
+    ),
+    auditEvents: [
+      createAudit(
+        `audit-${Date.now()}`,
+        "Applicant",
+        "applicant",
+        "correction.respond",
+        "correctionRequests",
+        `Responded to correction request for ${params.applicationId}.`,
+        { applicationId: params.applicationId }
+      ),
+      ...snapshot.auditEvents
+    ]
+  }));
+}
+
 export function upsertApplication(application: ReviewApplication): ConsoleSnapshot {
   return updateSnapshot((snapshot) => {
     const exists = snapshot.applications.some((candidate) => candidate.id === application.id);
@@ -234,6 +379,27 @@ export function upsertApplication(application: ReviewApplication): ConsoleSnapsh
       activeApplicationId: application.id
     };
   });
+}
+
+function setApplicationStatus(
+  applicationId: string,
+  status: ApplicationStatus,
+  action: string,
+  summary: string,
+  actor = "Applicant",
+  role: UserRole = "applicant"
+): ConsoleSnapshot {
+  return updateSnapshot((snapshot) => ({
+    ...snapshot,
+    activeApplicationId: applicationId,
+    applications: snapshot.applications.map((application) =>
+      application.id === applicationId ? { ...application, status, updatedAt: new Date().toISOString() } : application
+    ),
+    auditEvents: [
+      createAudit(`audit-${Date.now()}`, actor, role, action, "applications", summary, { applicationId }),
+      ...snapshot.auditEvents
+    ]
+  }));
 }
 
 function updateApplication(applicationId: string, updater: (application: ReviewApplication) => ReviewApplication): ConsoleSnapshot {

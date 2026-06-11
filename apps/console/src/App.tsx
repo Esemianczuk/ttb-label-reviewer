@@ -1,9 +1,17 @@
 import { Refine } from "@refinedev/core";
 import routerProvider, { DocumentTitleHandler, UnsavedChangesNotifier } from "@refinedev/react-router";
 import { App as AntApp, ConfigProvider, theme } from "antd";
+import type { ReactNode } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { AdminPortal } from "./pages/admin/AdminPortal";
 import { ApplicantPortal } from "./pages/applicant/ApplicantPortal";
+import { ApplicantApplicationDetail } from "./pages/applicant/ApplicantApplicationDetail";
+import { ApplicantOnboarding } from "./pages/applicant/ApplicantOnboarding";
+import { ApplicantTimeline } from "./pages/applicant/ApplicantTimeline";
+import { CorrectionResponsePage } from "./pages/applicant/CorrectionResponsePage";
+import { NewApplicationWizard } from "./pages/applicant/NewApplicationWizard";
+import { PrecheckPage } from "./pages/applicant/PrecheckPage";
+import { AccessDeniedPage } from "./pages/public/AccessDeniedPage";
 import { RoleLanding } from "./pages/public/RoleLanding";
 import { ReviewerPortal } from "./pages/reviewer/ReviewerPortal";
 import { ResourceIndexPage } from "./pages/resources/ResourceIndexPage";
@@ -14,6 +22,8 @@ import { authProvider } from "./providers/auth/authProvider";
 import { createNotificationProvider } from "./providers/notification/notificationProvider";
 import { ProcessingModeProvider, useProcessingModeContext } from "./providers/processing/ProcessingModeProvider";
 import { consoleResources } from "./resources";
+import { canAccess } from "./providers/access/permissionMatrix";
+import { useCurrentRole } from "./hooks/useCurrentRole";
 
 export function App() {
   return (
@@ -61,9 +71,15 @@ function ConsoleRefineShell() {
       <Routes>
         <Route path="/" element={<AppLayout />}>
           <Route index element={<RoleLanding />} />
-          <Route path="reviewer" element={<ReviewerPortal />} />
-          <Route path="applicant" element={<ApplicantPortal />} />
-          <Route path="admin" element={<AdminPortal />} />
+          <Route path="reviewer" element={<RequireAccess resource="reviews" action="list"><ReviewerPortal /></RequireAccess>} />
+          <Route path="applicant" element={<RequireAccess resource="applications" action="list"><ApplicantPortal /></RequireAccess>} />
+          <Route path="applicant/onboarding" element={<RequireAccess resource="applications" action="create"><ApplicantOnboarding /></RequireAccess>} />
+          <Route path="applicant/applications/new" element={<RequireAccess resource="applications" action="create"><NewApplicationWizard /></RequireAccess>} />
+          <Route path="applicant/applications/:applicationId" element={<RequireAccess resource="applications" action="show"><ApplicantApplicationDetail /></RequireAccess>} />
+          <Route path="applicant/applications/:applicationId/precheck" element={<RequireAccess resource="applications" action="submit"><PrecheckPage /></RequireAccess>} />
+          <Route path="applicant/applications/:applicationId/corrections" element={<RequireAccess resource="correctionRequests" action="respond"><CorrectionResponsePage /></RequireAccess>} />
+          <Route path="applicant/applications/:applicationId/timeline" element={<RequireAccess resource="auditEvents" action="list"><ApplicantTimeline /></RequireAccess>} />
+          <Route path="admin" element={<RequireAccess resource="workers" action="manage"><AdminPortal /></RequireAccess>} />
           <Route path="resources/:resourceName" element={<ResourceIndexPage />} />
           <Route path="resources/:resourceName/:id" element={<ResourceIndexPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -73,4 +89,18 @@ function ConsoleRefineShell() {
       <DocumentTitleHandler handler={({ resource }) => `${resource?.name || "Console"} | TTB Label Reviewer`} />
     </Refine>
   );
+}
+
+function RequireAccess({
+  resource,
+  action,
+  children
+}: {
+  resource: string;
+  action: string;
+  children: ReactNode;
+}) {
+  const { role } = useCurrentRole();
+  if (!canAccess(role, resource, action)) return <AccessDeniedPage />;
+  return <>{children}</>;
 }

@@ -2,12 +2,18 @@ import type { DataProvider } from "@refinedev/core";
 import {
   addManualUpload,
   autoReviewApplication,
+  createApplicantDraft,
   getSnapshot,
+  requestApplicantCorrection,
+  respondToApplicantCorrection,
   resetSnapshot,
+  runApplicantPrecheck,
   setActiveApplication,
   setProcessingMode,
+  submitApplicantApplication,
   updateFieldDecision,
   updateReviewNotes,
+  withdrawApplicantApplication,
   upsertApplication
 } from "./browserStore";
 import { snapshotResourceData } from "./snapshotResources";
@@ -55,6 +61,12 @@ export const browserDataProvider: DataProvider = {
     if (action === "reviews/field") return { data: updateFieldDecision(payload as any) as any };
     if (action === "reviews/notes") return { data: updateReviewNotes(payload as any) as any };
     if (action === "applications/manual") return { data: addManualUpload(payload as any) as any };
+    if (action === "applications/draft") return { data: createApplicantDraft(payload as any) as any };
+    if (action === "applications/precheck") return { data: runApplicantPrecheck((payload as any).applicationId, (payload as any).mode) as any };
+    if (action === "applications/submit") return { data: submitApplicantApplication((payload as any).applicationId) as any };
+    if (action === "applications/withdraw") return { data: withdrawApplicantApplication((payload as any).applicationId) as any };
+    if (action === "corrections/request") return { data: requestApplicantCorrection(payload as any) as any };
+    if (action === "corrections/respond") return { data: respondToApplicantCorrection(payload as any) as any };
     throw new Error(`Browser data action ${action} is not implemented.`);
   }
 };
