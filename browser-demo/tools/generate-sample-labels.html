@@ -33,7 +33,7 @@
       ctx.fillStyle = '#1c1712';
       ctx.textAlign = 'center';
       ctx.font = '900 72px Georgia';
-      ctx.fillText('OLD TOM DISTILLERY', 450, 180);
+      ctx.fillText('HOLLOW RIDGE', 450, 180);
       ctx.font = '700 44px Georgia';
       ctx.fillText('KENTUCKY STRAIGHT', 450, 310);
       ctx.fillText('BOURBON WHISKEY', 450, 370);
@@ -59,7 +59,7 @@
       ctx.fillText(line, 450, y);
       document.querySelector('#download').addEventListener('click', () => {
         const link = document.createElement('a');
-        link.download = 'old_tom_pass.png';
+        link.download = 'hollow_ridge_pass.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
       });

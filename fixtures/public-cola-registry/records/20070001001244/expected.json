@@ -1,0 +1,56 @@
+{
+  "fixture_id": "ttb_20070001001244_tequila-galan",
+  "source_type": "official_public_registry",
+  "ttb_id": "20070001001244",
+  "expected_fields": {
+    "brandName": "TEQUILA GALAN",
+    "fancifulName": "SILVER",
+    "classType": "TEQUILA FB",
+    "productType": "distilled_spirits",
+    "alcoholContent": "40% ALC/VOL (80 PROOF)",
+    "netContents": "750 ML",
+    "governmentWarningRequired": true,
+    "isImported": true,
+    "countryOfOrigin": "MEXICO",
+    "responsibleParty": {
+      "name": "MARA IMPORTS",
+      "address": "545 W ALLEN AVE SUITE 14, SAN DIMAS, CA, 91773"
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_02.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Collector note: Approved public registry fixture discovered via distilled_spirits term; brand=TEQUILA GALAN; label_images=2.",
+    "Demo audit: ABV, net contents, and responsible party verified from label_01/02 images."
+  ],
+  "demo_ready": true,
+  "demo_audit": {
+    "status": "ready",
+    "reviewed_common_fields": [
+      "brandName",
+      "classType",
+      "alcoholContent",
+      "netContents",
+      "responsibleParty.name",
+      "governmentWarningRequired",
+      "countryOfOrigin"
+    ],
+    "source": "label_01/02 images",
+    "note": "Common reviewer criteria were audited against the downloaded label image(s) and official COLA form metadata."
+  }
+}

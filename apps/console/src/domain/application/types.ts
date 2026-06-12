@@ -17,7 +17,7 @@ export type ApplicationStatus =
   | "WITHDRAWN"
   | "ARCHIVED";
 
-export type ReviewStatus =
+export type ComplianceStatus =
   | "PASS"
   | "FAIL"
   | "WARNING"
@@ -26,7 +26,13 @@ export type ReviewStatus =
   | "NOT_APPLICABLE"
   | "PASS_WITH_WARNINGS";
 
-export type FieldStatus = ReviewStatus;
+export type ReviewStatus = ComplianceStatus;
+
+export type FieldStatus = ComplianceStatus;
+
+export type ReviewRunStatus = "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED";
+
+export type JobStatus = "queued" | "leased" | "running" | "completed" | "failed" | "cancelled" | "retrying";
 
 export type Severity = "info" | "warning" | "critical";
 
@@ -62,6 +68,16 @@ export type ReviewEvidence = {
   excerpt: string;
   confidence: number;
   pageAnchor?: string;
+  crop?: EvidenceCrop;
+};
+
+export type EvidenceCrop = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  unit: "pixel" | "ratio";
+  source: "ocr" | "estimated";
 };
 
 export type ReviewField = {
@@ -88,6 +104,7 @@ export type ReviewResult = {
   completedAt?: string;
   fields: ReviewField[];
   summary: string;
+  rawOcrText?: string;
   reviewerOverallStatus?: ReviewStatus;
   reviewerNotes?: string;
   engineTrace: string[];
@@ -109,23 +126,21 @@ export type ReviewApplication = {
   metadata: {
     description?: string;
     ttbId?: string;
+    applicationNumber?: string;
     publicRegistryUrl?: string;
     fixtureId?: string;
     packetPath?: string;
+    demoReady?: boolean;
+    demoAudit?: { status?: string; source?: string; reason?: string; note?: string; reviewed_common_fields?: string[] };
     notes?: string;
     correctionMessage?: string;
     correctionFields?: string[];
     correctionResponse?: string;
     reviewerDecision?: "accepted_auto" | "conditionally_approved" | "approved" | "rejected" | "escalated";
     reviewerDecisionNote?: string;
+    reviewerDecisionReopened?: boolean;
     escalationReason?: string;
-    precheckSettings?: {
-      runOcr: boolean;
-      validateGovernmentWarning: boolean;
-      requireAtLeastOneImage: boolean;
-      autoSubmitWhenReady: boolean;
-      browserWorkerOverride?: string;
-    };
+    archivedFromStatus?: ApplicationStatus;
   };
 };
 
@@ -155,7 +170,7 @@ export type AdminJob = {
   id: string;
   applicationId: string;
   type: "ocr" | "evidence_crop" | "validation" | "review_result";
-  status: "queued" | "leased" | "running" | "completed" | "failed" | "cancelled" | "retrying";
+  status: JobStatus;
   priority: number;
   workerId?: string;
   engine: string;
@@ -186,11 +201,27 @@ export type BenchmarkRun = {
   label: string;
   imageCount: number;
   mode: ProcessingMode;
+  status?: "completed" | "skipped" | "failed";
   workerId: string;
+  workerChosen?: string;
+  engineUsed?: string;
+  concurrency?: number;
+  totalMs?: number;
+  wallClockMs?: number;
   averageMsPerImage: number;
+  p50MsPerImage?: number;
+  p95MsPerImage?: number;
   p50OcrMs: number;
   p95OcrMs: number;
+  ocrMs?: number;
+  validationMs?: number;
+  queueMs?: number;
+  p50ValidationMs?: number;
+  p95ValidationMs?: number;
   imagesPerMinute: number;
+  failures?: number;
+  failedValidations?: number;
+  notes?: string;
   createdAt: string;
 };
 

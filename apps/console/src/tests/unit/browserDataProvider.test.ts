@@ -7,7 +7,8 @@ describe("browser data provider", () => {
     resetSnapshot();
     const response = await browserDataProvider.getList({ resource: "applications" });
     expect(response.total).toBeGreaterThan(3);
-    expect(response.data[0].images).toHaveLength(1);
+    expect(response.data[0].images.length).toBeGreaterThan(0);
+    expect(response.data[0].source).toBe("public_cola_registry");
   });
 
   it("auto reviews an application and preserves the result in snapshot state", async () => {
@@ -20,7 +21,7 @@ describe("browser data provider", () => {
     });
     const reviewed = getSnapshot().applications.find((application) => application.id === applicationId);
     expect(reviewed?.review?.fields.length).toBeGreaterThan(5);
-    expect(reviewed?.status).toBe("APPROVED");
+    expect(reviewed?.status).toBe("IN_REVIEW");
   });
 
   it("updates field decisions as reviewer overrides", async () => {
@@ -35,6 +36,6 @@ describe("browser data provider", () => {
     });
     const field = getSnapshot().applications[0].review?.fields[0];
     expect(field?.reviewerStatus).toBe("FAIL");
-    expect(getSnapshot().applications[0].status).toBe("REJECTED");
+    expect(getSnapshot().applications[0].status).toBe("IN_REVIEW");
   });
 });

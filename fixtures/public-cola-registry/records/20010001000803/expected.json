@@ -7,14 +7,14 @@
     "fancifulName": "TEQUILA SODA",
     "classType": "OTHER SPECIALTIES & PROPRIETARIES",
     "productType": "distilled_spirits",
-    "alcoholContent": null,
-    "netContents": null,
+    "alcoholContent": "7% ALC/VOL",
+    "netContents": "355 mL",
     "governmentWarningRequired": true,
-    "isImported": null,
+    "isImported": false,
     "countryOfOrigin": null,
     "responsibleParty": {
-      "name": null,
-      "address": null
+      "name": "CUTWATER SPIRITS",
+      "address": "9750 DISTRIBUTION AVE, San Diego, CA, 92121"
     }
   },
   "assets": [
@@ -30,7 +30,21 @@
     }
   ],
   "known_limitations": [
-    "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
-    "Collector note: Public registry search candidate: tequila RTD specialty."
-  ]
+    "Collector note: Public registry search candidate: tequila RTD specialty.",
+    "Demo audit: ABV, net contents, and responsible party verified from label_01 image."
+  ],
+  "demo_ready": true,
+  "demo_audit": {
+    "status": "ready",
+    "reviewed_common_fields": [
+      "brandName",
+      "classType",
+      "alcoholContent",
+      "netContents",
+      "responsibleParty.name",
+      "governmentWarningRequired"
+    ],
+    "source": "label_01 image",
+    "note": "Common reviewer criteria were audited against the downloaded label image(s) and official COLA form metadata."
+  }
 }

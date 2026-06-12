@@ -1,0 +1,49 @@
+{
+  "fixture_id": "ttb_20016001001081_the-cocktail-chemist",
+  "source_type": "official_public_registry",
+  "ttb_id": "20016001001081",
+  "expected_fields": {
+    "brandName": "THE COCKTAIL CHEMIST",
+    "fancifulName": "VODKA SODA SPLASH OF CRAN",
+    "classType": "VODKA SPECIALTIES",
+    "productType": "distilled_spirits",
+    "alcoholContent": "10% ALC/VOL",
+    "netContents": "200 mL",
+    "governmentWarningRequired": true,
+    "isImported": false,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": "THE COCKTAIL CHEMIST BEVERAGE CO.",
+      "address": "5353 MALY RD STE B & UNIT 4, Sun Prairie, WI, 53590"
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Demo audit: ABV, net contents, and responsible party verified from label_01 image."
+  ],
+  "demo_ready": true,
+  "demo_audit": {
+    "status": "ready",
+    "reviewed_common_fields": [
+      "brandName",
+      "classType",
+      "alcoholContent",
+      "netContents",
+      "responsibleParty.name",
+      "governmentWarningRequired"
+    ],
+    "source": "label_01 image",
+    "note": "Common reviewer criteria were audited against the downloaded label image(s) and official COLA form metadata."
+  }
+}

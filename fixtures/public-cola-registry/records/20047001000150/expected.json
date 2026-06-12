@@ -1,0 +1,50 @@
+{
+  "fixture_id": "ttb_20047001000150_whiskey-barrel-aged-sticke-alt-german-style-ale",
+  "source_type": "official_public_registry",
+  "ttb_id": "20047001000150",
+  "expected_fields": {
+    "brandName": "WHISKEY BARREL AGED STICKE ALT GERMAN STYLE ALE",
+    "fancifulName": null,
+    "classType": "ALE",
+    "productType": "malt_beverage",
+    "alcoholContent": "9.2% BY VOL",
+    "netContents": "5.16 GAL",
+    "governmentWarningRequired": true,
+    "isImported": false,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": "DRU BRU",
+      "address": "10 THE PASS LIFE WAY, SNOQUALMIE PASS, WA, 98068"
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Collector note: Approved public registry fixture discovered via distilled_spirits term; brand=WHISKEY BARREL AGED STICKE ALT GERMAN STYLE ALE; label_images=1.",
+    "Demo audit: ABV, net contents, and responsible party verified from label_01 image."
+  ],
+  "demo_ready": true,
+  "demo_audit": {
+    "status": "ready",
+    "reviewed_common_fields": [
+      "brandName",
+      "classType",
+      "alcoholContent",
+      "netContents",
+      "responsibleParty.name",
+      "governmentWarningRequired"
+    ],
+    "source": "label_01 image",
+    "note": "Common reviewer criteria were audited against the downloaded label image(s) and official COLA form metadata."
+  }
+}

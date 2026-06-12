@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from .. import models
+from ..core.application_numbers import metadata_with_existing_application_number
 from ..core.statuses import canonical_application_status, canonical_review_status
 
 
 def application_to_read(application: models.Application):
     status = canonical_application_status(application.status)
+    metadata = metadata_with_existing_application_number(application)
     return {
         "id": application.id,
         "sessionId": application.session_id,
@@ -15,7 +17,7 @@ def application_to_read(application: models.Application):
         "ownerUserId": application.owner_user_id,
         "organizationId": application.organization_id,
         "expectedFields": application.expected_fields,
-        "metadata": application.metadata_json,
+        "metadata": metadata,
         "createdAt": application.created_at,
         "updatedAt": application.updated_at,
         "assetCount": len(application.assets or []),

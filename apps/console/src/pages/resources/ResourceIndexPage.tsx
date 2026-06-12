@@ -2,12 +2,12 @@ import { ReloadOutlined } from "@ant-design/icons";
 import { Alert, Button, Card, Empty, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useList } from "@refinedev/core";
-import { NavLink, useParams } from "react-router";
+import { Navigate, NavLink, useParams } from "react-router";
 import { useMemo } from "react";
 import { useCurrentRole } from "../../hooks/useCurrentRole";
 import { canAccess } from "../../providers/access/permissionMatrix";
-import { AccessDeniedPage } from "../public/AccessDeniedPage";
 import { useProcessingMode } from "../../hooks/useProcessingMode";
+import { roleHomePath } from "../../providers/auth/authProvider";
 import { consoleResourceNames, isConsoleResourceName, resourceLabels } from "../../resources";
 
 export function ResourceIndexPage() {
@@ -32,14 +32,14 @@ export function ResourceIndexPage() {
   if (!validResource) {
     return (
       <Card size="small" title="Resources">
-        <Alert type="warning" showIcon message="Unknown resource" description="Choose one of the registered console resources." />
+        <Alert type="warning" showIcon title="Unknown resource" description="Choose one of the registered console resources." />
         <ResourceLinks />
       </Card>
     );
   }
 
   if (!allowed) {
-    return <AccessDeniedPage />;
+    return <Navigate to={roleHomePath(role)} replace />;
   }
 
   return (
@@ -48,7 +48,7 @@ export function ResourceIndexPage() {
         <Alert
           type="warning"
           showIcon
-          message="Backend coordinator unavailable"
+          title="Backend coordinator unavailable"
           description="This resource is registered to the FastAPI provider in Backend and Cluster modes. Switch to Browser Only to keep reviewing offline."
           action={<Button onClick={fallbackToBrowser}>Use Browser Only</Button>}
         />
@@ -57,7 +57,7 @@ export function ResourceIndexPage() {
         <Alert
           type="error"
           showIcon
-          message={`Could not load ${resourceLabels[validResource]}`}
+          title={`Could not load ${resourceLabels[validResource]}`}
           description={list.query.error?.message || "The active provider returned an error."}
         />
       ) : null}
@@ -77,7 +77,7 @@ export function ResourceIndexPage() {
         {rows.length ? (
           <Table rowKey={(record) => String(record.id ?? record.key ?? JSON.stringify(record).slice(0, 80))} dataSource={rows} columns={columns} pagination={{ pageSize: 10 }} scroll={{ x: 900 }} />
         ) : (
-          <Empty description={list.query.isFetching ? "Loading resource records" : "No records returned by active provider"} />
+          <Empty description={list.query.isFetching ? "Loading resource records" : "This provider has no records for the selected resource"} />
         )}
       </Card>
       <ResourceLinks />

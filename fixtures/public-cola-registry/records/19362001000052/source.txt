@@ -1,0 +1,10 @@
+retrieved_at: 2026-06-12T18:46:37Z
+system: TTB Public COLA Registry
+ttb_id: 19362001000052
+source_kind: public_registry
+detail_url: https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=19362001000052
+final_url: https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=19362001000052
+asset_urls:
+  - https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=19362001000052
+  - https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=GinQuila Front Label v2 2-4589in x 4-3826in.jpg&filetype=l
+  - https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=GinQuila Back Label v1 2-4566in x 3-7045in.jpg&filetype=l

@@ -1,0 +1,43 @@
+{
+  "fixture_id": "ttb_19352001000901_chapman-crafted-beer",
+  "source_type": "official_public_registry",
+  "ttb_id": "19352001000901",
+  "expected_fields": {
+    "brandName": "CHAPMAN CRAFTED BEER",
+    "fancifulName": "BEER OF THE DARK",
+    "classType": "MALT BEVERAGES SPECIALITIES - FLAVORED",
+    "productType": "malt_beverage",
+    "alcoholContent": null,
+    "netContents": null,
+    "governmentWarningRequired": true,
+    "isImported": false,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": "CHAPMAN CRAFTED BEER",
+      "address": "123 N CYPRESS ST, Orange, CA, 92866"
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
+    "Collector note: Approved public registry fixture discovered via malt_beverage term; brand=CHAPMAN CRAFTED BEER; label_images=1.",
+    "Demo audit exclusion: Available collar image has ABV but net contents are unselected checkbox options."
+  ],
+  "demo_ready": false,
+  "demo_audit": {
+    "status": "excluded",
+    "reason": "Available collar image has ABV but net contents are unselected checkbox options.",
+    "note": "Retained in the fixture corpus for provenance, but excluded from loaded demo samples."
+  }
+}

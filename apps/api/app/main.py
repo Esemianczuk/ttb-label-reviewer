@@ -53,10 +53,10 @@ def create_app(settings: Settings | None = None, session_factory: sessionmaker |
     app.state.session_factory = session_factory
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=list(settings.cors_allow_origins),
         allow_credentials=False,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=list(settings.cors_allow_methods),
+        allow_headers=list(settings.cors_allow_headers),
     )
 
     from . import db
@@ -94,8 +94,8 @@ app = create_app()
 
 def main() -> None:
     settings = get_settings()
-    if settings.lan_mode:
-        print("WARNING: LAN mode is enabled. Only run the coordinator on a trusted network.")
+    if settings.lan_warning:
+        print(settings.lan_warning)
     uvicorn.run("apps.api.app.main:app", host=settings.host, port=settings.port, reload=False)
 
 

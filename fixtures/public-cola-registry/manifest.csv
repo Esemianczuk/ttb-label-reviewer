@@ -1,7 +1,51 @@
-fixture_id,ttb_id,brand_name,class_type,product_type,asset_count,record_dir,expected_json
-ttb_19344001000769_beer-drinking-is-not-a-crime,19344001000769,BEER DRINKING IS NOT A CRIME,ALE,malt_beverage,2,records/19344001000769,records/19344001000769/expected.json
-ttb_20010001000197_sunstone-winery,20010001000197,SUNSTONE WINERY,TABLE WHITE WINE,wine,3,records/20010001000197,records/20010001000197/expected.json
-ttb_20010001000803_cutwater,20010001000803,CUTWATER,OTHER SPECIALTIES & PROPRIETARIES,distilled_spirits,2,records/20010001000803,records/20010001000803/expected.json
-ttb_20014001001179_what-the-phoque,20014001001179,WHAT THE PHOQUE,TABLE RED WINE,wine,3,records/20014001001179,records/20014001001179/expected.json
-ttb_20016001000598_monaco,20016001000598,MONACO,VODKA SPECIALTIES,distilled_spirits,2,records/20016001000598,records/20016001000598/expected.json
-ttb_20041001000838_natural-light,20041001000838,NATURAL LIGHT,MALT BEVERAGES SPECIALITIES - FLAVORED,malt_beverage,2,records/20041001000838,records/20041001000838/expected.json
+fixture_id,ttb_id,brand_name,class_type,product_type,asset_count,record_dir,expected_json,demo_ready,demo_status,demo_exclusion_reason
+ttb_19337001000251_transcontinental,19337001000251,TRANSCONTINENTAL,OTHER FOREIGN RUM,distilled_spirits,3,records/19337001000251,records/19337001000251/expected.json,true,ready,
+ttb_19344001000769_beer-drinking-is-not-a-crime,19344001000769,BEER DRINKING IS NOT A CRIME,ALE,malt_beverage,2,records/19344001000769,records/19344001000769/expected.json,false,excluded,Available image lacks clear alcohol-content and net-contents values.
+ttb_19346001000245_devils-backbone,19346001000245,DEVILS BACKBONE,COCKTAILS 48 PROOF UP,distilled_spirits,2,records/19346001000245,records/19346001000245/expected.json,true,ready,
+ttb_19350001000422_chloe,19350001000422,CHLOE,MALT BEVERAGES SPECIALITIES - FLAVORED,malt_beverage,2,records/19350001000422,records/19350001000422/expected.json,false,excluded,Available keg/collar image lacks a defensible alcohol-content value and has unselected net-contents checkboxes.
+ttb_19350001000429_chloe,19350001000429,CHLOE,MALT BEVERAGES SPECIALITIES - FLAVORED,malt_beverage,2,records/19350001000429,records/19350001000429/expected.json,true,ready,
+ttb_19351001000469_gino-pedrotti,19351001000469,GINO PEDROTTI,TABLE WHITE WINE,wine,4,records/19351001000469,records/19351001000469/expected.json,true,ready,
+ttb_19352001000901_chapman-crafted-beer,19352001000901,CHAPMAN CRAFTED BEER,MALT BEVERAGES SPECIALITIES - FLAVORED,malt_beverage,2,records/19352001000901,records/19352001000901/expected.json,false,excluded,Available collar image has ABV but net contents are unselected checkbox options.
+ttb_19354001000264_kettlehouse-brewing-co,19354001000264,KETTLEHOUSE BREWING CO.,MALT BEVERAGES SPECIALITIES - FLAVORED,malt_beverage,2,records/19354001000264,records/19354001000264/expected.json,false,excluded,Available collar image has ABV but net contents are unselected checkbox options.
+ttb_19354001000375_devils-backbone-distilling-co,19354001000375,DEVILS BACKBONE DISTILLING CO.,VODKA SPECIALTIES,distilled_spirits,2,records/19354001000375,records/19354001000375/expected.json,true,ready,
+ttb_19362001000052_ske-tic,19362001000052,SKE?TIC,GIN SPECIALTIES,distilled_spirits,3,records/19362001000052,records/19362001000052/expected.json,true,ready,
+ttb_19363001000082_mr-b-s-meadery,19363001000082,MR. B'S MEADERY,HONEY BASED TABLE WINE,wine,2,records/19363001000082,records/19363001000082/expected.json,true,ready,
+ttb_20004001000117_brewery-emperial,20004001000117,BREWERY EMPERIAL,MALT BEVERAGES SPECIALITIES - FLAVORED,malt_beverage,2,records/20004001000117,records/20004001000117/expected.json,false,excluded,Available collar image is too low-confidence/handwritten for robust ABV and net-content demo matching.
+ttb_20006001000584_decadent-ales,20006001000584,DECADENT ALES,MALT BEVERAGES SPECIALITIES - FLAVORED,malt_beverage,2,records/20006001000584,records/20006001000584/expected.json,true,ready,
+ttb_20009001000806_send-it,20009001000806,SEND IT,VODKA SPECIALTIES,distilled_spirits,2,records/20009001000806,records/20009001000806/expected.json,true,ready,
+ttb_20009001000816_send-it,20009001000816,SEND IT,VODKA SPECIALTIES,distilled_spirits,2,records/20009001000816,records/20009001000816/expected.json,true,ready,
+ttb_20009001000885_devils-backbone-distilling-co,20009001000885,DEVILS BACKBONE DISTILLING CO.,VODKA SPECIALTIES,distilled_spirits,2,records/20009001000885,records/20009001000885/expected.json,true,ready,
+ttb_20010001000197_sunstone-winery,20010001000197,SUNSTONE WINERY,TABLE WHITE WINE,wine,3,records/20010001000197,records/20010001000197/expected.json,false,excluded,Available images show ABV but no clear net-contents value.
+ttb_20010001000242_rumpus,20010001000242,RUMPUS,TABLE WHITE WINE,wine,3,records/20010001000242,records/20010001000242/expected.json,true,ready,
+ttb_20010001000803_cutwater,20010001000803,CUTWATER,OTHER SPECIALTIES & PROPRIETARIES,distilled_spirits,2,records/20010001000803,records/20010001000803/expected.json,true,ready,
+ttb_20014001001179_what-the-phoque,20014001001179,WHAT THE PHOQUE,TABLE RED WINE,wine,3,records/20014001001179,records/20014001001179/expected.json,true,ready,
+ttb_20016001000598_monaco,20016001000598,MONACO,VODKA SPECIALTIES,distilled_spirits,2,records/20016001000598,records/20016001000598/expected.json,true,ready,
+ttb_20016001001081_the-cocktail-chemist,20016001001081,THE COCKTAIL CHEMIST,VODKA SPECIALTIES,distilled_spirits,2,records/20016001001081,records/20016001001081/expected.json,true,ready,
+ttb_20017001000486_willow-hill,20017001000486,WILLOW HILL,VODKA SPECIALTIES,distilled_spirits,2,records/20017001000486,records/20017001000486/expected.json,true,ready,
+ttb_20021001000243_heathen-brewing,20021001000243,HEATHEN BREWING,MALT BEVERAGES SPECIALITIES - FLAVORED,malt_beverage,2,records/20021001000243,records/20021001000243/expected.json,true,ready,
+ttb_20021001000874_2sp-brewing-comapny,20021001000874,2SP BREWING COMAPNY,ALE,malt_beverage,2,records/20021001000874,records/20021001000874/expected.json,false,excluded,Available collar image has ABV but net contents are unselected checkbox options.
+ttb_20023001000513_omnipollo,20023001000513,OMNIPOLLO,MALT BEVERAGES SPECIALITIES,malt_beverage,2,records/20023001000513,records/20023001000513/expected.json,true,ready,
+ttb_20023001000590_omnipollo,20023001000590,OMNIPOLLO,MALT BEVERAGES SPECIALITIES,malt_beverage,2,records/20023001000590,records/20023001000590/expected.json,true,ready,
+ttb_20030001000826_b-nektar,20030001000826,B. NEKTAR,HONEY BASED TABLE WINE,wine,2,records/20030001000826,records/20030001000826/expected.json,true,ready,
+ttb_20038001000269_doc-wylder-s,20038001000269,DOC WYLDER'S,OTHER SPECIALTIES & PROPRIETARIES,distilled_spirits,2,records/20038001000269,records/20038001000269/expected.json,true,ready,
+ttb_20038001000502_the-beer-den,20038001000502,THE BEER DEN,ALE,malt_beverage,2,records/20038001000502,records/20038001000502/expected.json,true,ready,
+ttb_20041001000838_natural-light,20041001000838,NATURAL LIGHT,MALT BEVERAGES SPECIALITIES - FLAVORED,malt_beverage,2,records/20041001000838,records/20041001000838/expected.json,true,ready,
+ttb_20047001000150_whiskey-barrel-aged-sticke-alt-german-style-ale,20047001000150,WHISKEY BARREL AGED STICKE ALT GERMAN STYLE ALE,ALE,malt_beverage,2,records/20047001000150,records/20047001000150/expected.json,true,ready,
+ttb_20047001000152_whiskey-barrel-aged-sticke-alt-german-style-ale,20047001000152,WHISKEY BARREL AGED STICKE ALT GERMAN STYLE ALE,ALE,malt_beverage,2,records/20047001000152,records/20047001000152/expected.json,true,ready,
+ttb_20052001000890_tequila-ocho,20052001000890,TEQUILA OCHO,TEQUILA FB,distilled_spirits,6,records/20052001000890,records/20052001000890/expected.json,true,ready,
+ttb_20055001000188_domaine-ramonet,20055001000188,DOMAINE RAMONET,TABLE WHITE WINE,wine,3,records/20055001000188,records/20055001000188/expected.json,true,ready,
+ttb_20055001000326_whiskey-run-creek-vineyard-winery,20055001000326,WHISKEY RUN CREEK VINEYARD & WINERY,DESSERT FLAVORED WINE,wine,2,records/20055001000326,records/20055001000326/expected.json,true,ready,
+ttb_20056001000027_domaine-anne-gros,20056001000027,DOMAINE ANNE GROS,TABLE WHITE WINE,wine,3,records/20056001000027,records/20056001000027/expected.json,true,ready,
+ttb_20062001000300_etienne-sauzet,20062001000300,ETIENNE SAUZET,TABLE WHITE WINE,wine,3,records/20062001000300,records/20062001000300/expected.json,true,ready,
+ttb_20062001000455_sin-verguenza,20062001000455,SIN VERGUENZA,TEQUILA FB,distilled_spirits,4,records/20062001000455,records/20062001000455/expected.json,true,ready,
+ttb_20062001000465_sin-verguenza,20062001000465,SIN VERGUENZA,TEQUILA FB,distilled_spirits,4,records/20062001000465,records/20062001000465/expected.json,true,ready,
+ttb_20070001001241_tequila-galan,20070001001241,TEQUILA GALAN,TEQUILA FB,distilled_spirits,3,records/20070001001241,records/20070001001241/expected.json,true,ready,
+ttb_20070001001244_tequila-galan,20070001001244,TEQUILA GALAN,TEQUILA FB,distilled_spirits,3,records/20070001001244,records/20070001001244/expected.json,true,ready,
+ttb_20073001000932_irvine-roberts-vineyards,20073001000932,IRVINE & ROBERTS VINEYARDS,TABLE WHITE WINE,wine,3,records/20073001000932,records/20073001000932/expected.json,true,ready,
+ttb_20082001000147_lemon-creek,20082001000147,LEMON CREEK,TABLE WHITE WINE,wine,3,records/20082001000147,records/20082001000147/expected.json,false,excluded,Available images show ABV but no clear net-contents value.
+ttb_20086001000599_toppling-goliath-brewing-co,20086001000599,TOPPLING GOLIATH BREWING CO.,STOUT,malt_beverage,2,records/20086001000599,records/20086001000599/expected.json,false,excluded,Available keg/collar image lacks a defensible alcohol-content value and has checkbox/package options.
+ttb_20099001000399_neta,20099001000399,NETA,OTHER SPECIALTIES & PROPRIETARIES,distilled_spirits,5,records/20099001000399,records/20099001000399/expected.json,true,ready,
+ttb_20112001000226_landon-winery,20112001000226,LANDON WINERY,TABLE WHITE WINE,wine,3,records/20112001000226,records/20112001000226/expected.json,true,ready,
+ttb_20124001000063_north-coast-wine-club,20124001000063,NORTH COAST WINE CLUB,TABLE WHITE WINE,wine,2,records/20124001000063,records/20124001000063/expected.json,true,ready,
+ttb_20134001000705_kinsey,20134001000705,KINSEY,WHISKY SPECIALTIES,distilled_spirits,4,records/20134001000705,records/20134001000705/expected.json,true,ready,
+ttb_20268001000065_haiball,20268001000065,HAIBALL,COCKTAILS UNDER 48 PROOF,malt_beverage,2,records/20268001000065,records/20268001000065/expected.json,true,ready,

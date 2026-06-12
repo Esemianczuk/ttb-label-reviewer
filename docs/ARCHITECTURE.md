@@ -2,6 +2,19 @@
 
 TTB Label Reviewer is intentionally local-first. The browser demo remains the compatibility surface, and `apps/api` is an optional coordinator that can persist applications, store uploaded images, and assign review work to local or distributed workers.
 
+## Evaluator Doc Map
+
+- [EVALUATOR_GUIDE.md](EVALUATOR_GUIDE.md): exact run commands and click path.
+- [ROLE_MODEL.md](ROLE_MODEL.md): applicant/reviewer/admin/worker permissions.
+- [SECURITY_MODEL.md](SECURITY_MODEL.md): assessment hardening and tests.
+- [APPLICANT_WORKFLOW.md](APPLICANT_WORKFLOW.md): applicant intake and correction flow.
+- [REVIEWER_WORKBENCH.md](REVIEWER_WORKBENCH.md): review queue, evidence, overrides, PDF export.
+- [ADMIN_OPERATIONS.md](ADMIN_OPERATIONS.md): operations dashboard and admin routes.
+- [DISTRIBUTED_MODE.md](DISTRIBUTED_MODE.md): coordinator and worker setup.
+- [BENCHMARKS.md](BENCHMARKS.md): benchmark scripts and JSON outputs.
+- [FIXTURES.md](FIXTURES.md): sample packets and public fixture metadata.
+- [Known_LIMITATIONS.md](Known_LIMITATIONS.md): prototype boundaries.
+
 ## Modes
 
 - Browser-only: `browser-demo` and the console Browser Only mode run by themselves with local samples, packaged Tesseract.js assets, browser OCR, deterministic validation, reviewer edits, and report export.
@@ -94,9 +107,9 @@ The console also includes `mockDataProvider` for isolated tests and demos. The g
 
 ## Phase 9 Applicant Portal
 
-The applicant console now has guarded routes for onboarding, new application intake, application detail, pre-check, corrections, and timeline views. Applicants can create multi-image packets with up to 10 label images, assign each image a role, run deterministic pre-checks, submit ready packets, withdraw submissions, and respond to correction requests.
+The applicant console now has guarded routes for the dashboard, new application intake, edit-mode correction resubmission, application detail, and timeline views. Applicants can create a typical one-image packet or multi-image packets with up to 10 label images, assign each image a role, submit ready packets, withdraw submissions, create a new version, and resubmit updates when a reviewer requests changes.
 
-Browser-only applicant state is stored in the same console snapshot as reviewer/admin state. Applicant actions create audit events, preserve correction messages/responses in application metadata, and reuse the shared workflow statuses (`DRAFT`, `PRECHECK_RUNNING`, `APPLICANT_FIX_REQUIRED`, `READY_TO_SUBMIT`, `SUBMITTED`, `NEEDS_CORRECTION`, `RESUBMITTED`, `APPROVED`, `REJECTED`, and related terminal states).
+Browser-only applicant state is stored in the same console snapshot as reviewer/admin state. Applicant actions create audit events, preserve reviewer correction messages in application metadata, and reuse the shared workflow statuses (`DRAFT`, `SUBMITTED`, `NEEDS_CORRECTION`, `RESUBMITTED`, `APPROVED`, `REJECTED`, and related terminal states).
 
 Route guards enforce the role boundary in the console: applicant role can open applicant routes and correction/timeline resources, but cannot open reviewer or admin workspaces.
 
@@ -112,9 +125,11 @@ The reviewer status model mirrors the TTB-facing flow without letting model outp
 
 The admin console now exposes `/admin`, `/admin/users`, `/admin/roles`, `/admin/workers`, `/admin/jobs`, `/admin/engines`, `/admin/benchmarks`, `/admin/audit`, `/admin/retention`, `/admin/fixtures`, and `/admin/settings`.
 
-Browser-only operations state includes worker hardware/engine metadata, scheduler-style jobs, persisted admin settings, benchmark runs, and retention actions. Backend/Cluster mode uses FastAPI admin routes for live worker/job lists, audit events, server-side settings, worker recalibration/drain/disable/enable, job retry/cancel/priority changes, and retention actions.
+Browser-only operations state includes worker hardware/engine metadata, scheduler-style jobs, persisted admin settings, benchmark runs, and retention actions. Backend/Cluster mode uses FastAPI admin routes for live worker/job lists, audit events, server-side settings, worker recalibration/drain/disable/enable, job retry/cancel/priority changes, benchmark JSON read/run actions, and retention actions.
 
 Admin actions create audit events for settings updates, worker operations, job operations, benchmark runs, raw-image purges, old-job purges, packet deletion, and full demo-data purge where the active provider supports the operation.
+
+Phase 17 benchmark scripts and admin API routes share `apps.api.app.core.benchmarking`. The quick path uses bundled sample packets plus OCR fixtures, records calibrated OCR estimates and measured Python validator timings for 1, 10, and 50 image runs, and writes suites to `benchmarks/results/latest.json` plus timestamped history. Cluster benchmarks discover eligible workers through the coordinator and mark runs skipped when no workers are available.
 
 ## Phase 12 Live Updates
 
@@ -128,11 +143,13 @@ The console enables Refine `liveMode: "auto"` so resource list hooks refetch whe
 
 The browser demo packages Tesseract.js worker/core files and `eng.traineddata.gz` under `browser-demo/public/tesseract`. Production builds use these local assets by default, so OCR does not depend on jsDelivr or Project Naptha CDNs. The CDN fallback is available only for development when `VITE_ALLOW_TESSERACT_CDN_FALLBACK=1` is set.
 
-Browser worker pools process multi-image application packets and CSV manifests. Console Browser Only pre-checks and reviewer auto-review use the same browser OCR worker pool and JavaScript validators; uploaded image blobs stay in the browser session and are not sent to the backend in Browser Only mode.
+Browser worker pools process multi-image application packets and CSV manifests. Console Browser Only reviewer auto-review uses the same browser OCR worker pool and JavaScript validators; uploaded image blobs stay in the browser session and are not sent to the backend in Browser Only mode.
 
 ## Phase 14 Backend Static Integration
 
 `TTB_API_STATIC_DIR` defaults to `apps/console/dist`. When that directory contains `index.html`, FastAPI mounts it at `/` after the API routes. `/api/health` reports database scheme, asset root, static directory, and whether the static console build is ready. The console header displays backend health and static readiness.
+
+The coordinator CORS policy is explicit by default. Local development origins on `localhost` and `127.0.0.1` are allowed; deployments should set `TTB_API_CORS_ORIGINS` to a comma-separated list of exact origins. Binding with `TTB_API_HOST=0.0.0.0` or `::` enables LAN mode and returns a prominent warning in `/api/health`.
 
 ## Phase 4 Worker Agent
 
@@ -162,6 +179,8 @@ The current worker intentionally avoids bundling model weights or requiring nati
 - Applicant assets and reports are scoped by application ownership.
 - Application state changes must go through the transition service.
 - OCR/model output is treated as evidence; deterministic validators decide statuses.
-- Uploaded filenames are sanitized and never used as storage paths.
-- MIME type and upload size are validated before object-store writes.
+- Uploaded filenames are sanitized and never used as storage paths; object-store reads and retention deletes refuse paths outside the configured asset root.
+- Upload size, declared MIME, file extension, decoded MIME, image dimensions, and Pillow decode verification are validated before object-store writes.
 - The object store is content-addressed as `data/assets/{sha256[:2]}/{sha256}.ext`.
+- Worker registration requires a short-lived join token by default. Registered workers receive a persistent secret, stale workers are marked lost, and unauthenticated job claims are denied and audited.
+- Admin retention can purge raw assets, completed jobs, single application packets, or all demo application data.

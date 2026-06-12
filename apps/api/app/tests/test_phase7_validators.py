@@ -83,6 +83,30 @@ def test_evidence_task_preserves_ocr_line_word_bbox_candidates():
     assert candidates[0]["assetId"] == "asset-1"
 
 
+def test_evidence_task_normalizes_legacy_tesseract_bbox_shape():
+    result = process_evidence_job(
+        {
+            "payload": {
+                "asset_id": "asset-1",
+                "expected_fields": {"brandName": "Devils Backbone"},
+                "ocr_result": {
+                    "confidence": 0.88,
+                    "lines": [
+                        {
+                            "text": "DEVILS BACKBONE",
+                            "confidence": 0.92,
+                            "bbox": {"x": 504, "y": 632, "w": 257, "h": 45},
+                        }
+                    ],
+                },
+            }
+        }
+    )
+
+    candidates = result["evidence"][0]["candidates"]
+    assert candidates[0]["bbox"] == {"x": 504.0, "y": 632.0, "width": 257.0, "height": 45.0}
+
+
 class _NoopClient:
     def get_asset_content(self, asset_id: str, session_id: str | None = None) -> bytes:
         return b""

@@ -1,0 +1,119 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=19354001000264",
+    "retrieved_at": "2026-06-12T18:46:58Z"
+  },
+  "ttb_id": "19354001000264",
+  "status": "APPROVED",
+  "approval_date": "01/16/2020",
+  "serial_number": "192013",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "KETTLEHOUSE BREWING CO.",
+    "fanciful_name": "WHISKEY BARREL AGED WHITE STOUT",
+    "class_type": "MALT BEVERAGES SPECIALITIES - FLAVORED",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": "1339107",
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=19354001000264",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16711,
+      "sha256": "d11b226804e7c3a3640edf96c1b919b981097904a9c7cfee0eb5508cbd024186",
+      "downloaded_at": "2026-06-12T18:46:59Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=WS.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 79105,
+      "sha256": "c3beac13333aa47edf95596c88d770ce564bc9f1865ac138a8c333f7c5215831",
+      "downloaded_at": "2026-06-12T18:46:59Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "19354001000264"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "25369"
+    },
+    {
+      "label": "Serial #",
+      "value": "192013"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "MALT BEVERAGES SPECIALITIES - FLAVORED"
+    },
+    {
+      "label": "Origin Code",
+      "value": "MONTANA"
+    },
+    {
+      "label": "Brand Name",
+      "value": "KETTLEHOUSE BREWING CO."
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "WHISKEY BARREL AGED WHITE STOUT"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Formula",
+      "value": "1339107"
+    },
+    {
+      "label": "Approval Date",
+      "value": "01/16/2020"
+    },
+    {
+      "label": "TTB ID: 19354001000264",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=19354001000264",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=WS.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

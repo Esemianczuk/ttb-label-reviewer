@@ -168,6 +168,59 @@ export interface AuthzCanResponse {
   reason?: AuthzCanResponseReason;
 }
 
+export type BenchmarkRunReadNotes = string | null;
+
+export interface BenchmarkRunRead {
+  averageMsPerImage: number;
+  concurrency?: number;
+  createdAt: string;
+  engineUsed: string;
+  failedValidations?: number;
+  failures?: number;
+  id: string;
+  imageCount: number;
+  imagesPerMinute: number;
+  label: string;
+  mode: string;
+  notes?: BenchmarkRunReadNotes;
+  ocrMs?: number;
+  p50MsPerImage?: number;
+  p50OcrMs: number;
+  p50ValidationMs?: number;
+  p95MsPerImage?: number;
+  p95OcrMs: number;
+  p95ValidationMs?: number;
+  queueMs?: number;
+  status?: string;
+  totalMs: number;
+  validationMs?: number;
+  wallClockMs?: number;
+  workerChosen: string;
+  workerId: string;
+}
+
+export type BenchmarkRunRequestLabel = string | null;
+
+export type BenchmarkRunRequestMode = typeof BenchmarkRunRequestMode[keyof typeof BenchmarkRunRequestMode];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const BenchmarkRunRequestMode = {
+  browser: 'browser',
+  backend: 'backend',
+  cluster: 'cluster',
+} as const;
+
+export interface BenchmarkRunRequest {
+  /**
+   * @minimum 1
+   * @maximum 500
+   */
+  imageCount?: number;
+  label?: BenchmarkRunRequestLabel;
+  mode?: BenchmarkRunRequestMode;
+}
+
 export interface BodyUploadImageApiApplicationsApplicationIdImagesPost {
   file: string;
   role?: string;
@@ -232,10 +285,16 @@ export interface HTTPValidationError {
   detail?: ValidationError[];
 }
 
+export type HealthReadWarning = string | null;
+
 export interface HealthRead {
   assetRoot: string;
   database: string;
+  lanMode?: boolean;
   ok: boolean;
+  staticDir: string;
+  staticReady: boolean;
+  warning?: HealthReadWarning;
 }
 
 export type JobClaimRequestSessionId = string | null;
@@ -516,6 +575,86 @@ limit?: number;
 };
 
 /**
+ * @summary List Benchmark Results
+ */
+export type listBenchmarkResultsApiAdminBenchmarksResultsGetResponse200 = {
+  data: BenchmarkRunRead[]
+  status: 200
+}
+
+export type listBenchmarkResultsApiAdminBenchmarksResultsGetResponseSuccess = (listBenchmarkResultsApiAdminBenchmarksResultsGetResponse200) & {
+  headers: Headers;
+};
+;
+
+export type listBenchmarkResultsApiAdminBenchmarksResultsGetResponse = (listBenchmarkResultsApiAdminBenchmarksResultsGetResponseSuccess)
+
+export const getListBenchmarkResultsApiAdminBenchmarksResultsGetUrl = () => {
+
+
+
+
+  return `/api/admin/benchmarks/results`
+}
+
+export const listBenchmarkResultsApiAdminBenchmarksResultsGet = async ( options?: RequestInit): Promise<listBenchmarkResultsApiAdminBenchmarksResultsGetResponse> => {
+
+  return apiFetch<listBenchmarkResultsApiAdminBenchmarksResultsGetResponse>(getListBenchmarkResultsApiAdminBenchmarksResultsGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+/**
+ * @summary Run Benchmark
+ */
+export type runBenchmarkApiAdminBenchmarksRunPostResponse200 = {
+  data: BenchmarkRunRead[]
+  status: 200
+}
+
+export type runBenchmarkApiAdminBenchmarksRunPostResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type runBenchmarkApiAdminBenchmarksRunPostResponseSuccess = (runBenchmarkApiAdminBenchmarksRunPostResponse200) & {
+  headers: Headers;
+};
+export type runBenchmarkApiAdminBenchmarksRunPostResponseError = (runBenchmarkApiAdminBenchmarksRunPostResponse422) & {
+  headers: Headers;
+};
+
+export type runBenchmarkApiAdminBenchmarksRunPostResponse = (runBenchmarkApiAdminBenchmarksRunPostResponseSuccess | runBenchmarkApiAdminBenchmarksRunPostResponseError)
+
+export const getRunBenchmarkApiAdminBenchmarksRunPostUrl = () => {
+
+
+
+
+  return `/api/admin/benchmarks/run`
+}
+
+export const runBenchmarkApiAdminBenchmarksRunPost = async (benchmarkRunRequest: BenchmarkRunRequest, options?: RequestInit): Promise<runBenchmarkApiAdminBenchmarksRunPostResponse> => {
+
+  return apiFetch<runBenchmarkApiAdminBenchmarksRunPostResponse>(getRunBenchmarkApiAdminBenchmarksRunPostUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      benchmarkRunRequest,)
+  }
+);}
+
+
+
+/**
  * @summary Delete Application Packet
  */
 export type deleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostResponse200 = {
@@ -548,6 +687,42 @@ export const getDeleteApplicationPacketApiAdminRetentionDeleteApplicationApplica
 export const deleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPost = async (applicationId: string, options?: RequestInit): Promise<deleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostResponse> => {
 
   return apiFetch<deleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostResponse>(getDeleteApplicationPacketApiAdminRetentionDeleteApplicationApplicationIdPostUrl(applicationId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+/**
+ * @summary Purge All Demo Data
+ */
+export type purgeAllDemoDataApiAdminRetentionPurgeAllDemoDataPostResponse200 = {
+  data: OperationResult
+  status: 200
+}
+
+export type purgeAllDemoDataApiAdminRetentionPurgeAllDemoDataPostResponseSuccess = (purgeAllDemoDataApiAdminRetentionPurgeAllDemoDataPostResponse200) & {
+  headers: Headers;
+};
+;
+
+export type purgeAllDemoDataApiAdminRetentionPurgeAllDemoDataPostResponse = (purgeAllDemoDataApiAdminRetentionPurgeAllDemoDataPostResponseSuccess)
+
+export const getPurgeAllDemoDataApiAdminRetentionPurgeAllDemoDataPostUrl = () => {
+
+
+
+
+  return `/api/admin/retention/purge-all-demo-data`
+}
+
+export const purgeAllDemoDataApiAdminRetentionPurgeAllDemoDataPost = async ( options?: RequestInit): Promise<purgeAllDemoDataApiAdminRetentionPurgeAllDemoDataPostResponse> => {
+
+  return apiFetch<purgeAllDemoDataApiAdminRetentionPurgeAllDemoDataPostResponse>(getPurgeAllDemoDataApiAdminRetentionPurgeAllDemoDataPostUrl(),
   {
     ...options,
     method: 'POST'

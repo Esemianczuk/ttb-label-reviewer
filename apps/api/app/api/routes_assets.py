@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 from sqlalchemy import select
@@ -11,6 +9,7 @@ from .. import models
 from ..api.deps import bearer_token, get_current_user, get_session_id, require_permission
 from ..api.serializers import asset_to_read
 from ..core.auth import verify_secret
+from ..core.security import ensure_path_within_root
 from ..db import get_session
 from ..schemas import AssetRead
 
@@ -62,7 +61,10 @@ def get_asset_content(asset_id: str, request: Request, session: Session = Depend
             entity_id=asset_id,
             not_found_for_applicant=True,
         )
-    path = Path(asset.storage_path)
+    try:
+        path = ensure_path_within_root(asset.storage_path, request.app.state.settings.asset_root)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail="Asset file is missing.") from error
     if not path.exists():
         raise HTTPException(status_code=404, detail="Asset file is missing.")
     return FileResponse(path, media_type=asset.mime_type, filename=asset.original_filename)

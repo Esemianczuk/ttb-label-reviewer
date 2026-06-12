@@ -12,6 +12,7 @@ import {
   updateWorkerOperation
 } from "../../providers/data/browserStore";
 import { adminMetrics } from "../../pages/admin/adminUtils";
+import { normalizeBackendWorker } from "../../pages/admin/useAdminOperations";
 
 describe("phase 11 admin workflow", () => {
   it("persists operations settings in the browser snapshot", () => {
@@ -32,6 +33,48 @@ describe("phase 11 admin workflow", () => {
     expect(getSnapshot().workers.find((worker) => worker.id === "worker-fastapi-01")?.disabled).toBe(true);
     updateWorkerOperation({ workerId: "worker-fastapi-01", action: "enable" });
     expect(getSnapshot().workers.find((worker) => worker.id === "worker-fastapi-01")?.disabled).toBe(false);
+  });
+
+  it("normalizes rich backend worker capability maps into dashboard-safe arrays", () => {
+    const worker = normalizeBackendWorker({
+      id: "eric-TRX50-85ca20cf",
+      hostname: "eric-TRX50",
+      platform: "linux",
+      arch: "x86_64",
+      status: "online",
+      activeJobs: 0,
+      maxConcurrency: 2,
+      lastSeenAt: "2026-06-12T21:39:25.715017",
+      capabilities: {
+        cpuCount: 64,
+        memory: { totalBytes: 134518153216 },
+        network: { latencyMs: 15.6 },
+        ocr: true,
+        evidence_crop: true,
+        validation: true,
+        engines: {
+          tesseract: { available: false, status: "unavailable" },
+          null: { available: true, status: "ok" }
+        },
+        supportedJobTypes: ["ocr", "evidence_crop", "validation"],
+        warmEngines: ["null"]
+      },
+      calibration: {
+        engines: {
+          null: {
+            available: true,
+            status: "ok",
+            steadyStateMs: 0
+          }
+        }
+      }
+    });
+
+    expect(worker.engines).toEqual(["null"]);
+    expect(worker.capabilities).toEqual(expect.arrayContaining(["null", "ocr", "evidence_crop", "validation"]));
+    expect(worker.cpu).toBe("64 CPU cores");
+    expect(worker.ramGb).toBeGreaterThan(120);
+    expect(worker.latencyMs).toBe(16);
   });
 
   it("supports job retry, cancellation, and priority changes", () => {

@@ -13,6 +13,7 @@ dependencies = [
   "SQLAlchemy>=2.0,<3",
   "alembic>=1.13,<2",
   "pydantic>=2.9,<3",
+  "Pillow>=10,<12",
   "python-multipart>=0.0.9,<1",
   "psycopg[binary]>=3.2,<4",
 ]

@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { resetTesseractAssetConfigForTests, resolveTesseractAssetConfigForTests } from '../ocr/browser-tesseract.js';
+import {
+  createOcrVariantPlanForTests,
+  mapTesseractBboxForTests,
+  resetTesseractAssetConfigForTests,
+  resolveTesseractAssetConfigForTests,
+} from '../ocr/browser-tesseract.js';
 
 describe('Tesseract asset resolution', () => {
   afterEach(() => {
@@ -15,9 +20,9 @@ describe('Tesseract asset resolution', () => {
     const config = await resolveTesseractAssetConfigForTests();
 
     expect(config.usesCdnFallback).toBe(false);
-    expect(config.workerPath).toBe('/tesseract/worker.min.js');
-    expect(config.corePath).toBe('/tesseract/core');
-    expect(config.langPath).toBe('/tesseract/lang');
+    expect(config.workerPath).toMatch(/\/tesseract\/worker\.min\.js$/);
+    expect(config.corePath).toMatch(/\/tesseract\/core$/);
+    expect(config.langPath).toMatch(/\/tesseract\/lang$/);
   });
 
   it('rejects CDN fallback by default when local assets are missing', async () => {
@@ -36,5 +41,40 @@ describe('Tesseract asset resolution', () => {
 
     expect(config.usesCdnFallback).toBe(true);
     expect(config.workerPath).toContain('cdn.jsdelivr.net');
+  });
+});
+
+describe('Tesseract OCR planning', () => {
+  it('uses full-image coverage plus broad overlapping high-contrast bands', () => {
+    const variants = createOcrVariantPlanForTests(410, 539);
+
+    expect(variants.some((variant) => variant.id === 'original-full-auto')).toBe(true);
+    expect(variants.some((variant) => variant.id === 'original-full-sparse')).toBe(true);
+    expect(variants.some((variant) => variant.id === 'normalized-gray-top-band')).toBe(true);
+    expect(variants.some((variant) => variant.id === 'normalized-gray-bottom-band')).toBe(true);
+    expect(variants.some((variant) => variant.id === 'threshold-inverted-top-band')).toBe(true);
+    expect(variants.some((variant) => variant.id.includes('application-top'))).toBe(false);
+    expect(variants.some((variant) => variant.id.includes('warning-right'))).toBe(false);
+
+    for (const variant of variants) {
+      expect(variant.rectangle.left).toBeGreaterThanOrEqual(0);
+      expect(variant.rectangle.top).toBeGreaterThanOrEqual(0);
+      expect(variant.rectangle.left + variant.rectangle.width).toBeLessThanOrEqual(variant.source.width);
+      expect(variant.rectangle.top + variant.rectangle.height).toBeLessThanOrEqual(variant.source.height);
+    }
+  });
+
+  it('maps preprocessed and relative Tesseract boxes back to original image pixels', () => {
+    const scaledAbsolute = mapTesseractBboxForTests(
+      { x0: 250, y0: 500, x1: 450, y1: 560 },
+      { source: { scale: 2.5 }, rectangle: { left: 0, top: 0, width: 1025, height: 1348 } },
+    );
+    expect(scaledAbsolute).toEqual({ x: 100, y: 200, width: 80, height: 24 });
+
+    const relativeToRectangle = mapTesseractBboxForTests(
+      { x0: 20, y0: 30, x1: 120, y1: 60 },
+      { source: { scale: 2 }, rectangle: { left: 200, top: 300, width: 400, height: 500 } },
+    );
+    expect(relativeToRectangle).toEqual({ x: 110, y: 165, width: 50, height: 15 });
   });
 });

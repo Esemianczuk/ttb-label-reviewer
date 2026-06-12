@@ -10,6 +10,7 @@ describe("permission matrix", () => {
   it("lets reviewers update review decisions without admin-wide settings access", () => {
     expect(canAccess("reviewer", "reviews", "override")).toBe(true);
     expect(canAccess("reviewer", "settings", "update")).toBe(false);
+    expect(canAccess("reviewer", "workers", "list")).toBe(false);
   });
 
   it("lets admins access every resource and action", () => {

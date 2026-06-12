@@ -1,6 +1,6 @@
-import type { ApplicationStatus, FieldStatus, ProcessingMode, ReviewStatus } from "./types";
+import type { ApplicationStatus, ComplianceStatus, FieldStatus, ProcessingMode, ReviewRunStatus } from "./types";
 
-const REVIEW_STATUS_VALUES: ReviewStatus[] = [
+const COMPLIANCE_STATUS_VALUES: ComplianceStatus[] = [
   "PASS",
   "FAIL",
   "WARNING",
@@ -9,6 +9,8 @@ const REVIEW_STATUS_VALUES: ReviewStatus[] = [
   "NOT_APPLICABLE",
   "PASS_WITH_WARNINGS"
 ];
+
+const REVIEW_RUN_STATUS_VALUES: ReviewRunStatus[] = ["QUEUED", "RUNNING", "COMPLETED", "FAILED", "CANCELLED"];
 
 const APPLICATION_STATUS_VALUES: ApplicationStatus[] = [
   "DRAFT",
@@ -26,14 +28,19 @@ const APPLICATION_STATUS_VALUES: ApplicationStatus[] = [
   "ARCHIVED"
 ];
 
-export function normalizeReviewStatus(status: string | undefined | null): ReviewStatus {
+export function normalizeReviewStatus(status: string | undefined | null): ComplianceStatus {
   const candidate = String(status || "").trim().toUpperCase();
   if (candidate === "PASS_WITH_WARNING") return "PASS_WITH_WARNINGS";
-  if (candidate === "COMPLETED") return "PASS";
-  if (REVIEW_STATUS_VALUES.includes(candidate as ReviewStatus)) return candidate as ReviewStatus;
-  if (candidate === "PASS" || candidate === "APPROVED") return "PASS";
-  if (candidate === "FAIL" || candidate === "FAILED" || candidate === "REJECTED") return "FAIL";
+  if (COMPLIANCE_STATUS_VALUES.includes(candidate as ComplianceStatus)) return candidate as ComplianceStatus;
   return "NEEDS_REVIEW";
+}
+
+export function normalizeReviewRunStatus(status: string | undefined | null): ReviewRunStatus {
+  const candidate = String(status || "").trim().toUpperCase();
+  if (candidate === "PROCESSING" || candidate === "STARTED") return "RUNNING";
+  if (candidate === "QUEUED" || candidate === "PENDING") return "QUEUED";
+  if (REVIEW_RUN_STATUS_VALUES.includes(candidate as ReviewRunStatus)) return candidate as ReviewRunStatus;
+  return "QUEUED";
 }
 
 export function normalizeApplicationStatus(status: string | undefined | null): ApplicationStatus {
@@ -42,15 +49,20 @@ export function normalizeApplicationStatus(status: string | undefined | null): A
   if (candidate === "CREATED") return "DRAFT";
   if (candidate === "ASSETS_UPLOADED" || candidate === "READY") return "READY_TO_SUBMIT";
   if (candidate === "REVIEW_QUEUED" || candidate === "PROCESSING") return "IN_REVIEW";
-  if (candidate === "REVIEW_COMPLETED" || candidate === "PASS") return "APPROVED";
-  if (candidate === "FAIL" || candidate === "REVIEW_FAILED") return "REJECTED";
+  if (candidate === "REVIEW_COMPLETED" || candidate === "REVIEW_FAILED") return "IN_REVIEW";
+  if (candidate === "PASS" || candidate === "PASS_WITH_WARNINGS") return "READY_TO_SUBMIT";
+  if (candidate === "FAIL" || candidate === "NOT_FOUND") return "APPLICANT_FIX_REQUIRED";
   if (candidate === "NEEDS_REVIEW") return "IN_REVIEW";
   return "DRAFT";
 }
 
-export function applicationStatusFromReviewStatus(status: ReviewStatus): ApplicationStatus {
-  if (status === "PASS" || status === "PASS_WITH_WARNINGS" || status === "NOT_APPLICABLE") return "APPROVED";
-  if (status === "FAIL" || status === "NOT_FOUND") return "REJECTED";
+export function applicantReadinessStatusFromCompliance(status: ComplianceStatus): ApplicationStatus {
+  if (status === "PASS" || status === "PASS_WITH_WARNINGS" || status === "NOT_APPLICABLE") return "READY_TO_SUBMIT";
+  if (status === "FAIL" || status === "NOT_FOUND") return "APPLICANT_FIX_REQUIRED";
+  return "APPLICANT_FIX_REQUIRED";
+}
+
+export function reviewerWorkflowStatusFromCompliance(_status: ComplianceStatus): ApplicationStatus {
   return "IN_REVIEW";
 }
 

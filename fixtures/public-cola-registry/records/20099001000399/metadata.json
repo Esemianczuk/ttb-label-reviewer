@@ -1,0 +1,164 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20099001000399",
+    "retrieved_at": "2026-06-12T18:46:29Z"
+  },
+  "ttb_id": "20099001000399",
+  "status": "APPROVED",
+  "approval_date": "04/20/2020",
+  "serial_number": "20N010",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "NETA",
+    "fanciful_name": "TEQUILANA",
+    "class_type": "OTHER SPECIALTIES & PROPRIETARIES",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": "1330431",
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20099001000399",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17621,
+      "sha256": "f6f9dd9002ca07a4f3f56ed665d0c217c322d8a101558df91e1082cfc30db464",
+      "downloaded_at": "2026-06-12T18:46:29Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Neta Tequilana FRONT.jpeg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 66833,
+      "sha256": "8ff12afc8d54687608ab3a5083f204ad99906ee684b13a966acad5e6da12228f",
+      "downloaded_at": "2026-06-12T18:46:29Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=etiqueta_circular_TEQUILANA.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 784226,
+      "sha256": "3b4e878e415792c81d650931a71a7ce67d1d9878b5656847fc849fecaf4a1472",
+      "downloaded_at": "2026-06-12T18:46:29Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=NETA_NewYork_Tequilana_TEQCAN1203.jpg&filetype=l",
+      "local_path": "assets/label_03.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 86942,
+      "sha256": "ba0f6dcd83f286827bfb484b17c4413111563b7187f6706f7d433ba24c85a57e",
+      "downloaded_at": "2026-06-12T18:46:29Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=WARNING LABEL copy.jpeg&filetype=l",
+      "local_path": "assets/label_04.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 218159,
+      "sha256": "b6a6a88edc6a375fbd32b21b9191775008d97e8bea0df40ff8c02895b64256a3",
+      "downloaded_at": "2026-06-12T18:46:29Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20099001000399"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "33878"
+    },
+    {
+      "label": "Serial #",
+      "value": "20N010"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "OTHER SPECIALTIES & PROPRIETARIES"
+    },
+    {
+      "label": "Origin Code",
+      "value": "MEXICO"
+    },
+    {
+      "label": "Brand Name",
+      "value": "NETA"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "TEQUILANA"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Formula",
+      "value": "1330431"
+    },
+    {
+      "label": "Approval Date",
+      "value": "04/20/2020"
+    },
+    {
+      "label": "TTB ID: 20099001000399",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20099001000399",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Neta Tequilana FRONT.jpeg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=etiqueta_circular_TEQUILANA.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=NETA_NewYork_Tequilana_TEQCAN1203.jpg&filetype=l",
+      "local_path": "assets/label_03.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=WARNING LABEL copy.jpeg&filetype=l",
+      "local_path": "assets/label_04.bin",
+      "content_type": null
+    }
+  ]
+}

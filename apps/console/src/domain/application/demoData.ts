@@ -15,173 +15,16 @@ import type {
   Severity,
   WorkerSnapshot
 } from "./types";
+import { estimatedCropForField } from "./evidenceCrops";
+import { createApplicationNumber } from "./applicationNumber";
+import { realColaFixtureSeeds, type FixtureSeed } from "./realColaFixtures";
 
 const NOW = "2026-06-10T19:45:00.000Z";
-
-type FixtureSeed = {
-  id: string;
-  title: string;
-  description: string;
-  imagePath: string;
-  expectedOutcome: ReviewApplication["expectedOutcome"];
-  expected: ExpectedFields;
-  extracted?: Partial<Record<keyof ExpectedFields | "governmentWarning", string>>;
-  forcedFailures?: Partial<Record<keyof ExpectedFields | "governmentWarning", { status: FieldStatus; reason: string; severity?: Severity }>>;
-  initialStatus?: ReviewApplication["status"];
-  correction?: {
-    message: string;
-    fields: string[];
-  };
-};
 
 const warningText =
   "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.";
 
-const seeds: FixtureSeed[] = [
-  {
-    id: "hollow-ridge-bourbon",
-    title: "Hollow Ridge bourbon COLA sheet",
-    description: "One-image synthetic COLA sheet with complete bourbon application data.",
-    imagePath: "/label-packets/hollow-ridge-bourbon/cola-sheet.png",
-    expectedOutcome: "PASS",
-    expected: {
-      productType: "distilled_spirits",
-      brandName: "HOLLOW RIDGE",
-      classType: "Kentucky Straight Bourbon Whiskey",
-      alcoholContent: "45% Alc./Vol. (90 Proof)",
-      netContents: "750 mL",
-      governmentWarningRequired: true,
-      producerName: "Hollow Ridge Distilling Co.",
-      countryOfOrigin: "United States",
-      applicationId: "SAMPLE-HOLLOW-RIDGE",
-      labelId: "hollow-ridge-bourbon-cola-sheet.png"
-    }
-  },
-  {
-    id: "highland-coast-lightkeeper-gin",
-    title: "Highland Coast Lightkeeper Gin COLA sheet",
-    description: "Clean gin submission with strong brand, class, ABV, and warning evidence.",
-    imagePath: "/label-packets/highland-coast-lightkeeper-gin/cola-sheet.png",
-    expectedOutcome: "PASS",
-    expected: {
-      productType: "distilled_spirits",
-      brandName: "HIGHLAND COAST",
-      fancifulName: "Lightkeeper Gin",
-      classType: "Distilled Gin",
-      alcoholContent: "43% Alc./Vol.",
-      netContents: "750 mL",
-      governmentWarningRequired: true,
-      producerName: "Highland Coast Spirits",
-      countryOfOrigin: "United States",
-      applicationId: "SAMPLE-LIGHTKEEPER",
-      labelId: "highland-coast-lightkeeper-gin-cola-sheet.png"
-    }
-  },
-  {
-    id: "riverlight-rye-whiskey",
-    title: "Riverlight rye whiskey COLA sheet",
-    description: "Rye whiskey application with an alcohol-content mismatch for reviewer correction.",
-    imagePath: "/label-packets/riverlight-rye-whiskey/cola-sheet.png",
-    expectedOutcome: "FAIL",
-    expected: {
-      productType: "distilled_spirits",
-      brandName: "RIVERLIGHT",
-      classType: "Straight Rye Whiskey",
-      alcoholContent: "47% Alc./Vol. (94 Proof)",
-      netContents: "750 mL",
-      governmentWarningRequired: true,
-      producerName: "Riverlight Spirits",
-      countryOfOrigin: "United States",
-      applicationId: "SAMPLE-RIVERLIGHT-RYE",
-      labelId: "riverlight-rye-whiskey-cola-sheet.png"
-    },
-    extracted: {
-      alcoholContent: "45% Alc./Vol. (90 Proof)"
-    },
-    forcedFailures: {
-      alcoholContent: {
-        status: "FAIL",
-        severity: "critical",
-        reason: "The label evidence reads 45% Alc./Vol. while the expected application value is 47% Alc./Vol."
-      }
-    }
-  },
-  {
-    id: "sundaze-hard-seltzer",
-    title: "Sundaze hard seltzer COLA sheet",
-    description: "Hard seltzer packet where warning evidence needs human confirmation.",
-    imagePath: "/label-packets/sundaze-hard-seltzer/cola-sheet.png",
-    expectedOutcome: "NEEDS_REVIEW",
-    expected: {
-      productType: "malt_beverage",
-      brandName: "SUNDAZE",
-      fancifulName: "Hard Seltzer Variety Pack",
-      classType: "Flavored Malt Beverage",
-      alcoholContent: "5% Alc./Vol.",
-      netContents: "12 fl oz",
-      governmentWarningRequired: true,
-      producerName: "Sundaze Beverage Co.",
-      countryOfOrigin: "United States",
-      applicationId: "SAMPLE-SUNDAZE",
-      labelId: "sundaze-hard-seltzer-cola-sheet.png"
-    },
-    extracted: {
-      governmentWarning: "GOVERNMENT WARNING present but OCR confidence is low around line breaks."
-    },
-    forcedFailures: {
-      governmentWarning: {
-        status: "NEEDS_REVIEW",
-        severity: "warning",
-        reason: "The required government warning is probably present, but the detected line breaks and confidence need reviewer confirmation."
-      }
-    },
-    initialStatus: "NEEDS_CORRECTION",
-    correction: {
-      message: "Clarify the government warning placement and confirm the hard seltzer variety-pack label panel.",
-      fields: ["governmentWarning", "labelImages"]
-    }
-  },
-  {
-    id: "arbor-hill-cabernet-sauvignon",
-    title: "Arbor Hill Cabernet Sauvignon COLA sheet",
-    description: "Wine application with complete public-facing application fields.",
-    imagePath: "/label-packets/arbor-hill-cabernet-sauvignon/cola-sheet.png",
-    expectedOutcome: "PASS",
-    expected: {
-      productType: "wine",
-      brandName: "ARBOR HILL",
-      fancifulName: "Cabernet Sauvignon",
-      classType: "Table Red Wine",
-      alcoholContent: "13.8% Alc./Vol.",
-      netContents: "750 mL",
-      governmentWarningRequired: true,
-      producerName: "Arbor Hill Winery",
-      countryOfOrigin: "United States",
-      applicationId: "SAMPLE-ARBOR-HILL",
-      labelId: "arbor-hill-cabernet-sauvignon-cola-sheet.png"
-    }
-  },
-  {
-    id: "estrella-tequila-blanco",
-    title: "Estrella Tequila Blanco COLA sheet",
-    description: "Tequila application using the one-image COLA sheet path.",
-    imagePath: "/label-packets/estrella-tequila-blanco/cola-sheet.png",
-    expectedOutcome: "PASS",
-    expected: {
-      productType: "distilled_spirits",
-      brandName: "ESTRELLA",
-      fancifulName: "Tequila Blanco",
-      classType: "Tequila",
-      alcoholContent: "40% Alc./Vol. (80 Proof)",
-      netContents: "750 mL",
-      governmentWarningRequired: true,
-      producerName: "Destiladora Estrella",
-      countryOfOrigin: "Mexico",
-      applicationId: "SAMPLE-ESTRELLA",
-      labelId: "estrella-tequila-blanco-cola-sheet.png"
-    }
-  }
-];
+const seeds: FixtureSeed[] = realColaFixtureSeeds;
 
 export const fieldOrder: Array<keyof ExpectedFields | "governmentWarning"> = [
   "brandName",
@@ -191,9 +34,7 @@ export const fieldOrder: Array<keyof ExpectedFields | "governmentWarning"> = [
   "netContents",
   "governmentWarning",
   "producerName",
-  "countryOfOrigin",
-  "applicationId",
-  "labelId"
+  "countryOfOrigin"
 ];
 
 export const fieldLabels: Record<string, string> = {
@@ -219,7 +60,7 @@ export function createDemoSnapshot(): ConsoleSnapshot {
     adminSettings: createDefaultAdminSettings(),
     benchmarkRuns: createDemoBenchmarkRuns(),
     auditEvents: [
-      createAudit("audit-001", "System", "admin", "demo.reset", "applications", "Demo queue initialized from bundled sample packets."),
+      createAudit("audit-001", "System", "admin", "demo.reset", "applications", "Demo queue initialized from bundled public COLA registry records."),
       createAudit("audit-002", "Review Agent", "reviewer", "queue.ready", "reviews", "First application is ready for automatic review.")
     ],
     activeApplicationId: applications[0]?.id || "",
@@ -244,33 +85,23 @@ export function createDefaultAdminSettings(): AdminSettings {
 }
 
 export function createApplicationFromSeed(seed: FixtureSeed, index = 0): ReviewApplication {
-  const image: LabelImage = {
-    id: `${seed.id}-sheet`,
-    role: "cola_sheet",
-    name: seed.expected.labelId || `${seed.id}.png`,
-    url: seed.imagePath,
-    mimeType: "image/png",
-    source: "sample"
-  };
-
   return {
     id: `app-${seed.id}`,
     title: seed.title,
-    source: "sample",
-    status: seed.initialStatus || (index === 0 ? "SUBMITTED" : "DRAFT"),
+    source: seed.source,
+    status: seed.initialStatus || "SUBMITTED",
     expectedOutcome: seed.expectedOutcome,
     expectedFields: seed.expected,
-    images: [image],
-    submitter: index % 2 === 0 ? "Riverside Imports" : "Frontier Beverage Group",
+    images: seed.images,
+    submitter: seed.submitter || (index % 2 === 0 ? "Public COLA Registry" : "Imported COLA Applicant"),
     assignedTo: "Review Agent",
     createdAt: new Date(Date.parse(NOW) + index * 62_000).toISOString(),
     updatedAt: new Date(Date.parse(NOW) + index * 62_000).toISOString(),
     metadata: {
-      description: seed.description,
-      fixtureId: seed.id,
-      packetPath: seed.imagePath,
-      correctionMessage: seed.correction?.message,
-      correctionFields: seed.correction?.fields
+      ...seed.metadata,
+      applicationNumber: createApplicationNumber(index + 1),
+      description: seed.metadata.description || seed.description,
+      fixtureId: seed.metadata.fixtureId || seed.id
     }
   };
 }
@@ -297,6 +128,7 @@ export function createReviewForApplication(application: ReviewApplication, mode:
         : status === "FAIL"
           ? "One or more required TTB fields conflict with detected evidence."
           : "The automated review found low-confidence evidence requiring an agent decision.",
+    rawOcrText: createDemoRawOcrText(application, fields),
     engineTrace: [
       mode === "browser" ? "Browser fixture OCR" : mode === "backend" ? "FastAPI coordinator review" : "Distributed worker validation",
       "Deterministic field normalizers",
@@ -327,7 +159,6 @@ export function createApplicantApplication(input: {
   submitter?: string;
   notes?: string;
   description?: string;
-  precheckSettings?: ReviewApplication["metadata"]["precheckSettings"];
 }): ReviewApplication {
   const id = `app-manual-${Date.now()}`;
   const now = new Date().toISOString();
@@ -339,14 +170,13 @@ export function createApplicantApplication(input: {
     expectedOutcome: "NEEDS_REVIEW",
     expectedFields: input.expectedFields,
     images: input.images,
-    submitter: input.submitter || "Evaluator upload",
+    submitter: input.submitter || "Applicant",
     assignedTo: "Review Agent",
     createdAt: now,
     updatedAt: now,
     metadata: {
       description: input.description || "Applicant-created multi-image label packet.",
-      notes: input.notes,
-      precheckSettings: input.precheckSettings
+      notes: input.notes
     }
   };
 }
@@ -373,8 +203,7 @@ export function createAudit(
 }
 
 function createReviewFields(application: ReviewApplication, seed?: FixtureSeed): ReviewField[] {
-  return fieldOrder
-    .filter((fieldKey) => fieldKey === "governmentWarning" || application.expectedFields[fieldKey])
+  return reviewFieldsForApplication(application)
     .map((fieldKey) => {
       const expected = fieldKey === "governmentWarning" ? warningText : String(application.expectedFields[fieldKey] || "");
       const extracted = seed?.extracted?.[fieldKey] || expected;
@@ -398,11 +227,28 @@ function createReviewFields(application: ReviewApplication, seed?: FixtureSeed):
             sourceImageId: application.images[0]?.id || "",
             excerpt: extracted.length > 180 ? `${extracted.slice(0, 177)}...` : extracted,
             confidence: status === "PASS" ? 0.98 : status === "FAIL" ? 0.91 : 0.64,
-            pageAnchor: "COLA sheet"
+            pageAnchor: "COLA sheet",
+            crop: estimatedCropForField(fieldKey)
           }
         ]
       };
     });
+}
+
+function reviewFieldsForApplication(application: ReviewApplication): Array<keyof ExpectedFields | "governmentWarning"> {
+  const required: Array<keyof ExpectedFields | "governmentWarning"> = ["brandName", "classType", "alcoholContent", "netContents", "governmentWarning"];
+  const optional = fieldOrder.filter((fieldKey) => fieldKey !== "governmentWarning" && application.expectedFields[fieldKey]);
+  return Array.from(new Set([...required, ...optional]));
+}
+
+function createDemoRawOcrText(application: ReviewApplication, fields: ReviewField[]): string {
+  const image = application.images[0];
+  return [
+    `Image: ${image?.name || "Demo label image"}`,
+    `Role: ${image?.role?.replace("_", " ") || "label image"}`,
+    "",
+    ...fields.map((field) => `${field.label}: ${field.extracted || field.reason}`)
+  ].join("\n");
 }
 
 function createDemoWorkers(): WorkerSnapshot[] {

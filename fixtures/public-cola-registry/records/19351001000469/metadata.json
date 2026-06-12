@@ -1,0 +1,145 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=19351001000469",
+    "retrieved_at": "2026-06-12T18:46:34Z"
+  },
+  "ttb_id": "19351001000469",
+  "status": "APPROVED",
+  "approval_date": "01/06/2020",
+  "serial_number": "19GPN1",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "GINO PEDROTTI",
+    "fanciful_name": null,
+    "class_type": "TABLE WHITE WINE",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=19351001000469",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17718,
+      "sha256": "ab5fc1ed23037f73773e8366e712ddf943766d31ac9cc2b2bc44235f90295d85",
+      "downloaded_at": "2026-06-12T18:46:34Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=GINO NOSIOLA FRONT.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 213010,
+      "sha256": "e46db84bd74432ed495362cbd5b3cebe129d0af921ab1e8e1b33222ecd526a6a",
+      "downloaded_at": "2026-06-12T18:46:34Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=GINO BACK.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 80628,
+      "sha256": "abfa7f239757e8365b1043f1efec58f3997ff1b910d00e7f0e1eee06dcb35b43",
+      "downloaded_at": "2026-06-12T18:46:34Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=GINO FRONT.jpg&filetype=l",
+      "local_path": "assets/label_03.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 38324,
+      "sha256": "dcdcac6fce4218336cc076b39f4d5e145037530b59ee058ed44ee8f986e9cfe5",
+      "downloaded_at": "2026-06-12T18:46:34Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "19351001000469"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "40073"
+    },
+    {
+      "label": "Serial #",
+      "value": "19GPN1"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "TABLE WHITE WINE"
+    },
+    {
+      "label": "Origin Code",
+      "value": "ITALY"
+    },
+    {
+      "label": "Brand Name",
+      "value": "GINO PEDROTTI"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Grape Varietal(s)",
+      "value": "nosiola"
+    },
+    {
+      "label": "Approval Date",
+      "value": "01/06/2020"
+    },
+    {
+      "label": "TTB ID: 19351001000469",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=19351001000469",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=GINO NOSIOLA FRONT.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=GINO BACK.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=GINO FRONT.jpg&filetype=l",
+      "local_path": "assets/label_03.bin",
+      "content_type": null
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "fixture_id": "ttb_20086001000599_toppling-goliath-brewing-co",
+  "source_type": "official_public_registry",
+  "ttb_id": "20086001000599",
+  "expected_fields": {
+    "brandName": "TOPPLING GOLIATH BREWING CO.",
+    "fancifulName": "TEQUILA BARREL-AGED ASSASSIN, KILLER IMPERIAL STOUT AGED IN TEQUILLA BARRELS",
+    "classType": "STOUT",
+    "productType": "malt_beverage",
+    "alcoholContent": null,
+    "netContents": null,
+    "governmentWarningRequired": true,
+    "isImported": false,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": "Toppling Goliath Brewing Company, Toppling Goliath, Inc.",
+      "address": "1600 PROSPERITY RD, Decorah, IA, 52101"
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
+    "Collector note: Approved public registry fixture discovered via distilled_spirits term; brand=TOPPLING GOLIATH BREWING CO.; label_images=1.",
+    "Demo audit exclusion: Available keg/collar image lacks a defensible alcohol-content value and has checkbox/package options."
+  ],
+  "demo_ready": false,
+  "demo_audit": {
+    "status": "excluded",
+    "reason": "Available keg/collar image lacks a defensible alcohol-content value and has checkbox/package options.",
+    "note": "Retained in the fixture corpus for provenance, but excluded from loaded demo samples."
+  }
+}

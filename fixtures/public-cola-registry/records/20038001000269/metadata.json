@@ -1,0 +1,119 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20038001000269",
+    "retrieved_at": "2026-06-12T18:46:11Z"
+  },
+  "ttb_id": "20038001000269",
+  "status": "APPROVED",
+  "approval_date": "02/25/2020",
+  "serial_number": "200004",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "DOC WYLDER'S",
+    "fanciful_name": "TEQUILA INFUSED MARGARITA LEMONADE",
+    "class_type": "OTHER SPECIALTIES & PROPRIETARIES",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": "1340878",
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20038001000269",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17038,
+      "sha256": "28439ff47636548ee10c230d1729d7ef5acd750285d843f6371c7177bc1f7f11",
+      "downloaded_at": "2026-06-12T18:46:11Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Wylders_Tequila COLA.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 369033,
+      "sha256": "c161d205a3d40de9789bdaedba6abd10ba606e5e41c4e076fce2418273b2347f",
+      "downloaded_at": "2026-06-12T18:46:11Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20038001000269"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "37233"
+    },
+    {
+      "label": "Serial #",
+      "value": "200004"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "OTHER SPECIALTIES & PROPRIETARIES"
+    },
+    {
+      "label": "Origin Code",
+      "value": "CALIFORNIA"
+    },
+    {
+      "label": "Brand Name",
+      "value": "DOC WYLDER'S"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "TEQUILA INFUSED MARGARITA LEMONADE"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Formula",
+      "value": "1340878"
+    },
+    {
+      "label": "Approval Date",
+      "value": "02/25/2020"
+    },
+    {
+      "label": "TTB ID: 20038001000269",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20038001000269",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Wylders_Tequila COLA.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

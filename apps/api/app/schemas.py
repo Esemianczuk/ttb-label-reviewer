@@ -44,6 +44,7 @@ class ApplicationMetadata(BaseModel):
     createdAt: datetime | None = None
     sourceUrl: str | None = None
     ttbId: str | None = None
+    applicationNumber: str | None = None
     notes: str | None = None
 
 
@@ -210,6 +211,41 @@ class OperationResult(BaseModel):
     count: int = 0
 
 
+class BenchmarkRunRequest(BaseModel):
+    imageCount: int = Field(default=10, ge=1, le=500)
+    mode: Literal["browser", "backend", "cluster"] = "backend"
+    label: str | None = None
+
+
+class BenchmarkRunRead(BaseModel):
+    id: str
+    label: str
+    imageCount: int
+    mode: str
+    status: str = "completed"
+    workerId: str
+    workerChosen: str
+    engineUsed: str
+    concurrency: int = 1
+    totalMs: float
+    wallClockMs: float = 0
+    averageMsPerImage: float
+    p50MsPerImage: float = 0
+    p95MsPerImage: float = 0
+    imagesPerMinute: float
+    ocrMs: float = 0
+    validationMs: float = 0
+    queueMs: float = 0
+    p50OcrMs: float
+    p95OcrMs: float
+    p50ValidationMs: float = 0
+    p95ValidationMs: float = 0
+    failures: int = 0
+    failedValidations: int = 0
+    createdAt: datetime
+    notes: str | None = None
+
+
 class JoinTokenCreate(BaseModel):
     ttlSeconds: int | None = None
     coordinatorUrl: str | None = None
@@ -259,6 +295,8 @@ class HealthRead(BaseModel):
     assetRoot: str
     staticDir: str
     staticReady: bool
+    lanMode: bool = False
+    warning: str | None = None
 
 
 class OrganizationRead(BaseModel):

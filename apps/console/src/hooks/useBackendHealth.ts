@@ -9,6 +9,8 @@ export type BackendHealth = {
   assetRoot?: string;
   staticDir?: string;
   staticReady?: boolean;
+  lanMode?: boolean;
+  warning?: string;
 };
 
 export function useBackendHealth({ enabled = true }: { enabled?: boolean } = {}) {
@@ -46,7 +48,9 @@ export function useBackendHealth({ enabled = true }: { enabled?: boolean } = {})
             database: payload.database,
             assetRoot: payload.assetRoot,
             staticDir: payload.staticDir,
-            staticReady: Boolean(payload.staticReady)
+            staticReady: Boolean(payload.staticReady),
+            lanMode: Boolean(payload.lanMode),
+            warning: payload.warning
           });
         }
       })

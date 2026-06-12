@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from .. import models
 from ..schemas import ApplicationTransitionRequest
+from .application_numbers import application_number_for, metadata_with_existing_application_number
 from .rbac import can_access, log_audit_event
 from .statuses import canonical_application_status
 
@@ -67,6 +68,7 @@ def transition_application(
     apply_transition_side_effects(session, application, actor, payload)
     application.status = rule.to_status
 
+    application_number = application_number_for(application)
     event = log_audit_event(
         session,
         actor=actor,
@@ -74,11 +76,13 @@ def transition_application(
         event_type="application.transition",
         entity_type="applications",
         entity_id=application.id,
-        summary=transition_summary(payload.transition, before_status, rule.to_status, payload.note),
+        summary=transition_summary(application_number, payload.transition, before_status, rule.to_status, payload.note),
         before=before_json,
         after={"status": rule.to_status, "transition": payload.transition},
         metadata={
             "transition": payload.transition,
+            "applicationId": application.id,
+            "applicationNumber": application_number,
             "note": payload.note,
             "fieldKeys": payload.fieldKeys,
             "reviewerOverride": payload.reviewerOverride,
@@ -114,7 +118,13 @@ def authorize_transition(
         entity_type="applications",
         entity_id=application.id,
         summary=decision_reason,
-        metadata={"resource": rule.resource, "action": rule.action, "transition": transition},
+        metadata={
+            "resource": rule.resource,
+            "action": rule.action,
+            "transition": transition,
+            "applicationId": application.id,
+            "applicationNumber": application_number_for(application),
+        },
     )
     session.commit()
     raise TransitionError(403, decision_reason)
@@ -181,7 +191,7 @@ def apply_transition_side_effects(
     if payload.transition == "resubmit":
         if payload.expectedFields is not None:
             expected_fields = payload.expectedFields.model_dump(mode="json", exclude_none=True)
-            metadata = dict(application.metadata_json or {})
+            metadata = metadata_with_existing_application_number(application)
             if payload.metadata is not None:
                 metadata.update(payload.metadata.model_dump(mode="json", exclude_none=True))
             application.expected_fields = expected_fields
@@ -240,14 +250,15 @@ def next_version_number(application: models.Application) -> int:
 def application_snapshot(application: models.Application, status: str) -> dict[str, Any]:
     return {
         "id": application.id,
+        "applicationNumber": application_number_for(application),
         "status": status,
         "versionCount": len(application.versions or []),
         "assetCount": len(application.assets or []),
     }
 
 
-def transition_summary(transition: str, before_status: str, after_status: str, note: str | None) -> str:
-    summary = f"Application transitioned via {transition}: {before_status} -> {after_status}."
+def transition_summary(application_number: str, transition: str, before_status: str, after_status: str, note: str | None) -> str:
+    summary = f"{application_number} transitioned via {transition}: {before_status} -> {after_status}."
     if note:
         return f"{summary} Note: {note}"
     return summary

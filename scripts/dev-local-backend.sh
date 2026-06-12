@@ -9,10 +9,11 @@ export TTB_API_DATA_DIR="${TTB_API_DATA_DIR:-$ROOT_DIR/data}"
 export TTB_API_HOST="${TTB_API_HOST:-127.0.0.1}"
 export TTB_API_PORT="${TTB_API_PORT:-8000}"
 export TTB_API_STATIC_DIR="${TTB_API_STATIC_DIR:-$ROOT_DIR/apps/console/dist}"
-export TTB_REQUIRE_WORKER_JOIN_TOKEN="${TTB_REQUIRE_WORKER_JOIN_TOKEN:-0}"
+export TTB_REQUIRE_WORKER_JOIN_TOKEN="${TTB_REQUIRE_WORKER_JOIN_TOKEN:-1}"
 
 if [[ "$TTB_API_HOST" == "0.0.0.0" || "$TTB_API_HOST" == "::" ]]; then
-  echo "WARNING: LAN mode enabled. Only run on a trusted network."
+  echo "LAN MODE ENABLED: coordinator APIs are reachable from the local network. Use only on a trusted network."
+  echo "Set TTB_API_CORS_ORIGINS to the exact console origins allowed to call this coordinator."
 fi
 
 BUILD_CONSOLE="${TTB_API_BUILD_CONSOLE:-auto}"

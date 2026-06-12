@@ -17,8 +17,18 @@ use_node_20_if_available() {
   if [[ -s "$HOME/.nvm/nvm.sh" ]]; then
     # shellcheck source=/dev/null
     source "$HOME/.nvm/nvm.sh"
-    nvm use 20 >/dev/null
+    nvm use 20 >/dev/null || fail "Node 20 is required. Install it with 'nvm install 20' or enable another Node >=20 runtime."
   fi
+}
+
+ensure_node_version() {
+  node <<'NODE' || fail "Node 20 or newer is required. Current node is too old; run 'source ~/.nvm/nvm.sh && nvm use 20' or install Node 20."
+const major = Number.parseInt(process.versions.node.split(".")[0], 10);
+if (!Number.isFinite(major) || major < 20) {
+  console.error(`Found Node ${process.versions.node}`);
+  process.exit(1);
+}
+NODE
 }
 
 ensure_node_deps() {
@@ -55,6 +65,7 @@ NODE
 use_node_20_if_available
 require_command npm
 require_command node
+ensure_node_version
 
 ensure_node_deps browser-demo
 ensure_node_deps apps/console

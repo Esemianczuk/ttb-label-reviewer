@@ -108,7 +108,7 @@ export function findBestTextCandidate(expectedValue, ocrResult, options = {}) {
 
   for (const candidate of windows) {
     const score = similarityScore(expected, candidate.text);
-    if (!best || score > best.score) {
+    if (!best || isBetterCandidate(score, candidate, best)) {
       best = {
         value: candidate.text,
         evidence: candidate.text,
@@ -121,6 +121,25 @@ export function findBestTextCandidate(expectedValue, ocrResult, options = {}) {
   }
 
   return best;
+}
+
+function candidateHasLocation(candidate) {
+  const box = candidate?.bbox || candidate?.block?.bbox;
+  return Boolean(
+    box &&
+      Number.isFinite(box.x) &&
+      Number.isFinite(box.y) &&
+      Number.isFinite(box.width) &&
+      Number.isFinite(box.height) &&
+      box.width > 0 &&
+      box.height > 0,
+  );
+}
+
+function isBetterCandidate(score, candidate, best) {
+  if (score > best.score) return true;
+  if (score < best.score) return false;
+  return candidateHasLocation(candidate) && !candidateHasLocation(best);
 }
 
 function minimumTokenScore(token) {

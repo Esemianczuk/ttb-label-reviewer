@@ -2,7 +2,7 @@ import { Refine } from "@refinedev/core";
 import routerProvider, { DocumentTitleHandler, UnsavedChangesNotifier } from "@refinedev/react-router";
 import { App as AntApp, ConfigProvider, theme } from "antd";
 import type { ReactNode } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router";
+import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router";
 import {
   AdminAuditPage,
   AdminBenchmarksPage,
@@ -18,12 +18,8 @@ import {
 import { AdminPortal } from "./pages/admin/AdminPortal";
 import { ApplicantPortal } from "./pages/applicant/ApplicantPortal";
 import { ApplicantApplicationDetail } from "./pages/applicant/ApplicantApplicationDetail";
-import { ApplicantOnboarding } from "./pages/applicant/ApplicantOnboarding";
 import { ApplicantTimeline } from "./pages/applicant/ApplicantTimeline";
-import { CorrectionResponsePage } from "./pages/applicant/CorrectionResponsePage";
 import { NewApplicationWizard } from "./pages/applicant/NewApplicationWizard";
-import { PrecheckPage } from "./pages/applicant/PrecheckPage";
-import { AccessDeniedPage } from "./pages/public/AccessDeniedPage";
 import { RoleLanding } from "./pages/public/RoleLanding";
 import { ReviewQueuePage } from "./pages/reviewer/ReviewQueuePage";
 import { ReviewerBatchesPage } from "./pages/reviewer/ReviewerBatchesPage";
@@ -34,25 +30,23 @@ import { ResourceIndexPage } from "./pages/resources/ResourceIndexPage";
 import { AppLayout } from "./layouts/AppLayout";
 import { accessControlProvider } from "./providers/access/permissionMatrix";
 import { auditLogProvider } from "./providers/audit/auditProvider";
-import { authProvider } from "./providers/auth/authProvider";
+import { authProvider, roleHomePath } from "./providers/auth/authProvider";
 import { createNotificationProvider } from "./providers/notification/notificationProvider";
 import { ProcessingModeProvider, useProcessingModeContext } from "./providers/processing/ProcessingModeProvider";
 import { consoleResources } from "./resources";
 import { canAccess } from "./providers/access/permissionMatrix";
 import { useCurrentRole } from "./hooks/useCurrentRole";
+import { governmentTheme } from "./theme/governmentTheme";
+import type { UserRole } from "./domain/application/types";
 
 export function App() {
   return (
     <BrowserRouter>
       <ConfigProvider
         theme={{
+          ...governmentTheme,
           algorithm: theme.defaultAlgorithm,
-          token: {
-            colorPrimary: "#1f6feb",
-            borderRadius: 6,
-            fontFamily:
-              'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-          }
+          token: governmentTheme.token
         }}
       >
         <AntApp>
@@ -88,29 +82,33 @@ function ConsoleRefineShell() {
       <Routes>
         <Route path="/" element={<AppLayout />}>
           <Route index element={<RoleLanding />} />
-          <Route path="reviewer" element={<RequireAccess resource="reviews" action="list"><ReviewerPortal /></RequireAccess>} />
-          <Route path="reviewer/queue" element={<RequireAccess resource="reviews" action="list"><ReviewQueuePage /></RequireAccess>} />
-          <Route path="reviewer/applications/:applicationId" element={<RequireAccess resource="reviews" action="show"><ReviewWorkbenchPage /></RequireAccess>} />
-          <Route path="reviewer/batches" element={<RequireAccess resource="reviews" action="update"><ReviewerBatchesPage /></RequireAccess>} />
-          <Route path="reviewer/reports" element={<RequireAccess resource="reports" action="list"><ReviewerReportsPage /></RequireAccess>} />
-          <Route path="applicant" element={<RequireAccess resource="applications" action="list"><ApplicantPortal /></RequireAccess>} />
-          <Route path="applicant/onboarding" element={<RequireAccess resource="applications" action="create"><ApplicantOnboarding /></RequireAccess>} />
-          <Route path="applicant/applications/new" element={<RequireAccess resource="applications" action="create"><NewApplicationWizard /></RequireAccess>} />
-          <Route path="applicant/applications/:applicationId" element={<RequireAccess resource="applications" action="show"><ApplicantApplicationDetail /></RequireAccess>} />
-          <Route path="applicant/applications/:applicationId/precheck" element={<RequireAccess resource="applications" action="submit"><PrecheckPage /></RequireAccess>} />
-          <Route path="applicant/applications/:applicationId/corrections" element={<RequireAccess resource="correctionRequests" action="respond"><CorrectionResponsePage /></RequireAccess>} />
-          <Route path="applicant/applications/:applicationId/timeline" element={<RequireAccess resource="auditEvents" action="list"><ApplicantTimeline /></RequireAccess>} />
-          <Route path="admin" element={<RequireAccess resource="workers" action="manage"><AdminPortal /></RequireAccess>} />
-          <Route path="admin/users" element={<RequireAccess resource="users" action="manage"><AdminUsersPage /></RequireAccess>} />
-          <Route path="admin/roles" element={<RequireAccess resource="settings" action="manage"><AdminRolesPage /></RequireAccess>} />
-          <Route path="admin/workers" element={<RequireAccess resource="workers" action="manage"><AdminWorkersPage /></RequireAccess>} />
-          <Route path="admin/jobs" element={<RequireAccess resource="jobs" action="manage"><AdminJobsPage /></RequireAccess>} />
-          <Route path="admin/engines" element={<RequireAccess resource="settings" action="manage"><AdminEnginesPage /></RequireAccess>} />
-          <Route path="admin/benchmarks" element={<RequireAccess resource="benchmarks" action="manage"><AdminBenchmarksPage /></RequireAccess>} />
-          <Route path="admin/audit" element={<RequireAccess resource="auditEvents" action="manage"><AdminAuditPage /></RequireAccess>} />
-          <Route path="admin/retention" element={<RequireAccess resource="settings" action="purge"><AdminRetentionPage /></RequireAccess>} />
-          <Route path="admin/fixtures" element={<RequireAccess resource="fixtures" action="manage"><AdminFixturesPage /></RequireAccess>} />
-          <Route path="admin/settings" element={<RequireAccess resource="settings" action="manage"><AdminSettingsPage /></RequireAccess>} />
+          <Route path="reviewer" element={<RequireAccess resource="reviews" action="list" roles={["reviewer"]}><ReviewerPortal /></RequireAccess>} />
+          <Route path="reviewer/queue" element={<RequireAccess resource="reviews" action="list" roles={["reviewer"]}><ReviewQueuePage /></RequireAccess>} />
+          <Route path="reviewer/applications/:applicationId" element={<RequireAccess resource="reviews" action="show" roles={["reviewer"]}><ReviewWorkbenchPage /></RequireAccess>} />
+          <Route path="reviewer/batches" element={<RequireAccess resource="reviews" action="update" roles={["reviewer"]}><ReviewerBatchesPage /></RequireAccess>} />
+          <Route path="reviewer/reports" element={<RequireAccess resource="reports" action="list" roles={["reviewer"]}><ReviewerReportsPage /></RequireAccess>} />
+          <Route path="applicant" element={<RequireAccess resource="applications" action="list" roles={["applicant"]}><ApplicantPortal /></RequireAccess>} />
+          <Route path="applicant/drafts" element={<RequireAccess resource="applications" action="list" roles={["applicant"]}><ApplicantPortal view="drafts" /></RequireAccess>} />
+          <Route path="applicant/submitted" element={<RequireAccess resource="applications" action="list" roles={["applicant"]}><ApplicantPortal view="submitted" /></RequireAccess>} />
+          <Route path="applicant/attention" element={<RequireAccess resource="applications" action="update" roles={["applicant"]}><ApplicantPortal view="attention" /></RequireAccess>} />
+          <Route path="applicant/archived" element={<RequireAccess resource="applications" action="list" roles={["applicant"]}><ApplicantPortal view="archived" /></RequireAccess>} />
+          <Route path="applicant/onboarding" element={<RequireAccess resource="applications" action="create" roles={["applicant"]}><Navigate to="/applicant/applications/new" replace /></RequireAccess>} />
+          <Route path="applicant/applications/new" element={<RequireAccess resource="applications" action="create" roles={["applicant"]}><NewApplicationWizard /></RequireAccess>} />
+          <Route path="applicant/applications/:applicationId/edit" element={<RequireAccess resource="applications" action="update" roles={["applicant"]}><NewApplicationWizard /></RequireAccess>} />
+          <Route path="applicant/applications/:applicationId/corrections" element={<RequireAccess resource="applications" action="update" roles={["applicant"]}><ApplicantCorrectionRedirect /></RequireAccess>} />
+          <Route path="applicant/applications/:applicationId" element={<RequireAccess resource="applications" action="show" roles={["applicant"]}><ApplicantApplicationDetail /></RequireAccess>} />
+          <Route path="applicant/applications/:applicationId/timeline" element={<RequireAccess resource="auditEvents" action="list" roles={["applicant"]}><ApplicantTimeline /></RequireAccess>} />
+          <Route path="admin" element={<RequireAccess resource="workers" action="manage" roles={["admin"]}><AdminPortal /></RequireAccess>} />
+          <Route path="admin/users" element={<RequireAccess resource="users" action="manage" roles={["admin"]}><AdminUsersPage /></RequireAccess>} />
+          <Route path="admin/roles" element={<RequireAccess resource="settings" action="manage" roles={["admin"]}><AdminRolesPage /></RequireAccess>} />
+          <Route path="admin/workers" element={<RequireAccess resource="workers" action="manage" roles={["admin"]}><AdminWorkersPage /></RequireAccess>} />
+          <Route path="admin/jobs" element={<RequireAccess resource="jobs" action="manage" roles={["admin"]}><AdminJobsPage /></RequireAccess>} />
+          <Route path="admin/engines" element={<RequireAccess resource="settings" action="manage" roles={["admin"]}><AdminEnginesPage /></RequireAccess>} />
+          <Route path="admin/benchmarks" element={<RequireAccess resource="benchmarks" action="manage" roles={["admin"]}><AdminBenchmarksPage /></RequireAccess>} />
+          <Route path="admin/audit" element={<RequireAccess resource="auditEvents" action="manage" roles={["admin"]}><AdminAuditPage /></RequireAccess>} />
+          <Route path="admin/retention" element={<RequireAccess resource="settings" action="purge" roles={["admin"]}><AdminRetentionPage /></RequireAccess>} />
+          <Route path="admin/fixtures" element={<RequireAccess resource="fixtures" action="manage" roles={["admin"]}><AdminFixturesPage /></RequireAccess>} />
+          <Route path="admin/settings" element={<RequireAccess resource="settings" action="manage" roles={["admin"]}><AdminSettingsPage /></RequireAccess>} />
           <Route path="resources/:resourceName" element={<ResourceIndexPage />} />
           <Route path="resources/:resourceName/:id" element={<ResourceIndexPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -122,16 +120,25 @@ function ConsoleRefineShell() {
   );
 }
 
-function RequireAccess({
+function ApplicantCorrectionRedirect() {
+  const { applicationId } = useParams();
+  return <Navigate to={`/applicant/applications/${applicationId}/edit`} replace />;
+}
+
+export function RequireAccess({
   resource,
   action,
+  roles,
   children
 }: {
   resource: string;
   action: string;
+  roles?: UserRole[];
   children: ReactNode;
 }) {
   const { role } = useCurrentRole();
-  if (!canAccess(role, resource, action)) return <AccessDeniedPage />;
+  if ((roles && !roles.includes(role)) || !canAccess(role, resource, action)) {
+    return <Navigate to={roleHomePath(role)} replace />;
+  }
   return <>{children}</>;
 }

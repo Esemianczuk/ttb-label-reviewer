@@ -9,11 +9,11 @@ from fastapi.testclient import TestClient
 
 from apps.api.app.config import Settings
 from apps.api.app.main import create_app
-from apps.api.app.tests.helpers import auth_headers
+from apps.api.app.tests.helpers import PNG_1X1_BYTES, auth_headers
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-PNG_BYTES = b"\x89PNG\r\n\x1a\nphase-3-api-test"
+PNG_BYTES = PNG_1X1_BYTES
 
 
 def headers(session_id: str = "session-a") -> dict[str, str]:
@@ -129,6 +129,7 @@ def test_health_and_application_session_scope(client: TestClient):
     assert application["ownerUserId"]
     assert application["versionCount"] == 1
     assert application["expectedFields"]["brandName"] == "Hollow Ridge"
+    assert application["metadata"]["applicationNumber"] == "TTB-2026-0001"
 
     assert client.get("/api/applications", headers=auth_headers(client, "applicant", "session-a")).json()[0]["id"] == application["id"]
     assert client.get("/api/applications").status_code == 401
@@ -225,7 +226,7 @@ def test_review_queue_fake_worker_and_report_flow(client: TestClient):
 
 def test_job_cancel_releases_worker_capacity(client: TestClient):
     application = create_application(client)
-    upload_image(client, application["id"], data=b"\x89PNG\r\n\x1a\ncancel")
+    upload_image(client, application["id"])
     review = client.post(f"/api/applications/{application['id']}/review", json={}, headers=auth_headers(client, "reviewer")).json()
     worker = register_worker(client)
     secret = worker["workerSecret"]
@@ -241,7 +242,7 @@ def test_job_cancel_releases_worker_capacity(client: TestClient):
 
 def test_admin_operations_endpoints_manage_backend_jobs_settings_and_workers(client: TestClient):
     application = create_application(client)
-    upload_image(client, application["id"], data=b"\x89PNG\r\n\x1a\nadmin-ops")
+    upload_image(client, application["id"])
     review_response = client.post(f"/api/applications/{application['id']}/review", json={}, headers=auth_headers(client, "reviewer"))
     assert review_response.status_code == 201, review_response.text
 
@@ -311,7 +312,7 @@ def test_phase12_session_websocket_emits_live_resource_events(client: TestClient
         application = create_application(client)
         assert "application.created" in collect_live_events(websocket, {"application.created"})
 
-        upload_image(client, application["id"], data=b"\x89PNG\r\n\x1a\nphase12-live")
+        upload_image(client, application["id"])
         review_response = client.post(f"/api/applications/{application['id']}/review", json={}, headers=auth_headers(client, "reviewer"))
         assert review_response.status_code == 201, review_response.text
         assert {"review.started", "job.queued"}.issubset(collect_live_events(websocket, {"review.started", "job.queued"}))

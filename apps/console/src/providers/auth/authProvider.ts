@@ -2,6 +2,7 @@ import type { AuthProvider } from "@refinedev/core";
 import type { UserRole } from "../../domain/application/types";
 
 export const ROLE_STORAGE_KEY = "ttb-console-role";
+export const ROLE_CHANGE_EVENT = "ttb-console-role-change";
 
 export type ConsoleIdentity = {
   id: string;
@@ -31,6 +32,16 @@ const identities: Record<UserRole, ConsoleIdentity> = {
   }
 };
 
+export function roleLabel(role: UserRole): string {
+  if (role === "admin") return "Admin";
+  if (role === "applicant") return "Applicant";
+  return "Reviewer";
+}
+
+export function roleHomePath(role: UserRole): string {
+  return `/${role}`;
+}
+
 export function getStoredRole(): UserRole {
   const stored = window.localStorage.getItem(ROLE_STORAGE_KEY);
   if (stored === "applicant" || stored === "reviewer" || stored === "admin") return stored;
@@ -39,6 +50,7 @@ export function getStoredRole(): UserRole {
 
 export function setStoredRole(role: UserRole): void {
   window.localStorage.setItem(ROLE_STORAGE_KEY, role);
+  window.dispatchEvent(new Event(ROLE_CHANGE_EVENT));
 }
 
 export function getConsoleIdentity(): ConsoleIdentity {

@@ -10,11 +10,11 @@
     "alcoholContent": null,
     "netContents": null,
     "governmentWarningRequired": true,
-    "isImported": null,
+    "isImported": false,
     "countryOfOrigin": null,
     "responsibleParty": {
-      "name": null,
-      "address": null
+      "name": "SUNSTONE WINERY",
+      "address": "125 N REFUGIO RD, SANTA YNEZ, CA, 93460"
     }
   },
   "assets": [
@@ -36,6 +36,13 @@
   ],
   "known_limitations": [
     "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
-    "Collector note: Public registry search candidate: Chardonnay."
-  ]
+    "Collector note: Public registry search candidate: Chardonnay.",
+    "Demo audit exclusion: Available images show ABV but no clear net-contents value."
+  ],
+  "demo_ready": false,
+  "demo_audit": {
+    "status": "excluded",
+    "reason": "Available images show ABV but no clear net-contents value.",
+    "note": "Retained in the fixture corpus for provenance, but excluded from loaded demo samples."
+  }
 }

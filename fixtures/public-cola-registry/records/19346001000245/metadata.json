@@ -1,0 +1,119 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=19346001000245",
+    "retrieved_at": "2026-06-12T18:46:31Z"
+  },
+  "ttb_id": "19346001000245",
+  "status": "APPROVED",
+  "approval_date": "01/17/2020",
+  "serial_number": "190113",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "DEVILS BACKBONE",
+    "fanciful_name": "GIN AND TONIC",
+    "class_type": "COCKTAILS 48 PROOF UP",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": "1341686",
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=19346001000245",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16731,
+      "sha256": "6026e2f10c995548fd9122c9609f229733b53aaf135d7d3c64d4e3c84881fb24",
+      "downloaded_at": "2026-06-12T18:46:32Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Gin and Tonic 12oz can.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 141605,
+      "sha256": "10ac528a1d661cf7bdcf3fca939e508184e69e9f50e5694ff5dbc16b2ddc570e",
+      "downloaded_at": "2026-06-12T18:46:32Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "19346001000245"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "39562"
+    },
+    {
+      "label": "Serial #",
+      "value": "190113"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "COCKTAILS 48 PROOF UP"
+    },
+    {
+      "label": "Origin Code",
+      "value": "VIRGINIA"
+    },
+    {
+      "label": "Brand Name",
+      "value": "DEVILS BACKBONE"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "GIN AND TONIC"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Formula",
+      "value": "1341686"
+    },
+    {
+      "label": "Approval Date",
+      "value": "01/17/2020"
+    },
+    {
+      "label": "TTB ID: 19346001000245",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=19346001000245",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Gin and Tonic 12oz can.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

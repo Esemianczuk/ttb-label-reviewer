@@ -1,0 +1,171 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20052001000890",
+    "retrieved_at": "2026-06-12T18:46:14Z"
+  },
+  "ttb_id": "20052001000890",
+  "status": "APPROVED",
+  "approval_date": "02/26/2020",
+  "serial_number": "20SAM2",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "TEQUILA OCHO",
+    "fanciful_name": null,
+    "class_type": "TEQUILA FB",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20052001000890",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 18035,
+      "sha256": "a3d9049558337ad19006124aef86ffb03b9852c980774bd92a287485990dc94f",
+      "downloaded_at": "2026-06-12T18:46:14Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=FL.JPG&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 53877,
+      "sha256": "f4291875526ba23119053ce3c89c35b39814864beac13e33f552319a2db4dbc3",
+      "downloaded_at": "2026-06-12T18:46:14Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=BL.JPG&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 69868,
+      "sha256": "7f297fbf36d79d9c0d65247faeaa5cd1ab7225280245c681878aef403744fce2",
+      "downloaded_at": "2026-06-12T18:46:14Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=OL.JPG&filetype=l",
+      "local_path": "assets/label_03.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 14805,
+      "sha256": "70d463ed7b31d1f7a3686d3886fff27ac8f20ed16962c5cf7c7ac7d6630d43bc",
+      "downloaded_at": "2026-06-12T18:46:14Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=OL2.JPG&filetype=l",
+      "local_path": "assets/label_04.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 89378,
+      "sha256": "b1313ee484f6cfacc584ed12cb342b0b42a98e56b429bbcc935f5488f70eb687",
+      "downloaded_at": "2026-06-12T18:46:14Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=SL.JPG&filetype=l",
+      "local_path": "assets/label_05.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 35587,
+      "sha256": "2e2746706a12f335e78142bcf74fce255e18d1bef2f2b0a7cb600d1dcae47142",
+      "downloaded_at": "2026-06-12T18:46:14Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20052001000890"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "20255"
+    },
+    {
+      "label": "Serial #",
+      "value": "20SAM2"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "TEQUILA FB"
+    },
+    {
+      "label": "Origin Code",
+      "value": "MEXICO"
+    },
+    {
+      "label": "Brand Name",
+      "value": "TEQUILA OCHO"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "02/26/2020"
+    },
+    {
+      "label": "TTB ID: 20052001000890",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20052001000890",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=FL.JPG&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=BL.JPG&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=OL.JPG&filetype=l",
+      "local_path": "assets/label_03.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=OL2.JPG&filetype=l",
+      "local_path": "assets/label_04.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=SL.JPG&filetype=l",
+      "local_path": "assets/label_05.bin",
+      "content_type": null
+    }
+  ]
+}

@@ -16,6 +16,8 @@ def health(request: Request):
         "assetRoot": str(settings.asset_root),
         "staticDir": str(settings.static_dir),
         "staticReady": (settings.static_dir / "index.html").exists(),
+        "lanMode": settings.lan_mode,
+        "warning": settings.lan_warning,
     }
 
 

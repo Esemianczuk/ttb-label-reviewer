@@ -1,0 +1,115 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20038001000502",
+    "retrieved_at": "2026-06-12T18:46:56Z"
+  },
+  "ttb_id": "20038001000502",
+  "status": "APPROVED",
+  "approval_date": "03/31/2020",
+  "serial_number": "200012",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "THE BEER DEN",
+    "fanciful_name": "RUMPELSTILTSKIN SOUTH GERMAN STYLE HEFEWEIZEN",
+    "class_type": "ALE",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20038001000502",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16946,
+      "sha256": "9e29c5dedefc0ecaa7eb8d6a95af2f09b82500120e5ac6fe36cc9c60c1222975",
+      "downloaded_at": "2026-06-12T18:46:56Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=rump4.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 742038,
+      "sha256": "c9a715930122e22c552700622bcbdebae6f33f39a944375490aee48d3d84150b",
+      "downloaded_at": "2026-06-12T18:46:56Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20038001000502"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "10508"
+    },
+    {
+      "label": "Serial #",
+      "value": "200012"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "ALE"
+    },
+    {
+      "label": "Origin Code",
+      "value": "SOUTH CAROLINA"
+    },
+    {
+      "label": "Brand Name",
+      "value": "THE BEER DEN"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "RUMPELSTILTSKIN SOUTH GERMAN STYLE HEFEWEIZEN"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "03/31/2020"
+    },
+    {
+      "label": "TTB ID: 20038001000502",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20038001000502",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=rump4.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

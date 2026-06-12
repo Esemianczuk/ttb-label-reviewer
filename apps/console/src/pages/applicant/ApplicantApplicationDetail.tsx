@@ -1,13 +1,15 @@
 import { CheckCircleOutlined, CloseCircleOutlined, EditOutlined, SendOutlined, StopOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Descriptions, Image, List, Row, Space, Table, Typography, message } from "antd";
-import { Link, useNavigate, useParams } from "react-router";
+import { Button, Card, Col, Descriptions, Image, Row, Space, Table, Typography } from "antd";
+import { Navigate, useNavigate, useParams } from "react-router";
 import { ApplicationProgressTracker } from "../../components/application/ApplicationProgressTracker";
 import { PdfExportButton } from "../../components/common/PdfExportButton";
 import { StatusTag } from "../../components/common/StatusTag";
+import { applicationNumberFor } from "../../domain/application/applicationNumber";
 import { fieldLabels } from "../../domain/application/demoData";
 import type { ExpectedFields, ReviewApplication } from "../../domain/application/types";
 import { useConsoleStore } from "../../hooks/useConsoleStore";
-import { runApplicantPrecheckWithBrowserOcr, submitApplicantApplication, withdrawApplicantApplication } from "../../providers/data/browserStore";
+import { GovPageShell } from "../../layouts/GovPageShell";
+import { submitApplicantApplication, withdrawApplicantApplication } from "../../providers/data/browserStore";
 import { readinessIssues } from "./applicantUtils";
 
 export function ApplicantApplicationDetail() {
@@ -24,38 +26,42 @@ export function ApplicantApplicationDetail() {
     );
   }
 
+  if (application.status === "NEEDS_CORRECTION") {
+    return <Navigate to={`/applicant/applications/${application.id}/edit`} replace />;
+  }
+
   const issues = readinessIssues(application);
 
   return (
-    <Space orientation="vertical" className="full-width" size={16}>
-      <Card
-        size="small"
-        title={application.title}
-        extra={
-          <Space wrap>
-            <StatusTag status={application.status} />
-            <PdfExportButton application={application} pageName="Applicant Application" />
-          </Space>
-        }
-      >
-        <ApplicationProgressTracker status={application.status} />
-      </Card>
+    <GovPageShell
+      title={application.title}
+      eyebrow="Application packet"
+      description="Review submitted application fields, uploaded label images, submission status, and correction requests."
+      statusTag={<StatusTag status={application.status} />}
+      primaryAction={<PdfExportButton application={application} pageName="Applicant Application" />}
+    >
+      <Space orientation="vertical" className="full-width" size={16}>
+        <Card size="small" title="Application #">
+          <Typography.Text strong>{applicationNumberFor(application)}</Typography.Text>
+        </Card>
+        <Card size="small" title="Application process">
+          <ApplicationProgressTracker status={application.status} />
+        </Card>
 
       <Row gutter={[16, 16]}>
         <Col xs={24} xl={10}>
           <Card size="small" title="Label Images">
-            <List
-              dataSource={application.images}
-              renderItem={(image) => (
-                <List.Item>
-                  <List.Item.Meta
-                    avatar={<Image src={image.url} alt={`${image.name} preview`} width={92} height={92} className="image-thumb" />}
-                    title={image.name}
-                    description={`${image.role} ${image.width && image.height ? `${image.width} x ${image.height}` : ""}`}
-                  />
-                </List.Item>
-              )}
-            />
+            <div className="image-evidence-list">
+              {application.images.map((image) => (
+                <div className="image-evidence-row" key={image.id}>
+                  <Image src={image.url} alt={`${image.name} preview`} width={92} height={92} className="image-thumb" />
+                  <Space orientation="vertical" size={2}>
+                    <Typography.Text strong>{image.name}</Typography.Text>
+                    <Typography.Text type="secondary">{image.role} {image.width && image.height ? `${image.width} x ${image.height}` : ""}</Typography.Text>
+                  </Space>
+                </div>
+              ))}
+            </div>
           </Card>
         </Col>
         <Col xs={24} xl={14}>
@@ -67,42 +73,37 @@ export function ApplicantApplicationDetail() {
 
       <Card size="small" title="Readiness">
         {issues.length ? (
-          <List size="small" dataSource={issues} renderItem={(issue) => <List.Item><CloseCircleOutlined className="status-fail" /> {issue}</List.Item>} />
+          <div className="simple-list">
+            {issues.map((issue) => (
+              <div className="simple-list-item" key={issue}><CloseCircleOutlined className="status-fail" /> {issue}</div>
+            ))}
+          </div>
         ) : (
-          <Typography.Text><CheckCircleOutlined className="status-pass" /> Application is ready for pre-check or submission.</Typography.Text>
+          <Typography.Text><CheckCircleOutlined className="status-pass" /> Application is ready for submission.</Typography.Text>
         )}
       </Card>
 
       <Card size="small">
         <Space wrap>
-          <Button icon={<EditOutlined />}>
-            <Link to="/applicant/applications/new">Create New Version</Link>
+          <Button icon={<EditOutlined />} onClick={() => navigate("/applicant/applications/new")}>
+            Create New Version
           </Button>
-          <Button onClick={() => navigate(`/applicant/applications/${application.id}/precheck`)}>Pre-check</Button>
-          <Button icon={<SendOutlined />} type="primary" disabled={application.status !== "READY_TO_SUBMIT"} onClick={() => submitApplicantApplication(application.id)}>
+          <Button
+            icon={<SendOutlined />}
+            type="primary"
+            disabled={issues.length > 0 || !["DRAFT", "READY_TO_SUBMIT"].includes(application.status)}
+            onClick={() => submitApplicantApplication(application.id)}
+          >
             Submit
           </Button>
-          {application.status === "NEEDS_CORRECTION" ? (
-            <Button danger onClick={() => navigate(`/applicant/applications/${application.id}/corrections`)}>
-              Respond To Correction
-            </Button>
-          ) : null}
           <Button icon={<StopOutlined />} danger onClick={() => withdrawApplicantApplication(application.id)}>
             Withdraw
           </Button>
           <Button onClick={() => navigate(`/applicant/applications/${application.id}/timeline`)}>Timeline</Button>
-          <Button
-            onClick={() =>
-              void runApplicantPrecheckWithBrowserOcr(application.id, snapshot.processingMode).catch((error) =>
-                message.error(error instanceof Error ? error.message : "Pre-check failed.")
-              )
-            }
-          >
-            Run Pre-check
-          </Button>
         </Space>
       </Card>
-    </Space>
+      </Space>
+    </GovPageShell>
   );
 }
 

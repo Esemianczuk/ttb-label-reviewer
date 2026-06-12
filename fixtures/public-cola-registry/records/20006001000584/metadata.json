@@ -1,0 +1,115 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20006001000584",
+    "retrieved_at": "2026-06-12T18:46:43Z"
+  },
+  "ttb_id": "20006001000584",
+  "status": "APPROVED",
+  "approval_date": "01/21/2020",
+  "serial_number": "20GINM",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "DECADENT ALES",
+    "fanciful_name": "GINGERBREAD MAPLE DONUT",
+    "class_type": "MALT BEVERAGES SPECIALITIES - FLAVORED",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20006001000584",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16624,
+      "sha256": "057ecd359871447e7afe0ae8107d1c0aafed8446899855b9c15a08e04f292d3a",
+      "downloaded_at": "2026-06-12T18:46:44Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Gingerbread Maple Donut Final.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 742948,
+      "sha256": "566d1fe1e10836fc3b5754f550d4721a3a89e8ec264dbc6f77e4342056fb8595",
+      "downloaded_at": "2026-06-12T18:46:44Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20006001000584"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "34912"
+    },
+    {
+      "label": "Serial #",
+      "value": "20GINM"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "MALT BEVERAGES SPECIALITIES - FLAVORED"
+    },
+    {
+      "label": "Origin Code",
+      "value": "NEW YORK"
+    },
+    {
+      "label": "Brand Name",
+      "value": "DECADENT ALES"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "GINGERBREAD MAPLE DONUT"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "01/21/2020"
+    },
+    {
+      "label": "TTB ID: 20006001000584",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20006001000584",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Gingerbread Maple Donut Final.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

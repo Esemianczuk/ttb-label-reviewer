@@ -1,0 +1,123 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=19363001000082",
+    "retrieved_at": "2026-06-12T18:46:39Z"
+  },
+  "ttb_id": "19363001000082",
+  "status": "APPROVED",
+  "approval_date": "01/12/2020",
+  "serial_number": "190029",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "MR. B'S MEADERY",
+    "fanciful_name": "GINGER CARDAMOM",
+    "class_type": "HONEY BASED TABLE WINE",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": "1338433",
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=19363001000082",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16560,
+      "sha256": "15ec89e8349196e500e9294735cbffacd58d82779cd90c6b58562e6b7176cbad",
+      "downloaded_at": "2026-06-12T18:46:39Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Ginger Cardamom.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 244662,
+      "sha256": "0295e06768243c793b319f254b764ecff1bc3289383ccf66d845c467e1349b5c",
+      "downloaded_at": "2026-06-12T18:46:39Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "19363001000082"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "40873"
+    },
+    {
+      "label": "Serial #",
+      "value": "190029"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "HONEY BASED TABLE WINE"
+    },
+    {
+      "label": "Origin Code",
+      "value": "WASHINGTON"
+    },
+    {
+      "label": "Brand Name",
+      "value": "MR. B'S MEADERY"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "GINGER CARDAMOM"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Grape Varietal(s)",
+      "value": "N/A"
+    },
+    {
+      "label": "Formula",
+      "value": "1338433"
+    },
+    {
+      "label": "Approval Date",
+      "value": "01/12/2020"
+    },
+    {
+      "label": "TTB ID: 19363001000082",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=19363001000082",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Ginger Cardamom.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

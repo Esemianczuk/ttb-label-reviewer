@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+import base64
+
 from fastapi.testclient import TestClient
+
+PNG_1X1_BYTES = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+)
 
 
 def auth_headers(client: TestClient, role: str = "applicant", session_id: str = "session-a") -> dict[str, str]:

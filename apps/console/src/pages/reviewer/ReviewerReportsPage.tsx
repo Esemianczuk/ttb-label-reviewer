@@ -3,6 +3,7 @@ import type { ColumnsType } from "antd/es/table";
 import { Link } from "react-router";
 import { PdfExportButton } from "../../components/common/PdfExportButton";
 import { StatusTag } from "../../components/common/StatusTag";
+import { applicationNumberFor } from "../../domain/application/applicationNumber";
 import type { ReviewApplication } from "../../domain/application/types";
 import { useConsoleStore } from "../../hooks/useConsoleStore";
 
@@ -15,6 +16,7 @@ export function ReviewerReportsPage() {
       render: (_, application) => (
         <Space orientation="vertical" size={1}>
           <Link to={`/reviewer/applications/${application.id}`}>{application.title}</Link>
+          <Typography.Text type="secondary">Application # {applicationNumberFor(application)}</Typography.Text>
           <Typography.Text type="secondary">{application.review?.id}</Typography.Text>
         </Space>
       )

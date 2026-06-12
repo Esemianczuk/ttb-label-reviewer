@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
@@ -36,9 +36,65 @@ def require_worker(session: Session, worker_id: str) -> models.Worker:
     return worker
 
 
+def mark_stale_workers(session: Session, *, stale_seconds: int) -> int:
+    if stale_seconds <= 0:
+        return 0
+    stale_count = 0
+    workers = session.scalars(select(models.Worker).where(~models.Worker.status.in_(["disabled", "lost", "offline"]))).all()
+    for worker in workers:
+        if worker_is_stale(worker, stale_seconds):
+            mark_worker_lost(session, worker, stale_seconds=stale_seconds)
+            stale_count += 1
+    if stale_count:
+        session.commit()
+    return stale_count
+
+
+def require_worker_fresh(session: Session, worker: models.Worker, *, stale_seconds: int) -> None:
+    if stale_seconds <= 0 or not worker_is_stale(worker, stale_seconds):
+        return
+    mark_worker_lost(session, worker, stale_seconds=stale_seconds)
+    session.commit()
+    raise HTTPException(status_code=409, detail="Worker heartbeat is stale; send a heartbeat before claiming jobs.")
+
+
+def worker_is_stale(worker: models.Worker, stale_seconds: int) -> bool:
+    last_seen_at = worker.last_seen_at
+    if last_seen_at.tzinfo is None:
+        last_seen_at = last_seen_at.replace(tzinfo=timezone.utc)
+    return models.now_utc() - last_seen_at > timedelta(seconds=stale_seconds)
+
+
+def mark_worker_lost(session: Session, worker: models.Worker, *, stale_seconds: int) -> None:
+    before_status = worker.status
+    lost_jobs = session.scalars(
+        select(models.Job).where(models.Job.assigned_worker_id == worker.id, models.Job.status.in_(["leased", "running"]))
+    ).all()
+    for job in lost_jobs:
+        job.status = "queued"
+        job.assigned_worker_id = None
+        job.lease_expires_at = None
+        job.error = "Worker heartbeat timed out; job returned to queue."
+    worker.status = "lost"
+    worker.active_jobs = 0
+    session.add(
+        models.WorkerEvent(
+            worker_id=worker.id,
+            event_type="worker_lost",
+            payload_json={
+                "worker_id": worker.id,
+                "previous_status": before_status,
+                "stale_seconds": stale_seconds,
+                "requeued_job_ids": [job.id for job in lost_jobs],
+            },
+        )
+    )
+
+
 @router.get("", response_model=list[WorkerRead])
-def list_workers(session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
+def list_workers(request: Request, session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
     require_permission(session, current_user, resource="workers", action="manage")
+    mark_stale_workers(session, stale_seconds=request.app.state.settings.worker_stale_seconds)
     workers = session.scalars(select(models.Worker).order_by(models.Worker.last_seen_at.desc())).all()
     return [worker_to_read(worker) for worker in workers]
 
@@ -65,6 +121,18 @@ def register_worker(payload: WorkerRegister, request: Request, session: Session 
     if payload.joinToken:
         joined = consume_join_token(session, payload.joinToken, payload.id)
     if request.app.state.settings.require_worker_join_token and not existing_secret_valid and not joined:
+        session.add(
+            models.AuditEvent(
+                actor_user_id=None,
+                actor_role="worker",
+                event_type="authz.denied",
+                entity_type="workers",
+                entity_id=payload.id,
+                summary="Worker registration rejected because a valid join token is required.",
+                metadata_json={"resource": "workers", "action": "register"},
+            )
+        )
+        session.commit()
         raise HTTPException(status_code=401, detail="A valid worker join token is required.")
 
     worker_secret = None
@@ -254,6 +322,7 @@ def enable_worker(worker_id: str, session: Session = Depends(get_session), curre
 def claim(worker_id: str, payload: JobClaimRequest, request: Request, session: Session = Depends(get_session)):
     worker = require_worker(session, worker_id)
     require_worker_auth(request, worker, session)
+    require_worker_fresh(session, worker, stale_seconds=request.app.state.settings.worker_stale_seconds)
     job, assignment = claim_next_job(
         session,
         worker=worker,
@@ -334,6 +403,18 @@ def fail(worker_id: str, payload: JobFailRequest, request: Request, session: Ses
 def require_worker_auth(request: Request, worker: models.Worker, session: Session) -> None:
     if worker_secret_authorized(request, worker, session):
         return
+    session.add(
+        models.AuditEvent(
+            actor_user_id=None,
+            actor_role="worker",
+            event_type="authz.denied",
+            entity_type="workers",
+            entity_id=worker.id,
+            summary="Worker authentication failed for a protected worker action.",
+            metadata_json={"resource": "workers", "action": request.url.path},
+        )
+    )
+    session.commit()
     raise HTTPException(status_code=401, detail="A valid worker secret or join token is required.")
 
 

@@ -19,7 +19,7 @@ ApplicationStatus = Literal[
     "ARCHIVED",
 ]
 
-ReviewStatus = Literal[
+ComplianceStatus = Literal[
     "PASS",
     "FAIL",
     "WARNING",
@@ -28,6 +28,12 @@ ReviewStatus = Literal[
     "NOT_APPLICABLE",
     "PASS_WITH_WARNINGS",
 ]
+
+ReviewStatus = ComplianceStatus
+
+ReviewRunStatus = Literal["QUEUED", "RUNNING", "COMPLETED", "FAILED", "CANCELLED"]
+
+JobStatus = Literal["queued", "leased", "running", "completed", "failed", "cancelled", "retrying"]
 
 
 def canonical_application_status(status: str | None) -> ApplicationStatus:
@@ -53,15 +59,16 @@ def canonical_application_status(status: str | None) -> ApplicationStatus:
         "ASSETS_UPLOADED": "READY_TO_SUBMIT",
         "REVIEW_QUEUED": "IN_REVIEW",
         "PROCESSING": "IN_REVIEW",
-        "REVIEW_COMPLETED": "APPROVED",
-        "PASS": "APPROVED",
-        "REVIEW_FAILED": "REJECTED",
-        "FAIL": "REJECTED",
-        "FAILED": "REJECTED",
+        "REVIEW_COMPLETED": "IN_REVIEW",
+        "REVIEW_FAILED": "IN_REVIEW",
+        "PASS": "READY_TO_SUBMIT",
+        "PASS_WITH_WARNINGS": "READY_TO_SUBMIT",
+        "FAIL": "APPLICANT_FIX_REQUIRED",
+        "NOT_FOUND": "APPLICANT_FIX_REQUIRED",
     }.get(normalized, "DRAFT")  # type: ignore[return-value]
 
 
-def canonical_review_status(status: str | None) -> ReviewStatus:
+def canonical_review_status(status: str | None) -> ComplianceStatus:
     normalized = str(status or "").strip().upper()
     if normalized in {
         "PASS",
@@ -73,10 +80,17 @@ def canonical_review_status(status: str | None) -> ReviewStatus:
         "PASS_WITH_WARNINGS",
     }:
         return normalized  # type: ignore[return-value]
-    if normalized in {"COMPLETED", "APPROVED"}:
-        return "PASS"
-    if normalized in {"FAILED", "REJECTED"}:
-        return "FAIL"
     if normalized == "PASS_WITH_WARNING":
         return "PASS_WITH_WARNINGS"
     return "NEEDS_REVIEW"
+
+
+def canonical_review_run_status(status: str | None) -> ReviewRunStatus:
+    normalized = str(status or "").strip().upper()
+    if normalized in {"PROCESSING", "STARTED"}:
+        return "RUNNING"
+    if normalized in {"QUEUED", "PENDING"}:
+        return "QUEUED"
+    if normalized in {"QUEUED", "RUNNING", "COMPLETED", "FAILED", "CANCELLED"}:
+        return normalized  # type: ignore[return-value]
+    return "QUEUED"

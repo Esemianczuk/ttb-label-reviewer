@@ -1,0 +1,115 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20023001000513",
+    "retrieved_at": "2026-06-12T18:47:10Z"
+  },
+  "ttb_id": "20023001000513",
+  "status": "APPROVED",
+  "approval_date": "02/07/2020",
+  "serial_number": "200005",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "OMNIPOLLO",
+    "fanciful_name": "WHISKY BARREL-AGED AON",
+    "class_type": "MALT BEVERAGES SPECIALITIES",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20023001000513",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16492,
+      "sha256": "94c40d702e24bd72ef5d1a741ba253d872cb13a4761a52305a6d38df92f79da0",
+      "downloaded_at": "2026-06-12T18:47:10Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Omni Whisky Barrel Aged Aon .jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 113581,
+      "sha256": "a49ae33fc7710e841abb672f6d2df5431f2aaccdd2373c830a776fe2fd845e55",
+      "downloaded_at": "2026-06-12T18:47:10Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20023001000513"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "16545"
+    },
+    {
+      "label": "Serial #",
+      "value": "200005"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "MALT BEVERAGES SPECIALITIES"
+    },
+    {
+      "label": "Origin Code",
+      "value": "SWEDEN"
+    },
+    {
+      "label": "Brand Name",
+      "value": "OMNIPOLLO"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "WHISKY BARREL-AGED AON"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "02/07/2020"
+    },
+    {
+      "label": "TTB ID: 20023001000513",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20023001000513",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Omni Whisky Barrel Aged Aon .jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

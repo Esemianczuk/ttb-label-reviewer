@@ -2,9 +2,12 @@ import type { DataProvider } from "@refinedev/core";
 import {
   addManualUpload,
   acceptAutoReview,
+  archiveApplicantApplication,
+  autosaveApplicantDraft,
   autoReviewApplication,
   autoReviewApplicationWithBrowserOcr,
   createApplicantDraft,
+  deleteApplicantDraft,
   deleteApplicationPacket,
   finalizeReviewerDecision,
   getSnapshot,
@@ -13,11 +16,10 @@ import {
   purgeRawImages,
   processReviewerBatch,
   requestApplicantCorrection,
-  respondToApplicantCorrection,
+  resubmitApplicantApplication,
   resetSnapshot,
+  reopenReviewerDecision,
   runAdminBenchmark,
-  runApplicantPrecheck,
-  runApplicantPrecheckWithBrowserOcr,
   setActiveApplication,
   setProcessingMode,
   submitApplicantApplication,
@@ -26,6 +28,7 @@ import {
   updateJobOperation,
   updateReviewNotes,
   updateWorkerOperation,
+  unarchiveApplicantApplication,
   withdrawApplicantApplication,
   upsertApplication
 } from "./browserStore";
@@ -47,7 +50,7 @@ export const browserDataProvider: DataProvider = {
       const snapshot = upsertApplication(variables as any);
       return { data: snapshot.applications.find((application) => application.id === (variables as any).id) as any };
     }
-    throw new Error(`Create is not implemented for ${resource}.`);
+    throw new Error(`Create is not supported for ${resource} in Browser Only mode.`);
   },
   update: async ({ resource, id, variables }) => {
     if (resource === "applications") {
@@ -56,7 +59,7 @@ export const browserDataProvider: DataProvider = {
       const snapshot = upsertApplication({ ...existing, ...(variables as any), updatedAt: new Date().toISOString() });
       return { data: snapshot.applications.find((application) => application.id === String(id)) as any };
     }
-    throw new Error(`Update is not implemented for ${resource}.`);
+    throw new Error(`Update is not supported for ${resource} in Browser Only mode.`);
   },
   deleteOne: async ({ id }) => {
     return { data: { id } as any };
@@ -80,23 +83,20 @@ export const browserDataProvider: DataProvider = {
     }
     if (action === "reviews/accept-auto") return { data: acceptAutoReview((payload as any).applicationId) as any };
     if (action === "reviews/finalize") return { data: finalizeReviewerDecision(payload as any) as any };
+    if (action === "reviews/reopen") return { data: reopenReviewerDecision((payload as any).applicationId) as any };
     if (action === "reviews/batch-process") return { data: processReviewerBatch(payload as any) as any };
     if (action === "reviews/field") return { data: updateFieldDecision(payload as any) as any };
     if (action === "reviews/notes") return { data: updateReviewNotes(payload as any) as any };
     if (action === "applications/manual") return { data: addManualUpload(payload as any) as any };
     if (action === "applications/draft") return { data: createApplicantDraft(payload as any) as any };
-    if (action === "applications/precheck") {
-      if (import.meta.env.MODE === "test") return { data: runApplicantPrecheck((payload as any).applicationId, (payload as any).mode) as any };
-      return {
-        data: (await runApplicantPrecheckWithBrowserOcr((payload as any).applicationId, (payload as any).mode, {
-          workerOverride: (payload as any).workerOverride
-        })) as any
-      };
-    }
+    if (action === "applications/autosave-draft") return { data: autosaveApplicantDraft(payload as any) as any };
+    if (action === "applications/delete-draft") return { data: deleteApplicantDraft((payload as any).applicationId) as any };
     if (action === "applications/submit") return { data: submitApplicantApplication((payload as any).applicationId) as any };
+    if (action === "applications/resubmit") return { data: resubmitApplicantApplication(payload as any) as any };
     if (action === "applications/withdraw") return { data: withdrawApplicantApplication((payload as any).applicationId) as any };
+    if (action === "applications/archive") return { data: archiveApplicantApplication((payload as any).applicationId) as any };
+    if (action === "applications/unarchive") return { data: unarchiveApplicantApplication((payload as any).applicationId) as any };
     if (action === "corrections/request") return { data: requestApplicantCorrection(payload as any) as any };
-    if (action === "corrections/respond") return { data: respondToApplicantCorrection(payload as any) as any };
     if (action === "admin/settings") return { data: updateAdminSettings(payload as any) as any };
     if (action === "admin/worker") return { data: updateWorkerOperation(payload as any) as any };
     if (action === "admin/job") return { data: updateJobOperation(payload as any) as any };
@@ -105,7 +105,7 @@ export const browserDataProvider: DataProvider = {
     if (action === "admin/purge-old-jobs") return { data: purgeOldJobs() as any };
     if (action === "admin/delete-packet") return { data: deleteApplicationPacket((payload as any).applicationId) as any };
     if (action === "admin/purge-all") return { data: purgeAllDemoData() as any };
-    throw new Error(`Browser data action ${action} is not implemented.`);
+    throw new Error(`Browser data action ${action} is not supported by the active provider.`);
   }
 };
 

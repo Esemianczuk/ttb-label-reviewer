@@ -1,6 +1,8 @@
 import { GOVERNMENT_WARNING_TEXT } from '../app-state.js';
-import { bestWindowSimilarity, normalizeForStrictWarning } from '../normalization/text-normalize.js';
+import { bestWindowSimilarity, normalizeForStrictWarning, normalizeWhitespace, splitLines } from '../normalization/text-normalize.js';
 import { makeReview, SEVERITY, STATUS } from './status.js';
+
+const WARNING_EVIDENCE_MAX_LENGTH = 520;
 
 export const REQUIRED_WARNING_SEGMENTS = [
   'GOVERNMENT WARNING',
@@ -37,7 +39,7 @@ export function validateGovernmentWarning(required, ocrResult) {
   const strongSegments = segmentResults.filter((segment) => segment.score >= 0.9);
   const reviewSegments = segmentResults.filter((segment) => segment.score >= 0.76);
   const lowest = segmentResults.reduce((min, current) => (current.score < min.score ? current : min), segmentResults[0]);
-  const evidenceText = normalizedText.includes('GOVERNMENT WARNING') ? 'Government warning text detected' : reviewSegments.map((item) => item.evidence).filter(Boolean).join(' / ');
+  const evidenceText = governmentWarningEvidenceText(rawText, segmentResults, reviewSegments);
 
   if (strongSegments.length === REQUIRED_WARNING_SEGMENTS.length) {
     return makeReview({
@@ -87,4 +89,31 @@ export function validateGovernmentWarning(required, ocrResult) {
     reason: 'Required government warning was not found or major required phrases are missing.',
     evidence: { text: evidenceText, method: 'required-segment-check', segments: segmentResults },
   });
+}
+
+function governmentWarningEvidenceText(rawText, segmentResults, reviewSegments) {
+  return limitEvidenceText(
+    warningExcerptFromRawText(rawText) ||
+      reviewSegments.map((item) => item.evidence).filter(Boolean).join(' / ') ||
+      segmentResults.filter((item) => item.score > 0.45).map((item) => item.evidence).filter(Boolean).join(' / '),
+  );
+}
+
+function warningExcerptFromRawText(rawText) {
+  const lines = splitLines(rawText);
+  const headingIndex = lines.findIndex((line) => normalizeForStrictWarning(line).includes('GOVERNMENT WARNING'));
+  if (headingIndex >= 0) {
+    return normalizeWhitespace(lines.slice(headingIndex, headingIndex + 6).join(' '));
+  }
+
+  const normalizedRaw = normalizeForStrictWarning(rawText);
+  const headingAt = normalizedRaw.indexOf('GOVERNMENT WARNING');
+  if (headingAt < 0) return '';
+  return normalizeWhitespace(normalizedRaw.slice(headingAt, headingAt + WARNING_EVIDENCE_MAX_LENGTH));
+}
+
+function limitEvidenceText(text) {
+  const normalized = normalizeWhitespace(text);
+  if (normalized.length <= WARNING_EVIDENCE_MAX_LENGTH) return normalized;
+  return `${normalized.slice(0, WARNING_EVIDENCE_MAX_LENGTH - 3).trim()}...`;
 }

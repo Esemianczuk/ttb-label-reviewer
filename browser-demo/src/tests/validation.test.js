@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import badAbv from './fixtures/ocr-bad-abv.json' with { type: 'json' };
 import caseDifference from './fixtures/ocr-case-difference.json' with { type: 'json' };
-import cleanOldTom from './fixtures/ocr-clean-old-tom.json' with { type: 'json' };
+import cleanBourbon from './fixtures/ocr-clean-bourbon.json' with { type: 'json' };
 import missingWarning from './fixtures/ocr-missing-warning.json' with { type: 'json' };
 import { validateAlcohol } from '../validation/alcohol.js';
 import { validateBrand } from '../validation/brand.js';
@@ -25,13 +25,13 @@ describe('brand validator', () => {
   });
 
   it('flags different brands', () => {
-    expect(validateBrand('BLUE RIVER DISTILLING', cleanOldTom).status).toBe(STATUS.FAIL);
+    expect(validateBrand('HOLLOW CANYON', cleanBourbon).status).toBe(STATUS.FAIL);
   });
 });
 
 describe('alcohol validator', () => {
   it('passes matching ABV and proof values', () => {
-    expect(validateAlcohol('45% Alc./Vol. (90 Proof)', cleanOldTom).status).toBe(STATUS.PASS);
+    expect(validateAlcohol('45% Alc./Vol. (90 Proof)', cleanBourbon).status).toBe(STATUS.PASS);
     expect(validateAlcohol('45% Alc./Vol.', { rawText: '90 Proof', blocks: [] }).status).toBe(STATUS.PASS);
   });
 
@@ -69,7 +69,11 @@ describe('net contents validator', () => {
 
 describe('government warning validator', () => {
   it('passes the full standard warning', () => {
-    expect(validateGovernmentWarning(true, cleanOldTom).status).toBe(STATUS.PASS);
+    const result = validateGovernmentWarning(true, cleanBourbon);
+    expect(result.status).toBe(STATUS.PASS);
+    expect(result.extracted).toContain('GOVERNMENT WARNING');
+    expect(result.extracted).toContain('Surgeon General');
+    expect(result.extracted).not.toBe('Government warning text detected');
   });
 
   it('fails when the warning is missing', () => {
@@ -82,7 +86,10 @@ describe('government warning validator', () => {
         'GOVERNMENT WARNING: According to Surgeon General women should not drink alcoholic beverages during pregnancy. Consumption of alcoholic beverages impairs ability to drive and may cause health problems.',
       blocks: [],
     };
-    expect(validateGovernmentWarning(true, noisy).status).toBe(STATUS.NEEDS_REVIEW);
+    const result = validateGovernmentWarning(true, noisy);
+    expect(result.status).toBe(STATUS.NEEDS_REVIEW);
+    expect(result.extracted).toContain('GOVERNMENT WARNING');
+    expect(result.extracted).toContain('Surgeon General');
   });
 });
 

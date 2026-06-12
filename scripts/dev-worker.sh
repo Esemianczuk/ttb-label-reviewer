@@ -20,6 +20,9 @@ fi
 
 echo "Worker coordinator: $TTB_WORKER_COORDINATOR"
 echo "Worker engines:     $TTB_WORKER_ENGINES"
+if [[ -z "${TTB_WORKER_JOIN_TOKEN:-}" && -z "${TTB_WORKER_SECRET:-}" && ! -f "$TTB_WORKER_SECRET_FILE" ]]; then
+  echo "Worker join token:  not set; issue one from /api/cluster/join-token for first registration."
+fi
 
 python -m ttb_worker \
   --coordinator "$TTB_WORKER_COORDINATOR" \

@@ -5,7 +5,11 @@ export const backendHandlers = [
     HttpResponse.json({
       ok: true,
       database: "sqlite",
-      assetRoot: "data/assets"
+      assetRoot: "data/assets",
+      staticDir: "apps/console/dist",
+      staticReady: true,
+      lanMode: false,
+      warning: null
     })
   ),
   http.post("http://127.0.0.1:8000/api/auth/demo-login", async ({ request }) => {

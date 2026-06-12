@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { UserRole } from "../domain/application/types";
-import { getConsoleIdentity, getStoredRole, setStoredRole, type ConsoleIdentity } from "../providers/auth/authProvider";
+import { ROLE_CHANGE_EVENT, getConsoleIdentity, getStoredRole, setStoredRole, type ConsoleIdentity } from "../providers/auth/authProvider";
 
 export function useCurrentRole() {
   const [role, setRoleState] = useState<UserRole>(() => getStoredRole());
@@ -13,12 +13,16 @@ export function useCurrentRole() {
   };
 
   useEffect(() => {
-    const onStorage = () => {
+    const syncRole = () => {
       setRoleState(getStoredRole());
       setIdentity(getConsoleIdentity());
     };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    window.addEventListener("storage", syncRole);
+    window.addEventListener(ROLE_CHANGE_EVENT, syncRole);
+    return () => {
+      window.removeEventListener("storage", syncRole);
+      window.removeEventListener(ROLE_CHANGE_EVENT, syncRole);
+    };
   }, []);
 
   return { role, identity, setRole };

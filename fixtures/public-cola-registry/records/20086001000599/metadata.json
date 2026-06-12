@@ -1,0 +1,115 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20086001000599",
+    "retrieved_at": "2026-06-12T18:46:26Z"
+  },
+  "ttb_id": "20086001000599",
+  "status": "APPROVED",
+  "approval_date": "04/06/2020",
+  "serial_number": "20KCTA",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "TOPPLING GOLIATH BREWING CO.",
+    "fanciful_name": "TEQUILA BARREL-AGED ASSASSIN, KILLER IMPERIAL STOUT AGED IN TEQUILLA BARRELS",
+    "class_type": "STOUT",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20086001000599",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16691,
+      "sha256": "bd8638b82ee7b6d4ca6f2843eb71279f7e8a1e0254d379a2e1891c903305cda8",
+      "downloaded_at": "2026-06-12T18:46:26Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=KCAssassinTequila.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 457685,
+      "sha256": "2e81570f95b2b98d99be9714eb389dfe97e2ee77e344bd36aa126700d4d20afe",
+      "downloaded_at": "2026-06-12T18:46:26Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20086001000599"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "33950"
+    },
+    {
+      "label": "Serial #",
+      "value": "20KCTA"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "STOUT"
+    },
+    {
+      "label": "Origin Code",
+      "value": "IOWA"
+    },
+    {
+      "label": "Brand Name",
+      "value": "TOPPLING GOLIATH BREWING CO."
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "TEQUILA BARREL-AGED ASSASSIN, KILLER IMPERIAL STOUT AGED IN TEQUILLA BARRELS"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "04/06/2020"
+    },
+    {
+      "label": "TTB ID: 20086001000599",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20086001000599",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=KCAssassinTequila.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

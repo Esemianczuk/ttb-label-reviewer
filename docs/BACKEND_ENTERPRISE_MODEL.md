@@ -33,7 +33,7 @@ It inserts the demo organization and users used by `/api/auth/demo-login`.
 
 `users`
 
-- Demo and future authenticated users.
+- Demo authenticated users and local assessment identities.
 - Includes email, display name, role, status, optional organization, and timestamps.
 
 `application_versions`

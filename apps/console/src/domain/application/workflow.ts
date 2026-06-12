@@ -7,8 +7,7 @@ export type WorkflowMilestone = {
 };
 
 export const APPLICATION_WORKFLOW_MILESTONES: WorkflowMilestone[] = [
-  { key: "draft", title: "Draft", statuses: ["DRAFT"] },
-  { key: "precheck", title: "Precheck", statuses: ["PRECHECK_RUNNING", "APPLICANT_FIX_REQUIRED", "READY_TO_SUBMIT"] },
+  { key: "draft", title: "Draft", statuses: ["DRAFT", "PRECHECK_RUNNING", "APPLICANT_FIX_REQUIRED", "READY_TO_SUBMIT"] },
   { key: "submitted", title: "Submitted", statuses: ["SUBMITTED", "RESUBMITTED"] },
   { key: "review", title: "Review", statuses: ["IN_REVIEW", "NEEDS_CORRECTION"] },
   { key: "decision", title: "Decision", statuses: ["CONDITIONALLY_APPROVED", "APPROVED", "REJECTED", "WITHDRAWN"] },

@@ -2,6 +2,7 @@ import { BrowserOcrWorkerPool, getRecommendedBrowserOcrWorkerCount } from "@brow
 import { validateLabelPacket } from "@browser-demo/validation/overall.js";
 import { blocksFromText, createOcrResult } from "@browser-demo/ocr/ocr-types.js";
 import type { FieldStatus, LabelImage, ProcessingMode, ReviewApplication, ReviewEvidence, ReviewField, ReviewResult, ReviewStatus, Severity } from "./types";
+import { cropFromOcrBlock, estimatedCropForField } from "./evidenceCrops";
 
 type BrowserReviewOptions = {
   workerOverride?: string;
@@ -21,6 +22,7 @@ type BrowserValidationField = {
 
 type BrowserImageResult = LabelImage & {
   ocrResult: any;
+  ocrSource: "sample-fixture" | "browser-ocr";
 };
 
 const fieldKeysByLabel: Record<string, ReviewField["fieldKey"]> = {
@@ -54,8 +56,10 @@ export async function createBrowserOcrReview(
 
   const startedAt = new Date();
   const workerCount = resolveBrowserOcrWorkerCount(application.images.length, options.workerOverride);
-  options.onProgress?.(`Starting browser OCR with ${workerCount} worker${workerCount === 1 ? "" : "s"}.`);
+  options.onProgress?.("Reading label text with local OCR.");
   const imageResults = await recognizeApplicationImages(application, workerCount, options.onProgress);
+  const fixtureCount = imageResults.filter((image) => image.ocrSource === "sample-fixture").length;
+  const liveCount = imageResults.length - fixtureCount;
   options.onProgress?.("Validating detected label evidence against expected TTB fields.");
   const validation = validateLabelPacket(application.expectedFields, imageResults);
   const fields = (validation.fields as Array<BrowserValidationField | null>)
@@ -73,13 +77,15 @@ export async function createBrowserOcrReview(
     completedAt: completedAt.toISOString(),
     fields,
     summary: reviewSummary(status, application.images.length, workerCount),
+    rawOcrText: formatRawOcrText(imageResults),
     engineTrace: [
-      "Browser Only Tesseract.js OCR",
+      fixtureCount ? `Sample fixture OCR: ${fixtureCount} bundled sample image${fixtureCount === 1 ? "" : "s"}` : "",
+      liveCount ? `Browser OCR: ${liveCount} image${liveCount === 1 ? "" : "s"} processed locally with Tesseract.js` : "",
       `${workerCount} browser OCR worker${workerCount === 1 ? "" : "s"}`,
       "Shared field normalizers and validators",
       "Image blobs stayed in this browser session",
       `${Math.max(1, completedAt.getTime() - startedAt.getTime())} ms elapsed`
-    ]
+    ].filter(Boolean)
   };
 }
 
@@ -96,8 +102,8 @@ async function recognizeApplicationImages(
     images.map(async (image, index) => {
       const fixture = await loadLocalOcrFixture(image, application);
       if (fixture) {
-        onProgress?.(`${image.name}: local OCR fixture loaded`);
-        imageResults[index] = { ...image, ocrResult: fixture };
+        onProgress?.(`${image.name}: Sample fixture OCR loaded`);
+        imageResults[index] = { ...image, ocrResult: fixture, ocrSource: "sample-fixture" };
       } else {
         liveImages.push({ image, index });
       }
@@ -123,7 +129,7 @@ async function recognizeApplicationImages(
       onTaskComplete: (task: { name: string }) => onProgress?.(`${task.name}: OCR complete`)
     });
     tasks.forEach((task, resultIndex) => {
-      imageResults[task.index] = { ...images[task.index], ocrResult: results[resultIndex] };
+      imageResults[task.index] = { ...images[task.index], ocrResult: results[resultIndex], ocrSource: "browser-ocr" };
     });
     return imageResults;
   } finally {
@@ -131,8 +137,9 @@ async function recognizeApplicationImages(
   }
 }
 
-async function loadLocalOcrFixture(image: LabelImage, application: ReviewApplication): Promise<any | null> {
-  const packetId = packetIdFromImageUrl(image.url) || packetIdFromExpectedFields(application);
+export async function loadLocalOcrFixture(image: LabelImage, _application: ReviewApplication): Promise<any | null> {
+  if (!canUseSampleOcrFixture(image)) return null;
+  const packetId = packetIdFromImageUrl(image.url);
   if (!packetId) return null;
   try {
     const response = await fetch(assetPath(`label-packets/${packetId}/ocr-fixture.json`));
@@ -146,7 +153,7 @@ async function loadLocalOcrFixture(image: LabelImage, application: ReviewApplica
       rawText: fixtureImage.rawText || "",
       blocks: fixtureImage.blocks || blocksFromText(fixtureImage.rawText || "", fixtureImage.confidence ?? 0.98),
       processingTimeMs: fixtureImage.processingTimeMs ?? 25,
-      preprocessingNotes: fixtureImage.preprocessingNotes || [`Sample OCR fixture loaded for ${image.name}`],
+      preprocessingNotes: fixtureImage.preprocessingNotes || [`Sample fixture OCR loaded for ${image.name}`],
       warnings: fixtureImage.warnings || [],
       source: "fixture"
     });
@@ -155,22 +162,13 @@ async function loadLocalOcrFixture(image: LabelImage, application: ReviewApplica
   }
 }
 
+export function canUseSampleOcrFixture(image: LabelImage): boolean {
+  return image.source === "sample" && /\/label-packets\/[^/]+\//.test(String(image.url || ""));
+}
+
 function packetIdFromImageUrl(url: string): string | null {
   const match = String(url || "").match(/\/label-packets\/([^/]+)\//);
   return match?.[1] || null;
-}
-
-function packetIdFromExpectedFields(application: ReviewApplication): string | null {
-  const brand = application.expectedFields.brandName?.toUpperCase().trim();
-  const classType = application.expectedFields.classType?.toUpperCase().trim();
-  if (brand === "OLD TOM DISTILLERY" && classType.includes("BOURBON")) return "old-tom-pass";
-  if (brand === "HOLLOW RIDGE") return "hollow-ridge-bourbon";
-  if (brand === "HIGHLAND COAST") return "highland-coast-lightkeeper-gin";
-  if (brand === "RIVERLIGHT") return "riverlight-rye-whiskey";
-  if (brand === "SUNDAZE") return "sundaze-hard-seltzer";
-  if (brand === "ARBOR HILL") return "arbor-hill-cabernet-sauvignon";
-  if (brand === "ESTRELLA") return "estrella-tequila-blanco";
-  return null;
 }
 
 function fixtureKeyForImage(image: LabelImage): string {
@@ -215,7 +213,8 @@ function mapEvidence(application: ReviewApplication, field: BrowserValidationFie
     sourceImageId: block.imageId || fallbackImage?.id || "",
     excerpt: String(excerpt || "").slice(0, 220),
     confidence,
-    pageAnchor: block.imageName || field.evidence?.method || "Browser OCR"
+    pageAnchor: block.imageName || field.evidence?.method || "Browser OCR",
+    crop: cropFromOcrBlock(block) || estimatedCropForField(fieldKeysByLabel[field.field] || "labelId")
   };
 }
 
@@ -228,8 +227,8 @@ function normalizeReviewStatus(status: string): ReviewStatus {
   return "PASS";
 }
 
-function reviewSummary(status: ReviewStatus, imageCount: number, workerCount: number): string {
-  const prefix = `Browser-only OCR reviewed ${imageCount} image${imageCount === 1 ? "" : "s"} with ${workerCount} worker${workerCount === 1 ? "" : "s"}.`;
+function reviewSummary(status: ReviewStatus, imageCount: number, _workerCount: number): string {
+  const prefix = `Evidence review checked ${imageCount} label image${imageCount === 1 ? "" : "s"} with local OCR.`;
   if (status === "PASS") return `${prefix} All required application values matched detected label evidence.`;
   if (status === "FAIL") return `${prefix} One or more required TTB fields conflict with detected evidence.`;
   return `${prefix} The automated review found low-confidence or incomplete evidence requiring an agent decision.`;
@@ -240,4 +239,23 @@ function firstFinite(...values: unknown[]): number {
     if (typeof value === "number" && Number.isFinite(value)) return value;
   }
   return 0.5;
+}
+
+function formatRawOcrText(imageResults: BrowserImageResult[]): string {
+  return imageResults
+    .map((image) => {
+      const rawText = String(image.ocrResult?.rawText || textFromBlocks(image.ocrResult?.blocks) || "").trim();
+      if (!rawText) return "";
+      return [`Image: ${image.name}`, `Role: ${image.role.replace("_", " ")}`, "", rawText].join("\n");
+    })
+    .filter(Boolean)
+    .join("\n\n---\n\n");
+}
+
+function textFromBlocks(blocks: unknown): string {
+  if (!Array.isArray(blocks)) return "";
+  return blocks
+    .map((block: any) => block?.text || block?.value || "")
+    .filter(Boolean)
+    .join("\n");
 }

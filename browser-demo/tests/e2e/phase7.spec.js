@@ -118,3 +118,21 @@ test('backend mode completes against a live coordinator', async ({ page }) => {
   await expect(page.getByText('Final Decision')).toBeVisible({ timeout: 90000 });
   await expect(page.locator('.result-panel')).toContainText('Pass', { timeout: 90000 });
 });
+
+test('browser-only OCR smoke runs with packaged worker assets', async ({ page }) => {
+  const enabled = process.env.TTB_E2E_BROWSER_OCR === '1' || process.env.RUN_SLOW_OCR === '1';
+  test.skip(!enabled, 'Set TTB_E2E_BROWSER_OCR=1 to run the slow packaged browser OCR smoke test.');
+  test.setTimeout(120000);
+
+  await page.route('http://localhost:8000/api/health', (route) => route.abort());
+  await page.goto('/');
+
+  await page.locator('#image-input').setInputFiles([
+    fixtureImage('label-packets/hollow-ridge-bourbon/cola-sheet.png', 'hollow-ridge-cola-sheet.png'),
+  ]);
+
+  await expect(page.getByText('Uploaded application 1 of 1')).toBeVisible();
+  await page.getByRole('button', { name: 'Auto Review' }).click();
+  await expect(page.getByText(/Using browser worker pool OCR|Preparing browser OCR|Processing 1 image/)).toBeVisible();
+  await expect(page.getByText('Final Decision')).toBeVisible({ timeout: 120000 });
+});

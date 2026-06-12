@@ -8,7 +8,7 @@ from .base import EngineEstimate, EngineHealth, OcrEngine, OcrResult
 
 class OnnxOcrEngine(OcrEngine):
     id = "onnx"
-    display_name = "ONNX OCR Placeholder"
+    display_name = "ONNX OCR Local Model"
     supports_gpu = True
     supports_cpu = True
 
@@ -19,7 +19,7 @@ class OnnxOcrEngine(OcrEngine):
         return None
 
     def estimate(self, task: dict[str, Any], capabilities: dict[str, Any]) -> EngineEstimate:
-        return EngineEstimate(self.id, 9999, 0.0, ["placeholder", "model_required"])
+        return EngineEstimate(self.id, 9999, 0.0, ["local_model_required"])
 
     def recognize(self, image_bytes: bytes, options: dict[str, Any] | None = None) -> OcrResult:
         raise RuntimeError("ONNX OCR requires a configured local model; none is bundled with the prototype.")

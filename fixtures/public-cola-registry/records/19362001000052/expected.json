@@ -1,0 +1,55 @@
+{
+  "fixture_id": "ttb_19362001000052_ske-tic",
+  "source_type": "official_public_registry",
+  "ttb_id": "19362001000052",
+  "expected_fields": {
+    "brandName": "SKE?TIC",
+    "fancifulName": "GINQUILA REPOSADO",
+    "classType": "GIN SPECIALTIES",
+    "productType": "distilled_spirits",
+    "alcoholContent": "40% ALC/VOL (80 PROOF)",
+    "netContents": "750 mL",
+    "governmentWarningRequired": true,
+    "isImported": false,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": "Skeptic Distillery CO.",
+      "address": "2525 W LE MOYNE ST, Melrose Park, IL, 60160"
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_02.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Collector note: Approved public registry fixture discovered via distilled_spirits term; brand=SKE?TIC; label_images=2.",
+    "Demo audit: ABV, net contents, and responsible party verified from label_01/02 images."
+  ],
+  "demo_ready": true,
+  "demo_audit": {
+    "status": "ready",
+    "reviewed_common_fields": [
+      "brandName",
+      "classType",
+      "alcoholContent",
+      "netContents",
+      "responsibleParty.name",
+      "governmentWarningRequired"
+    ],
+    "source": "label_01/02 images",
+    "note": "Common reviewer criteria were audited against the downloaded label image(s) and official COLA form metadata."
+  }
+}

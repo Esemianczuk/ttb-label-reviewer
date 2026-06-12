@@ -23,7 +23,7 @@ def cluster_status(request: Request, current_user: models.User = Depends(get_cur
         "mdnsEnabled": settings.enable_mdns,
         "mdnsService": SERVICE_TYPE,
         "lanMode": settings.lan_mode,
-        "warning": lan_warning(settings.lan_mode),
+        "warning": settings.lan_warning,
     }
 
 
@@ -47,7 +47,7 @@ def issue_join_token(
         "coordinatorUrl": coordinator_url,
         "command": command,
         "mdnsService": SERVICE_TYPE if settings.enable_mdns else None,
-        "warning": lan_warning(settings.lan_mode),
+        "warning": settings.lan_warning,
     }
 
 
@@ -57,9 +57,3 @@ def coordinator_url_for(request: Request) -> str:
         return settings.coordinator_public_url.rstrip("/")
     base_url = str(request.base_url).rstrip("/")
     return base_url
-
-
-def lan_warning(lan_mode: bool) -> str | None:
-    if not lan_mode:
-        return None
-    return "LAN mode is enabled. Only run on a trusted network; worker join tokens are short-lived but coordinator APIs are reachable on the LAN."

@@ -98,8 +98,21 @@ def nullable_string(value: Any) -> str | None:
 def map_product_type(metadata: dict[str, Any], *, expected_group: str | None = None) -> str:
     if expected_group in {"distilled_spirits", "wine", "malt_beverage", "unknown"}:
         return expected_group
-    haystack_parts: list[str] = []
     application = metadata.get("application") or {}
+
+    primary_parts = [
+        normalize_space(application.get("product_type")),
+        normalize_space(application.get("class_type")),
+    ]
+    primary = " ".join(primary_parts).lower()
+    if contains_any(primary, MALT_TERMS):
+        return "malt_beverage"
+    if contains_any(primary, WINE_TERMS):
+        return "wine"
+    if contains_any(primary, SPIRITS_TERMS):
+        return "distilled_spirits"
+
+    haystack_parts: list[str] = []
     for key in ["product_type", "class_type", "brand_name", "fanciful_name", "origin", "appellation"]:
         haystack_parts.append(normalize_space(application.get(key)))
     for field in metadata.get("raw_fields") or []:

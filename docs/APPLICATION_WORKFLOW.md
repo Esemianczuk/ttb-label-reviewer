@@ -2,6 +2,8 @@
 
 Phase 6 makes application status changes explicit and auditable. The backend stores canonical application statuses and exposes one transition endpoint instead of letting clients mutate arbitrary state.
 
+For evaluator-facing applicant click steps, see [APPLICANT_WORKFLOW.md](APPLICANT_WORKFLOW.md). This file documents the backend state machine and transition guards.
+
 ## Canonical Statuses
 
 - `DRAFT`

@@ -1,0 +1,60 @@
+{
+  "fixture_id": "ttb_20134001000705_kinsey",
+  "source_type": "official_public_registry",
+  "ttb_id": "20134001000705",
+  "expected_fields": {
+    "brandName": "KINSEY",
+    "fancifulName": "CHARDONNAY CASK",
+    "classType": "WHISKY SPECIALTIES",
+    "productType": "distilled_spirits",
+    "alcoholContent": "40% ALC/VOL",
+    "netContents": "750ML",
+    "governmentWarningRequired": true,
+    "isImported": false,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": "KINSEY DISTILLING CO.",
+      "address": "1431 N CADWALLADER ST, Philadelphia, PA, 19122"
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_02.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_03.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Collector note: Approved public registry fixture discovered via wine term; brand=KINSEY; label_images=3.",
+    "Demo audit: ABV, net contents, and responsible party verified from label_01 image."
+  ],
+  "demo_ready": true,
+  "demo_audit": {
+    "status": "ready",
+    "reviewed_common_fields": [
+      "brandName",
+      "classType",
+      "alcoholContent",
+      "netContents",
+      "responsibleParty.name",
+      "governmentWarningRequired"
+    ],
+    "source": "label_01 image",
+    "note": "Common reviewer criteria were audited against the downloaded label image(s) and official COLA form metadata."
+  }
+}

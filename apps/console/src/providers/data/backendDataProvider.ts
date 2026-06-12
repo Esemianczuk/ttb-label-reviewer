@@ -1,10 +1,8 @@
 import type { DataProvider } from "@refinedev/core";
-import type { BenchmarkRun } from "../../domain/application/types";
 import type { ConsoleResourceName } from "../../resources";
 import { getStoredRole } from "../auth/authProvider";
 
 const SESSION_KEY = "ttb-console-session-id";
-const BACKEND_BENCHMARKS_KEY = "ttb-console-backend-benchmarks";
 const authCache = new Map<string, { token: string; expiresAt: string }>();
 
 export function getBackendUrl(): string {
@@ -39,7 +37,7 @@ export const apiDataProvider: DataProvider = {
     if (resource === "applications") {
       return { data: await request("/api/applications", { method: "POST", body: JSON.stringify(variables) }) };
     }
-    throw new Error(`Create is not implemented for backend resource ${resource}.`);
+    throw new Error(`Create is not supported for backend resource ${resource}.`);
   },
   update: async ({ resource, id, variables }) => {
     if (resource === "applications" && (variables as any)?.transition) {
@@ -74,17 +72,23 @@ async function listResource(resource: string): Promise<any[]> {
     case "jobs":
       return request("/api/jobs?limit=100");
     case "benchmarks":
-      return loadBackendBenchmarks();
+      return request("/api/admin/benchmarks/results");
     case "applicationVersions":
+      return request("/api/admin/application-versions");
     case "labelAssets":
+      return request("/api/admin/assets");
     case "reviewDecisions":
+      return request("/api/admin/review-decisions");
     case "correctionRequests":
+      return request("/api/admin/correction-requests");
     case "users":
+      return request("/api/admin/users");
     case "reports":
+      return request("/api/admin/reports");
     case "fixtures":
-      return [];
+      return request("/api/admin/fixtures");
     default:
-      return [];
+      throw new Error(`Backend provider does not expose resource ${resource}.`);
   }
 }
 
@@ -109,7 +113,7 @@ async function runAdminAction(action: string, payload: any): Promise<any | null>
     throw new Error(`Unsupported job action ${jobAction}.`);
   }
   if (action === "admin/benchmark") {
-    return saveBackendBenchmark(payload || {});
+    return request("/api/admin/benchmarks/run", { method: "POST", body: JSON.stringify(payload || {}) });
   }
   if (action === "admin/purge-raw-images") return request("/api/admin/retention/purge-raw-images", { method: "POST" });
   if (action === "admin/purge-old-jobs") return request("/api/admin/retention/purge-old-jobs", { method: "POST" });
@@ -117,40 +121,9 @@ async function runAdminAction(action: string, payload: any): Promise<any | null>
     return request(`/api/admin/retention/delete-application/${encodeURIComponent(payload?.applicationId || "")}`, { method: "POST" });
   }
   if (action === "admin/purge-all") {
-    await request("/api/admin/retention/purge-old-jobs", { method: "POST" });
-    return request("/api/admin/retention/purge-raw-images", { method: "POST" });
+    return request("/api/admin/retention/purge-all-demo-data", { method: "POST" });
   }
   return null;
-}
-
-function loadBackendBenchmarks(): BenchmarkRun[] {
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(BACKEND_BENCHMARKS_KEY) || "[]");
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveBackendBenchmark(payload: any): BenchmarkRun {
-  const imageCount = Number(payload.imageCount || 1);
-  const now = new Date().toISOString();
-  const averageMsPerImage = Math.max(120, Math.round(520 * (payload.mode === "cluster" ? 0.72 : 0.88)));
-  const run: BenchmarkRun = {
-    id: `backend-benchmark-${Date.now()}`,
-    label: payload.label || `${imageCount} image backend run`,
-    imageCount,
-    mode: payload.mode || "backend",
-    workerId: "backend-coordinator",
-    averageMsPerImage,
-    p50OcrMs: averageMsPerImage,
-    p95OcrMs: Math.round(averageMsPerImage * 1.55),
-    imagesPerMinute: Math.max(1, Math.round(60000 / averageMsPerImage)),
-    createdAt: now
-  };
-  const runs = [run, ...loadBackendBenchmarks()].slice(0, 25);
-  window.localStorage.setItem(BACKEND_BENCHMARKS_KEY, JSON.stringify(runs));
-  return run;
 }
 
 export async function request<T = any>(path: string, init: RequestInit = {}): Promise<T> {

@@ -1,0 +1,50 @@
+{
+  "fixture_id": "ttb_20009001000806_send-it",
+  "source_type": "official_public_registry",
+  "ttb_id": "20009001000806",
+  "expected_fields": {
+    "brandName": "SEND IT",
+    "fancifulName": "VODKA SODA TWIST OF LIME",
+    "classType": "VODKA SPECIALTIES",
+    "productType": "distilled_spirits",
+    "alcoholContent": "4.44% ALC/VOL",
+    "netContents": "355 mL",
+    "governmentWarningRequired": true,
+    "isImported": false,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": "TRIPLE EIGHT DISTILLERY",
+      "address": "811 EDWARD ST, Utica, NY, 13502"
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Collector note: Approved public registry fixture discovered via distilled_spirits term; brand=SEND IT; label_images=1.",
+    "Demo audit: ABV, net contents, and responsible party verified from label_01 image."
+  ],
+  "demo_ready": true,
+  "demo_audit": {
+    "status": "ready",
+    "reviewed_common_fields": [
+      "brandName",
+      "classType",
+      "alcoholContent",
+      "netContents",
+      "responsibleParty.name",
+      "governmentWarningRequired"
+    ],
+    "source": "label_01 image",
+    "note": "Common reviewer criteria were audited against the downloaded label image(s) and official COLA form metadata."
+  }
+}

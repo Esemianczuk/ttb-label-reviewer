@@ -1,0 +1,130 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=19337001000251",
+    "retrieved_at": "2026-06-12T18:46:46Z"
+  },
+  "ttb_id": "19337001000251",
+  "status": "APPROVED",
+  "approval_date": "02/04/2020",
+  "serial_number": "191918",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "TRANSCONTINENTAL",
+    "fanciful_name": "RUM LINE",
+    "class_type": "OTHER FOREIGN RUM",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=19337001000251",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16873,
+      "sha256": "e941b159ef906ad3e4e8825ed8c811044a3f7000dd002c65b0c842a599dc6b4c",
+      "downloaded_at": "2026-06-12T18:46:46Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=trinidad.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 79054,
+      "sha256": "9a838e8339bdc4ca6926068f2e3517d827b1df424317352b9003ffd13aa33519",
+      "downloaded_at": "2026-06-12T18:46:46Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=TRINIDAD back label .jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 141326,
+      "sha256": "9aff2ff2bf018402cf03f9452e7c1d810eab8e9e0b5166439f6e7e936a43cf96",
+      "downloaded_at": "2026-06-12T18:46:46Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "19337001000251"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "42481"
+    },
+    {
+      "label": "Serial #",
+      "value": "191918"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "OTHER FOREIGN RUM"
+    },
+    {
+      "label": "Origin Code",
+      "value": "TRINIDAD/TOBAGO"
+    },
+    {
+      "label": "Brand Name",
+      "value": "TRANSCONTINENTAL"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "RUM LINE"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "02/04/2020"
+    },
+    {
+      "label": "TTB ID: 19337001000251",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=19337001000251",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=trinidad.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=TRINIDAD back label .jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

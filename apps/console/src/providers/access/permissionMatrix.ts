@@ -9,11 +9,11 @@ type Rule = {
 
 export const permissionMatrix: Record<UserRole, Rule[]> = {
   applicant: [
-    { resource: "applications", actions: ["list", "show", "create", "submit", "upload", "download", "withdraw"] },
+    { resource: "applications", actions: ["list", "show", "create", "update", "delete", "submit", "resubmit", "upload", "download", "withdraw", "archive", "unarchive"] },
     { resource: "applicationVersions", actions: ["list", "show", "create"] },
     { resource: "labelAssets", actions: ["list", "show", "create"] },
     { resource: "reviews", actions: ["show", "download"] },
-    { resource: "correctionRequests", actions: ["list", "show", "respond"] },
+    { resource: "correctionRequests", actions: ["list", "show"] },
     { resource: "auditEvents", actions: ["list"] },
     { resource: "reports", actions: ["download"] }
   ],
@@ -22,8 +22,7 @@ export const permissionMatrix: Record<UserRole, Rule[]> = {
     { resource: "reviews", actions: ["list", "show", "update", "override", "download"] },
     { resource: "correctionRequests", actions: ["list", "show", "create"] },
     { resource: "auditEvents", actions: ["list"] },
-    { resource: "reports", actions: ["list", "download"] },
-    { resource: "workers", actions: ["list"] }
+    { resource: "reports", actions: ["list", "download"] }
   ],
   admin: [
     { resource: "*", actions: ["*"] },
@@ -57,7 +56,7 @@ export const accessControlProvider: AccessControlProvider = {
   options: {
     buttons: {
       enableAccessControl: true,
-      hideIfUnauthorized: false
+      hideIfUnauthorized: true
     }
   }
 };

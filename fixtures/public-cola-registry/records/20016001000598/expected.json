@@ -7,14 +7,14 @@
     "fancifulName": "TEQUILA LIME CRUSH",
     "classType": "VODKA SPECIALTIES",
     "productType": "distilled_spirits",
-    "alcoholContent": null,
-    "netContents": null,
+    "alcoholContent": "9.0% ALC/VOL",
+    "netContents": "355ML (12 FL OZ)",
     "governmentWarningRequired": true,
-    "isImported": null,
+    "isImported": false,
     "countryOfOrigin": null,
     "responsibleParty": {
-      "name": null,
-      "address": null
+      "name": "HOUSE OF MONACO",
+      "address": "134 N 3300 E, RIGBY, ID, 83442"
     }
   },
   "assets": [
@@ -30,7 +30,21 @@
     }
   ],
   "known_limitations": [
-    "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
-    "Collector note: Public registry search candidate: RTD spirits specialty."
-  ]
+    "Collector note: Public registry search candidate: RTD spirits specialty.",
+    "Demo audit: ABV, net contents, and responsible party verified from label_01 image."
+  ],
+  "demo_ready": true,
+  "demo_audit": {
+    "status": "ready",
+    "reviewed_common_fields": [
+      "brandName",
+      "classType",
+      "alcoholContent",
+      "netContents",
+      "responsibleParty.name",
+      "governmentWarningRequired"
+    ],
+    "source": "label_01 image",
+    "note": "Common reviewer criteria were audited against the downloaded label image(s) and official COLA form metadata."
+  }
 }

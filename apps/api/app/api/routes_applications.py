@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from .. import models
 from ..api.deps import get_current_user, get_session_id, require_permission
 from ..api.serializers import application_to_read, asset_to_read, review_to_read
+from ..core.application_numbers import metadata_with_application_number
 from ..core.application_workflow import TransitionError, transition_application
 from ..core.object_store import ObjectStore
 from ..db import get_session
@@ -112,6 +113,7 @@ def create_application(
     metadata = payload.metadata.model_dump(mode="json", exclude_none=True)
     if payload.applicationId:
         metadata.setdefault("applicationId", payload.applicationId)
+    metadata = metadata_with_application_number(session, metadata)
     expected_fields = payload.expectedFields.model_dump(mode="json", exclude_none=True)
     application = models.Application(
         id=payload.id or models.new_uuid(),
@@ -189,6 +191,8 @@ async def upload_image(
         existing.size_bytes = stored["size_bytes"]
         existing.storage_path = stored["storage_path"]
         existing.role = role
+        existing.width = stored["width"]
+        existing.height = stored["height"]
         asset = existing
     else:
         asset = models.Asset(
@@ -199,6 +203,8 @@ async def upload_image(
             size_bytes=stored["size_bytes"],
             storage_path=stored["storage_path"],
             role=role,
+            width=stored["width"],
+            height=stored["height"],
         )
         session.add(asset)
     session.commit()

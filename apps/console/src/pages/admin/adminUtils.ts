@@ -1,7 +1,7 @@
 import type { AdminJob, AdminSettings, ConsoleSnapshot } from "../../domain/application/types";
 
 export function adminMetrics(snapshot: ConsoleSnapshot) {
-  const latestRun = snapshot.benchmarkRuns[0];
+  const latestRun = snapshot.benchmarkRuns.find((run) => run.status !== "skipped") || snapshot.benchmarkRuns[0];
   const latestApplicationTime = Math.max(...snapshot.applications.map((application) => Date.parse(application.createdAt)), 0);
   const latestApplicationDay = latestApplicationTime ? new Date(latestApplicationTime).toISOString().slice(0, 10) : "";
   const applicationsToday = snapshot.applications.filter((application) => application.createdAt.startsWith(latestApplicationDay)).length;

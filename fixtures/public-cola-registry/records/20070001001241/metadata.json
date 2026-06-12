@@ -1,0 +1,130 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20070001001241",
+    "retrieved_at": "2026-06-12T18:46:21Z"
+  },
+  "ttb_id": "20070001001241",
+  "status": "APPROVED",
+  "approval_date": "03/20/2020",
+  "serial_number": "20TGRE",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "TEQUILA GALAN",
+    "fanciful_name": "REPOSADO",
+    "class_type": "TEQUILA FB",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20070001001241",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17227,
+      "sha256": "9b30e839bc0ed2ce6f61f412b741a1aa9d63504fc7f4939643cff3bfa0df2c64",
+      "downloaded_at": "2026-06-12T18:46:21Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=TGrepFront.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 151444,
+      "sha256": "1c012ef93a30a3d9e3e6cb67f975df9b6f3cd73e4a6b8f61e5ef9e66cdd354c2",
+      "downloaded_at": "2026-06-12T18:46:21Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=TGrepBack.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 195290,
+      "sha256": "6de8eacf91691750743d4f6062dfdeaefdacb4a6aea6b4c12db46f091ae3c581",
+      "downloaded_at": "2026-06-12T18:46:22Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20070001001241"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "32638"
+    },
+    {
+      "label": "Serial #",
+      "value": "20TGRE"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "TEQUILA FB"
+    },
+    {
+      "label": "Origin Code",
+      "value": "MEXICO"
+    },
+    {
+      "label": "Brand Name",
+      "value": "TEQUILA GALAN"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "REPOSADO"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "03/20/2020"
+    },
+    {
+      "label": "TTB ID: 20070001001241",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20070001001241",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=TGrepFront.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=TGrepBack.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

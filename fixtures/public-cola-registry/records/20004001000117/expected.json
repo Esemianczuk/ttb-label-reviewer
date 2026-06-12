@@ -1,0 +1,43 @@
+{
+  "fixture_id": "ttb_20004001000117_brewery-emperial",
+  "source_type": "official_public_registry",
+  "ttb_id": "20004001000117",
+  "expected_fields": {
+    "brandName": "BREWERY EMPERIAL",
+    "fancifulName": "GINGER SHANDY - CITRUS BEER BREWED WITH GINGER AND LEMON",
+    "classType": "MALT BEVERAGES SPECIALITIES - FLAVORED",
+    "productType": "malt_beverage",
+    "alcoholContent": null,
+    "netContents": null,
+    "governmentWarningRequired": true,
+    "isImported": false,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": "BREWERY EMPERIAL",
+      "address": "1829 OAK ST, Kansas City, MO, 64108"
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
+    "Collector note: Approved public registry fixture discovered via distilled_spirits term; brand=BREWERY EMPERIAL; label_images=1.",
+    "Demo audit exclusion: Available collar image is too low-confidence/handwritten for robust ABV and net-content demo matching."
+  ],
+  "demo_ready": false,
+  "demo_audit": {
+    "status": "excluded",
+    "reason": "Available collar image is too low-confidence/handwritten for robust ABV and net-content demo matching.",
+    "note": "Retained in the fixture corpus for provenance, but excluded from loaded demo samples."
+  }
+}

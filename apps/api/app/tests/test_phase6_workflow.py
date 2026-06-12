@@ -6,10 +6,10 @@ from sqlalchemy import select
 from apps.api.app import models
 from apps.api.app.config import Settings
 from apps.api.app.main import create_app
-from apps.api.app.tests.helpers import auth_headers
+from apps.api.app.tests.helpers import PNG_1X1_BYTES, auth_headers
 
 
-PNG_BYTES = b"\x89PNG\r\n\x1a\nphase-6-workflow"
+PNG_BYTES = PNG_1X1_BYTES
 
 
 def app_payload(name: str = "Hollow Ridge") -> dict:

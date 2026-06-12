@@ -1,0 +1,50 @@
+{
+  "fixture_id": "ttb_20021001000243_heathen-brewing",
+  "source_type": "official_public_registry",
+  "ttb_id": "20021001000243",
+  "expected_fields": {
+    "brandName": "HEATHEN BREWING",
+    "fancifulName": "WHISKEY SOUR",
+    "classType": "MALT BEVERAGES SPECIALITIES - FLAVORED",
+    "productType": "malt_beverage",
+    "alcoholContent": "5.3% ALC. BY VOL",
+    "netContents": "16 FL OZ (1 PINT)",
+    "governmentWarningRequired": true,
+    "isImported": false,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": "HEATHEN BREWING",
+      "address": "5612 NE 119TH ST, VANCOUVER, WA, 98686"
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Collector note: Approved public registry fixture discovered via distilled_spirits term; brand=HEATHEN BREWING; label_images=1.",
+    "Demo audit: ABV, net contents, and responsible party verified from label_01 image."
+  ],
+  "demo_ready": true,
+  "demo_audit": {
+    "status": "ready",
+    "reviewed_common_fields": [
+      "brandName",
+      "classType",
+      "alcoholContent",
+      "netContents",
+      "responsibleParty.name",
+      "governmentWarningRequired"
+    ],
+    "source": "label_01 image",
+    "note": "Common reviewer criteria were audited against the downloaded label image(s) and official COLA form metadata."
+  }
+}

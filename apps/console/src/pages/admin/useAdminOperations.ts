@@ -31,6 +31,8 @@ export function useAdminOperations() {
         })
       );
       setRemoteSnapshot(normalizeRemoteSnapshot(localSnapshot, Object.fromEntries(entries)));
+    } catch {
+      setRemoteSnapshot({});
     } finally {
       setLoading(false);
     }
@@ -115,33 +117,109 @@ function normalizeApplication(row: any): ReviewApplication | null {
   } as ReviewApplication;
 }
 
-function normalizeWorker(row: any): WorkerSnapshot {
-  if (Array.isArray(row.capabilities)) return row as WorkerSnapshot;
-  const capabilities = Object.entries(row.capabilities || {})
-    .filter(([, enabled]) => Boolean(enabled))
-    .map(([key]) => key);
-  const calibration = row.calibration || {};
+export function normalizeBackendWorker(row: any): WorkerSnapshot {
+  const capabilityPayload = row?.capabilities || {};
+  const calibration = row?.calibration || {};
+  const engines = engineNames(row);
+  const capabilities = capabilityNames(row, engines);
+  const avgMsPerImage = workerAverageMs(calibration);
+  const memoryTotalBytes = numberValue(capabilityPayload?.memory?.totalBytes);
+  const latencyMs = numberValue(calibration.latencyMs) ?? numberValue(calibration.ocrMs) ?? numberValue(capabilityPayload?.network?.latencyMs) ?? 0;
   return {
     id: row.id,
-    hostname: row.hostname,
-    platform: row.platform || calibration.platform || "backend",
-    os: row.platform || calibration.os || "backend",
+    hostname: row.hostname || capabilityPayload.hostname || "backend-worker",
+    platform: row.platform || capabilityPayload.platform || calibration.platform || "backend",
+    os: row.platform || capabilityPayload.platform || calibration.os || "backend",
     arch: row.arch,
-    cpu: calibration.cpu || "reported CPU unavailable",
-    ramGb: calibration.ramGb,
+    cpu: calibration.cpu || (capabilityPayload.cpuCount ? `${capabilityPayload.cpuCount} CPU cores` : "reported CPU unavailable"),
+    ramGb: calibration.ramGb ?? (memoryTotalBytes ? Math.round((memoryTotalBytes / 1024 ** 3) * 10) / 10 : undefined),
     gpu: calibration.gpu || (capabilities.includes("cuda") ? "CUDA" : capabilities.includes("mps") ? "MPS" : undefined),
     status: row.status || "online",
     activeJobs: row.activeJobs || 0,
     maxConcurrency: row.maxConcurrency || 1,
     capabilities,
-    engines: calibration.engines || capabilities,
-    latencyMs: calibration.latencyMs || calibration.ocrMs || 0,
-    throughput: calibration.throughput || `${Math.max(1, Math.round(60000 / Math.max(1, calibration.ocrMs || 650)))} images/min`,
-    avgMsPerImage: calibration.avgMsPerImage || calibration.ocrMs,
+    engines,
+    latencyMs: Math.round(latencyMs),
+    throughput: calibration.throughput || `${Math.max(1, Math.round(60000 / Math.max(1, avgMsPerImage || 650)))} images/min`,
+    avgMsPerImage,
     drainMode: Boolean(calibration.drainMode),
     disabled: Boolean(calibration.disabled || row.status === "disabled"),
-    lastSeenAt: row.lastSeenAt
+    lastSeenAt: row.lastSeenAt || new Date().toISOString()
   };
+}
+
+function normalizeWorker(row: any): WorkerSnapshot {
+  return normalizeBackendWorker(row);
+}
+
+function engineNames(row: any): string[] {
+  const capabilities = row?.capabilities || {};
+  const names = [
+    ...stringList(row?.engines),
+    ...enabledObjectKeys(row?.engines),
+    ...stringList(row?.calibration?.engines),
+    ...enabledObjectKeys(row?.calibration?.engines),
+    ...stringList(capabilities.engines),
+    ...enabledObjectKeys(capabilities.engines),
+    ...stringList(capabilities.warmEngines)
+  ];
+  return uniqueStrings(names);
+}
+
+function capabilityNames(row: any, engines: string[]): string[] {
+  if (Array.isArray(row?.capabilities)) return uniqueStrings([...stringList(row.capabilities), ...engines]);
+  const capabilities = row?.capabilities || {};
+  const names = [
+    ...engines,
+    ...booleanCapabilityKeys(capabilities),
+    ...stringList(capabilities.supportedJobTypes),
+    capabilities.accelerators?.cuda?.available ? "cuda" : "",
+    capabilities.accelerators?.appleMps?.available ? "mps" : "",
+    capabilities.onnxRuntime?.available ? "onnx-runtime" : ""
+  ];
+  return uniqueStrings(names);
+}
+
+function workerAverageMs(calibration: any): number | undefined {
+  const direct = numberValue(calibration.avgMsPerImage) ?? numberValue(calibration.ocrMs);
+  if (direct !== undefined) return Math.round(direct);
+  const engineMeasurements = Object.values(calibration.engines || {})
+    .map((engine: any) => numberValue(engine.steadyStateMs) ?? numberValue(engine.firstRunMs) ?? numberValue(engine.warmupMs))
+    .filter((value): value is number => value !== undefined);
+  if (!engineMeasurements.length) return undefined;
+  return Math.round(engineMeasurements.reduce((sum, value) => sum + value, 0) / engineMeasurements.length);
+}
+
+function stringList(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map((item) => String(item)).filter(Boolean);
+  if (typeof value === "string") return value.split(",").map((item) => item.trim()).filter(Boolean);
+  return [];
+}
+
+function enabledObjectKeys(value: unknown): string[] {
+  if (!value || Array.isArray(value) || typeof value !== "object") return [];
+  return Object.entries(value)
+    .filter(([, entry]) => {
+      if (entry === true) return true;
+      if (!entry || typeof entry !== "object") return false;
+      return Boolean((entry as { available?: unknown }).available);
+    })
+    .map(([key]) => key);
+}
+
+function booleanCapabilityKeys(value: unknown): string[] {
+  if (!value || Array.isArray(value) || typeof value !== "object") return [];
+  return Object.entries(value)
+    .filter(([, entry]) => entry === true)
+    .map(([key]) => key);
+}
+
+function numberValue(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
 function normalizeJob(row: any): AdminJob {

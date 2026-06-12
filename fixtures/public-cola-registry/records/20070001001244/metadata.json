@@ -1,0 +1,130 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20070001001244",
+    "retrieved_at": "2026-06-12T18:46:24Z"
+  },
+  "ttb_id": "20070001001244",
+  "status": "APPROVED",
+  "approval_date": "03/20/2020",
+  "serial_number": "20TGSI",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "TEQUILA GALAN",
+    "fanciful_name": "SILVER",
+    "class_type": "TEQUILA FB",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20070001001244",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17168,
+      "sha256": "6e140567e8565d6818534d58accfbcf8b5efd6b9c34caa050f06b2b2d3726c8a",
+      "downloaded_at": "2026-06-12T18:46:24Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=TGsilverFront.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 151039,
+      "sha256": "c4d0bc418a3c18a22c56f203d23d01c70f9c48deefbeacbc7ddab85651dcd708",
+      "downloaded_at": "2026-06-12T18:46:24Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=TGsilverBack.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 184229,
+      "sha256": "862e8f43a20c90a71ee688d2352d84d16a4aeff7062b2096a5a3e284ae494b13",
+      "downloaded_at": "2026-06-12T18:46:24Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20070001001244"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "32638"
+    },
+    {
+      "label": "Serial #",
+      "value": "20TGSI"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "TEQUILA FB"
+    },
+    {
+      "label": "Origin Code",
+      "value": "MEXICO"
+    },
+    {
+      "label": "Brand Name",
+      "value": "TEQUILA GALAN"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "SILVER"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "03/20/2020"
+    },
+    {
+      "label": "TTB ID: 20070001001244",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20070001001244",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=TGsilverFront.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=TGsilverBack.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

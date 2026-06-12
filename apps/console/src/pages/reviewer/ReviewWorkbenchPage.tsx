@@ -3,5 +3,9 @@ import { ReviewWorkbench } from "../../components/review/ReviewWorkbench";
 
 export function ReviewWorkbenchPage() {
   const { applicationId } = useParams();
-  return <ReviewWorkbench applicationId={applicationId} />;
+  return (
+    <div className="gov-page-shell">
+      <ReviewWorkbench applicationId={applicationId} titleLevel={1} />
+    </div>
+  );
 }

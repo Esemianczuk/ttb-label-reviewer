@@ -1,0 +1,115 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20021001000243",
+    "retrieved_at": "2026-06-12T18:47:01Z"
+  },
+  "ttb_id": "20021001000243",
+  "status": "APPROVED",
+  "approval_date": "02/20/2020",
+  "serial_number": "200013",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "HEATHEN BREWING",
+    "fanciful_name": "WHISKEY SOUR",
+    "class_type": "MALT BEVERAGES SPECIALITIES - FLAVORED",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20021001000243",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16642,
+      "sha256": "0bb38896756286488b7c209daad60de97875f124fdc7c76d2e2602cbde1a39e7",
+      "downloaded_at": "2026-06-12T18:47:01Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=HBArtSeriesWhiskeySourSubmitRevised.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 302672,
+      "sha256": "d74ef92aa0563f132e67807f97ee32413424ea766631e54aa36752fb827966db",
+      "downloaded_at": "2026-06-12T18:47:01Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20021001000243"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "21602"
+    },
+    {
+      "label": "Serial #",
+      "value": "200013"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "MALT BEVERAGES SPECIALITIES - FLAVORED"
+    },
+    {
+      "label": "Origin Code",
+      "value": "WASHINGTON"
+    },
+    {
+      "label": "Brand Name",
+      "value": "HEATHEN BREWING"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "WHISKEY SOUR"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "02/20/2020"
+    },
+    {
+      "label": "TTB ID: 20021001000243",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20021001000243",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=HBArtSeriesWhiskeySourSubmitRevised.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

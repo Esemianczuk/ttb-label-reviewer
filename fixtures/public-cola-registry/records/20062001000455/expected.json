@@ -1,0 +1,61 @@
+{
+  "fixture_id": "ttb_20062001000455_sin-verguenza",
+  "source_type": "official_public_registry",
+  "ttb_id": "20062001000455",
+  "expected_fields": {
+    "brandName": "SIN VERGUENZA",
+    "fancifulName": "TEQUILA",
+    "classType": "TEQUILA FB",
+    "productType": "distilled_spirits",
+    "alcoholContent": "40% alc. vol",
+    "netContents": "750 ml",
+    "governmentWarningRequired": true,
+    "isImported": true,
+    "countryOfOrigin": "MEXICO",
+    "responsibleParty": {
+      "name": "RIAZUL IMPORTS LLC",
+      "address": "2700 NEILSON WAY #1134, SANTA MONICA, CA, 90405"
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_02.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_03.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Collector note: Approved public registry fixture discovered via distilled_spirits term; brand=SIN VERGUENZA; label_images=3.",
+    "Demo audit: ABV, net contents, and responsible party verified from label images."
+  ],
+  "demo_ready": true,
+  "demo_audit": {
+    "status": "ready",
+    "reviewed_common_fields": [
+      "brandName",
+      "classType",
+      "alcoholContent",
+      "netContents",
+      "responsibleParty.name",
+      "governmentWarningRequired",
+      "countryOfOrigin"
+    ],
+    "source": "label images",
+    "note": "Common reviewer criteria were audited against the downloaded label image(s) and official COLA form metadata."
+  }
+}

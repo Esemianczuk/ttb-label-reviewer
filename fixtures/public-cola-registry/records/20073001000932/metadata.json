@@ -1,0 +1,134 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20073001000932",
+    "retrieved_at": "2026-06-12T18:47:27Z"
+  },
+  "ttb_id": "20073001000932",
+  "status": "APPROVED",
+  "approval_date": "03/19/2020",
+  "serial_number": "20WHCH",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "IRVINE & ROBERTS VINEYARDS",
+    "fanciful_name": "CHARDONNAY WHOLESALE",
+    "class_type": "TABLE WHITE WINE",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20073001000932",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16913,
+      "sha256": "6f200f788fdeb6bc43b1de4239c5eb5f6600cb9967e7eb77e5138c8b43c5ca02",
+      "downloaded_at": "2026-06-12T18:47:28Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=2017 Estate Chardonnay Front.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 94398,
+      "sha256": "5b3368730f3e2561cd0d8c9ad9a2fb3d8518aa3514a989bbc02bc27facec1e67",
+      "downloaded_at": "2026-06-12T18:47:28Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=2017 Estate Chardonnay Back.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 182622,
+      "sha256": "f818ba64f0fbb71e7b6a16de5e6ef4e04632501f4b411954b5aba04ffe7262d9",
+      "downloaded_at": "2026-06-12T18:47:28Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20073001000932"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "36725"
+    },
+    {
+      "label": "Serial #",
+      "value": "20WHCH"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "TABLE WHITE WINE"
+    },
+    {
+      "label": "Origin Code",
+      "value": "OREGON"
+    },
+    {
+      "label": "Brand Name",
+      "value": "IRVINE & ROBERTS VINEYARDS"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "CHARDONNAY WHOLESALE"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Grape Varietal(s)",
+      "value": "Chardonnay"
+    },
+    {
+      "label": "Approval Date",
+      "value": "03/19/2020"
+    },
+    {
+      "label": "TTB ID: 20073001000932",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20073001000932",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=2017 Estate Chardonnay Front.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=2017 Estate Chardonnay Back.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

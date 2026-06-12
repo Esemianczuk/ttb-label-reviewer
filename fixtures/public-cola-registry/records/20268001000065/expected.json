@@ -1,0 +1,50 @@
+{
+  "fixture_id": "ttb_20268001000065_haiball",
+  "source_type": "official_public_registry",
+  "ttb_id": "20268001000065",
+  "expected_fields": {
+    "brandName": "HAIBALL",
+    "fancifulName": "WHISKY SELTZER",
+    "classType": "COCKTAILS UNDER 48 PROOF",
+    "productType": "malt_beverage",
+    "alcoholContent": "5.2% ALC BY VOL",
+    "netContents": "12 FL OZ (355ML)",
+    "governmentWarningRequired": true,
+    "isImported": false,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": "HAIBALL COMPANY",
+      "address": "8398 W ROUTE 20, WESTFIELD, NY, 14787"
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Collector note: Approved public registry fixture discovered via distilled_spirits term; brand=HAIBALL; label_images=1.",
+    "Demo audit: ABV, net contents, and responsible party verified from label_01 image."
+  ],
+  "demo_ready": true,
+  "demo_audit": {
+    "status": "ready",
+    "reviewed_common_fields": [
+      "brandName",
+      "classType",
+      "alcoholContent",
+      "netContents",
+      "responsibleParty.name",
+      "governmentWarningRequired"
+    ],
+    "source": "label_01 image",
+    "note": "Common reviewer criteria were audited against the downloaded label image(s) and official COLA form metadata."
+  }
+}

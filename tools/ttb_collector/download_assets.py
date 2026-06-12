@@ -146,7 +146,7 @@ def download_asset(
             raise ValueError(f"asset is larger than configured max size ({content_length} bytes)")
 
         ext = infer_extension(url, content_type)
-        if output_path.suffix.lower() in {"", ".bin"} and ext != output_path.suffix.lower():
+        if ext != ".bin" and output_path.suffix.lower() != ext:
             output_path = output_path.with_suffix(ext)
 
         tmp_path = output_path.with_suffix(output_path.suffix + ".tmp")

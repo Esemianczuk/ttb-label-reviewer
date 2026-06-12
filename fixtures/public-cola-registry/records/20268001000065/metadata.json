@@ -1,0 +1,119 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20268001000065",
+    "retrieved_at": "2026-06-12T18:47:15Z"
+  },
+  "ttb_id": "20268001000065",
+  "status": "APPROVED",
+  "approval_date": "10/16/2020",
+  "serial_number": "200030",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "HAIBALL",
+    "fanciful_name": "WHISKY SELTZER",
+    "class_type": "COCKTAILS UNDER 48 PROOF",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": "1362151",
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20268001000065",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16680,
+      "sha256": "351cb55a7ad9e328b45b63ccafefc3d9fc10271afabbf8c43ac318830aafba78",
+      "downloaded_at": "2026-06-12T18:47:15Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Haiball round 2 v2_edit2.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 259253,
+      "sha256": "0a0027dd9de0bcaaf5b1c8ac72cacf80e30e065593798ea0561cb1ff707f19b0",
+      "downloaded_at": "2026-06-12T18:47:15Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20268001000065"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "14076"
+    },
+    {
+      "label": "Serial #",
+      "value": "200030"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "COCKTAILS UNDER 48 PROOF"
+    },
+    {
+      "label": "Origin Code",
+      "value": "NEW YORK"
+    },
+    {
+      "label": "Brand Name",
+      "value": "HAIBALL"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "WHISKY SELTZER"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Formula",
+      "value": "1362151"
+    },
+    {
+      "label": "Approval Date",
+      "value": "10/16/2020"
+    },
+    {
+      "label": "TTB ID: 20268001000065",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20268001000065",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Haiball round 2 v2_edit2.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

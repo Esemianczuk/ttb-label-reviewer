@@ -10,13 +10,28 @@ VENV_DIR="${VENV_DIR:-.venv}"
 if [[ -s "$HOME/.nvm/nvm.sh" ]]; then
   # shellcheck source=/dev/null
   source "$HOME/.nvm/nvm.sh"
-  nvm use 20 >/dev/null
+  nvm use 20 >/dev/null || {
+    echo "setup-dev: Node 20 is required. Install it with 'nvm install 20' or enable another Node >=20 runtime." >&2
+    exit 1
+  }
 fi
 
 command -v npm >/dev/null 2>&1 || {
   echo "setup-dev: npm is required. Install Node 20 or enable nvm first." >&2
   exit 1
 }
+
+if ! node <<'NODE'
+const major = Number.parseInt(process.versions.node.split(".")[0], 10);
+if (!Number.isFinite(major) || major < 20) {
+  console.error(`Found Node ${process.versions.node}`);
+  process.exit(1);
+}
+NODE
+then
+  echo "setup-dev: Node 20 or newer is required. Run 'source ~/.nvm/nvm.sh && nvm use 20' or install Node 20." >&2
+  exit 1
+fi
 
 command -v "$PYTHON_BIN" >/dev/null 2>&1 || {
   echo "setup-dev: $PYTHON_BIN is required." >&2

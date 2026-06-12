@@ -1,0 +1,51 @@
+{
+  "fixture_id": "ttb_20023001000590_omnipollo",
+  "source_type": "official_public_registry",
+  "ttb_id": "20023001000590",
+  "expected_fields": {
+    "brandName": "OMNIPOLLO",
+    "fancifulName": "WHISKY BARREL-AGED SCELERISQUE",
+    "classType": "MALT BEVERAGES SPECIALITIES",
+    "productType": "malt_beverage",
+    "alcoholContent": "10% ALC/Vol",
+    "netContents": "5.28 Gal/7.93 Gal",
+    "governmentWarningRequired": true,
+    "isImported": true,
+    "countryOfOrigin": "SWEDEN",
+    "responsibleParty": {
+      "name": "TWELVE PERCENT LLC",
+      "address": "560 S THIRD AVE, MT VERNON, NY, 10550"
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Collector note: Approved public registry fixture discovered via distilled_spirits term; brand=OMNIPOLLO; label_images=1.",
+    "Demo audit: ABV, net contents, and responsible party verified from label_01 image."
+  ],
+  "demo_ready": true,
+  "demo_audit": {
+    "status": "ready",
+    "reviewed_common_fields": [
+      "brandName",
+      "classType",
+      "alcoholContent",
+      "netContents",
+      "responsibleParty.name",
+      "governmentWarningRequired",
+      "countryOfOrigin"
+    ],
+    "source": "label_01 image",
+    "note": "Common reviewer criteria were audited against the downloaded label image(s) and official COLA form metadata."
+  }
+}

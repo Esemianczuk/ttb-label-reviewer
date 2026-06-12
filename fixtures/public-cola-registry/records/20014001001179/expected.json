@@ -7,14 +7,14 @@
     "fancifulName": "CABERNET SAUVIGNON",
     "classType": "TABLE RED WINE",
     "productType": "wine",
-    "alcoholContent": null,
-    "netContents": null,
+    "alcoholContent": "13% BY VOL",
+    "netContents": "750 ML",
     "governmentWarningRequired": true,
-    "isImported": null,
-    "countryOfOrigin": null,
+    "isImported": true,
+    "countryOfOrigin": "FRANCE",
     "responsibleParty": {
-      "name": null,
-      "address": null
+      "name": "AJS IMPORTS INC",
+      "address": "67 WEST ST STE 401 UNT.41, Brooklyn, NY, 11222"
     }
   },
   "assets": [
@@ -35,7 +35,22 @@
     }
   ],
   "known_limitations": [
-    "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
-    "Collector note: Public registry search candidate: Cabernet Sauvignon."
-  ]
+    "Collector note: Public registry search candidate: Cabernet Sauvignon.",
+    "Demo audit: ABV, net contents, and responsible party verified from label_01 image."
+  ],
+  "demo_ready": true,
+  "demo_audit": {
+    "status": "ready",
+    "reviewed_common_fields": [
+      "brandName",
+      "classType",
+      "alcoholContent",
+      "netContents",
+      "responsibleParty.name",
+      "governmentWarningRequired",
+      "countryOfOrigin"
+    ],
+    "source": "label_01 image",
+    "note": "Common reviewer criteria were audited against the downloaded label image(s) and official COLA form metadata."
+  }
 }

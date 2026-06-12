@@ -1,0 +1,115 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=19350001000429",
+    "retrieved_at": "2026-06-12T18:46:51Z"
+  },
+  "ttb_id": "19350001000429",
+  "status": "APPROVED",
+  "approval_date": "01/07/2020",
+  "serial_number": "190172",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "CHLOE",
+    "fanciful_name": "RUM BARREL AGED COCONUT BALTIC",
+    "class_type": "MALT BEVERAGES SPECIALITIES - FLAVORED",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=19350001000429",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17285,
+      "sha256": "bf6fb76375128f667a9272c05eca835913b457574f3e06309db26822ab40d715",
+      "downloaded_at": "2026-06-12T18:46:51Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Chloe label.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 293430,
+      "sha256": "b9c01bd99143ccf8b590e7ba042193573fddfb99b18b026d81d1d919ea409c0f",
+      "downloaded_at": "2026-06-12T18:46:51Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "19350001000429"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "24940"
+    },
+    {
+      "label": "Serial #",
+      "value": "190172"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "MALT BEVERAGES SPECIALITIES - FLAVORED"
+    },
+    {
+      "label": "Origin Code",
+      "value": "NEW YORK"
+    },
+    {
+      "label": "Brand Name",
+      "value": "CHLOE"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "RUM BARREL AGED COCONUT BALTIC"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "01/07/2020"
+    },
+    {
+      "label": "TTB ID: 19350001000429",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=19350001000429",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Chloe label.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20055001000326",
+    "retrieved_at": "2026-06-12T18:48:52Z"
+  },
+  "ttb_id": "20055001000326",
+  "status": "APPROVED",
+  "approval_date": "03/02/2020",
+  "serial_number": "200202",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "WHISKEY RUN CREEK VINEYARD & WINERY",
+    "fanciful_name": "APPLE PIE WINE",
+    "class_type": "DESSERT FLAVORED WINE",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": "1004591",
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20055001000326",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16646,
+      "sha256": "cba12e220e51ff682844194cd01ccbb4705ddf9b614755f25af4cfddb233d578",
+      "downloaded_at": "2026-06-12T18:48:53Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Apple Pie WRC.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 115742,
+      "sha256": "60c8d0c811be26c67106ce8cdf1d7a7c0b9e3586884d7675940a9ba3049b840a",
+      "downloaded_at": "2026-06-12T18:48:53Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20055001000326"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "24393"
+    },
+    {
+      "label": "Serial #",
+      "value": "200202"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "DESSERT FLAVORED WINE"
+    },
+    {
+      "label": "Origin Code",
+      "value": "NEBRASKA"
+    },
+    {
+      "label": "Brand Name",
+      "value": "WHISKEY RUN CREEK VINEYARD & WINERY"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "APPLE PIE WINE"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Grape Varietal(s)",
+      "value": "N/A"
+    },
+    {
+      "label": "Formula",
+      "value": "1004591"
+    },
+    {
+      "label": "Approval Date",
+      "value": "03/02/2020"
+    },
+    {
+      "label": "TTB ID: 20055001000326",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20055001000326",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Apple Pie WRC.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

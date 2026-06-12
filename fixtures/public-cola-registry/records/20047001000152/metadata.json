@@ -1,0 +1,111 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20047001000152",
+    "retrieved_at": "2026-06-12T18:47:06Z"
+  },
+  "ttb_id": "20047001000152",
+  "status": "APPROVED",
+  "approval_date": "03/13/2020",
+  "serial_number": "20WS15",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "WHISKEY BARREL AGED STICKE ALT GERMAN STYLE ALE",
+    "fanciful_name": null,
+    "class_type": "ALE",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20047001000152",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16448,
+      "sha256": "2ce5106a22f39b0998142ca1b16e6ef880f233569fe73e179ed4d357371f9674",
+      "downloaded_at": "2026-06-12T18:47:06Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Keg Collar_Whiskey_15gal.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 132625,
+      "sha256": "e6d2a59b381c62edba5fad52fcf45a5067fd12414f353e0f5a15c20d03a853ae",
+      "downloaded_at": "2026-06-12T18:47:06Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20047001000152"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "26400"
+    },
+    {
+      "label": "Serial #",
+      "value": "20WS15"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "ALE"
+    },
+    {
+      "label": "Origin Code",
+      "value": "WASHINGTON"
+    },
+    {
+      "label": "Brand Name",
+      "value": "WHISKEY BARREL AGED STICKE ALT GERMAN STYLE ALE"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "03/13/2020"
+    },
+    {
+      "label": "TTB ID: 20047001000152",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20047001000152",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Keg Collar_Whiskey_15gal.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

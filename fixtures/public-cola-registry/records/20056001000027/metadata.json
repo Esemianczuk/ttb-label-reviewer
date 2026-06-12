@@ -1,0 +1,134 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20056001000027",
+    "retrieved_at": "2026-06-12T18:47:22Z"
+  },
+  "ttb_id": "20056001000027",
+  "status": "APPROVED",
+  "approval_date": "02/28/2020",
+  "serial_number": "200127",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "DOMAINE ANNE GROS",
+    "fanciful_name": "CHARDONNAY",
+    "class_type": "TABLE WHITE WINE",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20056001000027",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16826,
+      "sha256": "9d71571723aa988302028d54017c8d8759ea1a871e8877f4d09d8453753bdc41",
+      "downloaded_at": "2026-06-12T18:47:22Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Domaine Anne Gros Bourgogne Blanc Chardonnay.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 123852,
+      "sha256": "c96819788dfd562e90c3699f64e4ff4005b435ed1be0eb58d86a06237e8bf945",
+      "downloaded_at": "2026-06-12T18:47:23Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Back Label White Wine 14.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 661624,
+      "sha256": "2bb8fa809ced8499c87dbeed7231207c2c606e8c6716a7e74beb0a28ac67e9ea",
+      "downloaded_at": "2026-06-12T18:47:23Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20056001000027"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "40301"
+    },
+    {
+      "label": "Serial #",
+      "value": "200127"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "TABLE WHITE WINE"
+    },
+    {
+      "label": "Origin Code",
+      "value": "FRANCE"
+    },
+    {
+      "label": "Brand Name",
+      "value": "DOMAINE ANNE GROS"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "CHARDONNAY"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Grape Varietal(s)",
+      "value": "N/A"
+    },
+    {
+      "label": "Approval Date",
+      "value": "02/28/2020"
+    },
+    {
+      "label": "TTB ID: 20056001000027",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20056001000027",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Domaine Anne Gros Bourgogne Blanc Chardonnay.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Back Label White Wine 14.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

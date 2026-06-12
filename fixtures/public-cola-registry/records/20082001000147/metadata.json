@@ -1,0 +1,134 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20082001000147",
+    "retrieved_at": "2026-06-12T18:47:30Z"
+  },
+  "ttb_id": "20082001000147",
+  "status": "APPROVED",
+  "approval_date": "03/25/2020",
+  "serial_number": "204010",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "LEMON CREEK",
+    "fanciful_name": "CHARDONNAY RESERVE",
+    "class_type": "TABLE WHITE WINE",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20082001000147",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17191,
+      "sha256": "97af9bc8da7d71ca1309e6a42ee8d7c13f25d5937beef1e9510433da32e6460d",
+      "downloaded_at": "2026-06-12T18:47:30Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Chardonnay Reserve brand.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 527432,
+      "sha256": "932df871636fbc3977891b11ba6208c7b75f38fbf3a9ed5b7e9662b160494c6d",
+      "downloaded_at": "2026-06-12T18:47:30Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=chard reserve back.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 559590,
+      "sha256": "fbb03439c6858018453c85a8e5934c33ba8cf682de229e758ecf7d3fe4868044",
+      "downloaded_at": "2026-06-12T18:47:30Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20082001000147"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "10505"
+    },
+    {
+      "label": "Serial #",
+      "value": "204010"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "TABLE WHITE WINE"
+    },
+    {
+      "label": "Origin Code",
+      "value": "MICHIGAN"
+    },
+    {
+      "label": "Brand Name",
+      "value": "LEMON CREEK"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "CHARDONNAY RESERVE"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Grape Varietal(s)",
+      "value": "Chardonnay"
+    },
+    {
+      "label": "Approval Date",
+      "value": "03/25/2020"
+    },
+    {
+      "label": "TTB ID: 20082001000147",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20082001000147",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Chardonnay Reserve brand.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=chard reserve back.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

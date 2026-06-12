@@ -18,23 +18,15 @@ export const FIELD_LABELS = {
 };
 
 export const SAMPLE_EXPECTED_FIELDS = {
-  brandName: 'OLD TOM DISTILLERY',
+  brandName: 'HOLLOW RIDGE',
   classType: 'Kentucky Straight Bourbon Whiskey',
-  alcoholContent: '45% Alc./Vol. (90 Proof)',
+  alcoholContent: '45% ALC/VOL (90 PROOF)',
   netContents: '750 mL',
   governmentWarningRequired: true,
-  producerName: 'Old Tom Distillery',
+  producerName: 'Sunset Ridge Spirits, LLC',
   countryOfOrigin: 'United States',
-  applicationId: 'SAMPLE-OLD-TOM',
-  labelId: 'Synthetic Old Tom label packet',
-};
-
-export const OLD_TOM_SAMPLE_EXPECTED = {
-  ...SAMPLE_EXPECTED_FIELDS,
-  producerName: '',
-  countryOfOrigin: '',
-  applicationId: '',
-  labelId: '',
+  applicationId: 'SAMPLE-HOLLOW-RIDGE',
+  labelId: 'Hollow Ridge synthetic COLA sheet',
 };
 
 export function createInitialState() {

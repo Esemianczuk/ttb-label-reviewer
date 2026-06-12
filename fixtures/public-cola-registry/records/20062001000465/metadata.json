@@ -1,0 +1,145 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20062001000465",
+    "retrieved_at": "2026-06-12T18:46:19Z"
+  },
+  "ttb_id": "20062001000465",
+  "status": "APPROVED",
+  "approval_date": "03/20/2020",
+  "serial_number": "20SVA1",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "SIN VERGUENZA",
+    "fanciful_name": "TEQUILA",
+    "class_type": "TEQUILA FB",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20062001000465",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17682,
+      "sha256": "c9752909ce7d1b89bcd019de3e092e0d4a303a7aa8058ba177f849b80246f07b",
+      "downloaded_at": "2026-06-12T18:46:19Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Anejo_Front.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 261991,
+      "sha256": "0eb9e6b1117c2eb1e9f25a8e52b38227c199c91c0368c2b5d81ff8175aa7769d",
+      "downloaded_at": "2026-06-12T18:46:19Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Anejo_Neck.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 72058,
+      "sha256": "e95665bbf872dcd5a1a267765830e525b0f1f29cfa8a2898a696002f27f90be2",
+      "downloaded_at": "2026-06-12T18:46:19Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Anejo_Back.jpg&filetype=l",
+      "local_path": "assets/label_03.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 165223,
+      "sha256": "2eb50f28b469f5ac2c6442987a78012cf129946e14fca49fc44915b7b6f03dfb",
+      "downloaded_at": "2026-06-12T18:46:19Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20062001000465"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "22949"
+    },
+    {
+      "label": "Serial #",
+      "value": "20SVA1"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "TEQUILA FB"
+    },
+    {
+      "label": "Origin Code",
+      "value": "MEXICO"
+    },
+    {
+      "label": "Brand Name",
+      "value": "SIN VERGUENZA"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "TEQUILA"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "03/20/2020"
+    },
+    {
+      "label": "TTB ID: 20062001000465",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20062001000465",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Anejo_Front.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Anejo_Neck.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Anejo_Back.jpg&filetype=l",
+      "local_path": "assets/label_03.bin",
+      "content_type": null
+    }
+  ]
+}

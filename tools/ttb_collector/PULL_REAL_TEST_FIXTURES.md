@@ -1,6 +1,6 @@
 # Pull Real Public COLA Test Fixtures
 
-This runbook describes exactly how to pull the small real TTB Public COLA Registry fixture set used by this project.
+This runbook describes exactly how to pull the real TTB Public COLA Registry fixture set used by this project.
 
 Scope: small curated testing data only. Do not bulk scrape. Use public registry pages, low request rates, cache results, and approved public records.
 
@@ -56,21 +56,16 @@ curl --cacert "$REQUESTS_CA_BUNDLE" -I --max-time 20 \
 
 ## 3. Use the Approved Fixture Seed
 
-The curated real-test seed is:
+The curated 50-record real-test seed is:
+
+```text
+tools/ttb_collector/fixtures.real50.yaml
+```
+
+It contains 50 public approved COLA IDs selected from conservative public search terms across distilled spirits, wine, and malt beverages. The smaller six-record smoke seed is still available at:
 
 ```text
 tools/ttb_collector/fixtures.testing.yaml
-```
-
-Current approved public records:
-
-```text
-20010001000803  CUTWATER                         distilled_spirits
-20016001000598  MONACO                           distilled_spirits
-20014001001179  WHAT THE PHOQUE                  wine
-20010001000197  SUNSTONE WINERY                  wine
-19344001000769  BEER DRINKING IS NOT A CRIME     malt_beverage
-20041001000838  NATURAL LIGHT                    malt_beverage
 ```
 
 Each record is pulled from the public detail endpoint:
@@ -89,15 +84,15 @@ Actual label images are discovered from printable pages via public `publicViewAt
 
 ## 4. Pull the Fixtures
 
-To pull or refresh the six-record real test set:
+To pull or refresh the 50-record real test set:
 
 ```bash
 export REQUESTS_CA_BUNDLE=tools/ttb_collector/cache/certs/ttb-ca-bundle.pem
 
 python3 tools/ttb_collector/collect_by_ttb_ids.py \
-  --input tools/ttb_collector/fixtures.testing.yaml \
+  --input tools/ttb_collector/fixtures.real50.yaml \
   --out fixtures/public-cola-registry \
-  --limit 6 \
+  --limit 50 \
   --delay-seconds 2.0 \
   --respect-cache \
   --refresh \
@@ -135,13 +130,13 @@ fixtures/public-cola-registry/
         label_02.jpg
 ```
 
-The current six-record set should contain:
+The current 50-record set should contain:
 
 ```text
-6 records
-8 JPEG label images
-6 printable COLA HTML files
-about 2.3 MB total
+50 approved public records
+78 label images
+50 printable COLA HTML files
+about 24 MB total
 ```
 
 ## 6. Verify the Pull

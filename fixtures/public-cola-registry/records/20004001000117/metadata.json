@@ -1,0 +1,115 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20004001000117",
+    "retrieved_at": "2026-06-12T18:46:41Z"
+  },
+  "ttb_id": "20004001000117",
+  "status": "APPROVED",
+  "approval_date": "01/27/2020",
+  "serial_number": "20SHDY",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "BREWERY EMPERIAL",
+    "fanciful_name": "GINGER SHANDY - CITRUS BEER BREWED WITH GINGER AND LEMON",
+    "class_type": "MALT BEVERAGES SPECIALITIES - FLAVORED",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20004001000117",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16729,
+      "sha256": "2ba4b5d17af378eac4b11367584b0711e1239a04d0c33d9643d0a6cf8cfc5f54",
+      "downloaded_at": "2026-06-12T18:46:41Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=COLA_Ginger Shandy.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 244747,
+      "sha256": "551ba835649dcc938cafd38a33d8467632f0fb805bfaeaa5fde8a9576f27c06c",
+      "downloaded_at": "2026-06-12T18:46:41Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20004001000117"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "34814"
+    },
+    {
+      "label": "Serial #",
+      "value": "20SHDY"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "MALT BEVERAGES SPECIALITIES - FLAVORED"
+    },
+    {
+      "label": "Origin Code",
+      "value": "MISSOURI"
+    },
+    {
+      "label": "Brand Name",
+      "value": "BREWERY EMPERIAL"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "GINGER SHANDY - CITRUS BEER BREWED WITH GINGER AND LEMON"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "01/27/2020"
+    },
+    {
+      "label": "TTB ID: 20004001000117",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20004001000117",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=COLA_Ginger Shandy.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

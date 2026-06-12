@@ -1,0 +1,123 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20124001000063",
+    "retrieved_at": "2026-06-12T18:47:35Z"
+  },
+  "ttb_id": "20124001000063",
+  "status": "APPROVED",
+  "approval_date": "05/05/2020",
+  "serial_number": "20CHSO",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "NORTH COAST WINE CLUB",
+    "fanciful_name": "CHARDONNAY OAKED SONOMA COAST CA.",
+    "class_type": "TABLE WHITE WINE",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20124001000063",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16654,
+      "sha256": "e8579ccf89ae03c1187372dc016b694c35582c9f65be0e585b0a672e78f85c10",
+      "downloaded_at": "2026-06-12T18:47:36Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=ChardonnayOakSonoma Coast 2019.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 153106,
+      "sha256": "4fd8476ff259ad0baac8c0cc8745b7d424cb74600569dfd20a0a60b751e16e60",
+      "downloaded_at": "2026-06-12T18:47:36Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20124001000063"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "39392"
+    },
+    {
+      "label": "Serial #",
+      "value": "20CHSO"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "TABLE WHITE WINE"
+    },
+    {
+      "label": "Origin Code",
+      "value": "CALIFORNIA"
+    },
+    {
+      "label": "Brand Name",
+      "value": "NORTH COAST WINE CLUB"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "CHARDONNAY OAKED SONOMA COAST CA."
+    },
+    {
+      "label": "Type of Application",
+      "value": "EXEMPTION"
+    },
+    {
+      "label": "For Sale In",
+      "value": "OH"
+    },
+    {
+      "label": "Grape Varietal(s)",
+      "value": "Chardonnay"
+    },
+    {
+      "label": "Approval Date",
+      "value": "05/05/2020"
+    },
+    {
+      "label": "TTB ID: 20124001000063",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20124001000063",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=ChardonnayOakSonoma Coast 2019.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

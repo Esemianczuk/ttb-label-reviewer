@@ -1,0 +1,134 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20055001000188",
+    "retrieved_at": "2026-06-12T18:47:20Z"
+  },
+  "ttb_id": "20055001000188",
+  "status": "APPROVED",
+  "approval_date": "02/27/2020",
+  "serial_number": "200111",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "DOMAINE RAMONET",
+    "fanciful_name": "CHARDONNAY",
+    "class_type": "TABLE WHITE WINE",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20055001000188",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16815,
+      "sha256": "4969f6b807a60d6898e110fa50fcbb4e5055a412415f821d8595ec5cbb2bc1de",
+      "downloaded_at": "2026-06-12T18:47:20Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Jean Claude Ramonet Bourgogne Chardonnay White.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 72304,
+      "sha256": "1f77c782a332f552528292d50f80a478f0511ae1974a382f01969471b03c411f",
+      "downloaded_at": "2026-06-12T18:47:20Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=BL White Wine 14.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 596460,
+      "sha256": "ac8c0d96b7ddb28b64e5fc75329cb178c35779e4ca042f897ade0ba9766b10b5",
+      "downloaded_at": "2026-06-12T18:47:20Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20055001000188"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "40301"
+    },
+    {
+      "label": "Serial #",
+      "value": "200111"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "TABLE WHITE WINE"
+    },
+    {
+      "label": "Origin Code",
+      "value": "FRANCE"
+    },
+    {
+      "label": "Brand Name",
+      "value": "DOMAINE RAMONET"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "CHARDONNAY"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Grape Varietal(s)",
+      "value": "N/A"
+    },
+    {
+      "label": "Approval Date",
+      "value": "02/27/2020"
+    },
+    {
+      "label": "TTB ID: 20055001000188",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20055001000188",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Jean Claude Ramonet Bourgogne Chardonnay White.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=BL White Wine 14.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

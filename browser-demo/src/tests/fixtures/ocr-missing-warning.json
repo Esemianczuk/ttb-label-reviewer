@@ -1,7 +1,7 @@
 {
-  "rawText": "OLD TOM DISTILLERY\nKENTUCKY STRAIGHT BOURBON WHISKEY\n45% ALC./VOL. (90 PROOF)\n750 mL",
+  "rawText": "HOLLOW RIDGE\nKENTUCKY STRAIGHT BOURBON WHISKEY\n45% ALC./VOL. (90 PROOF)\n750 mL",
   "blocks": [
-    { "text": "OLD TOM DISTILLERY", "confidence": 0.98, "bbox": null },
+    { "text": "HOLLOW RIDGE", "confidence": 0.98, "bbox": null },
     { "text": "KENTUCKY STRAIGHT BOURBON WHISKEY", "confidence": 0.98, "bbox": null }
   ]
 }

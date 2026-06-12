@@ -8,7 +8,7 @@ Fresh databases and Alembic-upgraded databases seed:
 
 | Role | Email | Purpose |
 | --- | --- | --- |
-| applicant | `applicant@example.local` | Create/upload/run precheck/submit own applications and view own review reports. |
+| applicant | `applicant@example.local` | Create/upload/submit/resubmit own applications and view own review reports. |
 | reviewer | `reviewer@example.local` | Review submitted or in-progress work, create reviews, request corrections, override decisions, and export reviewed reports. |
 | admin | `admin@example.local` | Manage users, workers, cluster settings, audit, purge/benchmark operations, and view all applications. |
 

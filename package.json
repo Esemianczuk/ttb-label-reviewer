@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "description": "Root helper scripts for the local-first TTB Label Reviewer assessment project.",
+  "workspaces": [
+    "browser-demo",
+    "apps/console"
+  ],
   "scripts": {
     "browser:test": "npm --prefix browser-demo test",
     "browser:package-tesseract": "node scripts/package-tesseract-assets.mjs",
@@ -18,6 +22,7 @@
     "playwright:install": "npm --prefix browser-demo exec playwright install chromium && npm --prefix apps/console exec playwright install chromium",
     "api:dev": "./scripts/dev-local-backend.sh",
     "worker:dev": "./scripts/dev-worker.sh",
+    "launcher": "python scripts/ttb_launcher.py",
     "check": "./scripts/check-all.sh"
   }
 }

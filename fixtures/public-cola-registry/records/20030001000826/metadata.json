@@ -1,0 +1,123 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=20030001000826",
+    "retrieved_at": "2026-06-12T18:46:09Z"
+  },
+  "ttb_id": "20030001000826",
+  "status": "APPROVED",
+  "approval_date": "02/11/2020",
+  "serial_number": "200034",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "B. NEKTAR",
+    "fanciful_name": "TEQUILA BARREL AGED TUCO-STYLE FREAKOUT",
+    "class_type": "HONEY BASED TABLE WINE",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": "1299714",
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20030001000826",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16527,
+      "sha256": "4dafe349c76dcd90bacb499c3f89ddea9ba976b105ffeceaaefc0521efd5c2cc",
+      "downloaded_at": "2026-06-12T18:46:09Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=3p75x6-TequilaTuco-Style-Freakout-2.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 411045,
+      "sha256": "1a687aba86486e2ac06beda23283b3f14583a1663c9ead37594ab5b07a0eac98",
+      "downloaded_at": "2026-06-12T18:46:09Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "20030001000826"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "16485"
+    },
+    {
+      "label": "Serial #",
+      "value": "200034"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "HONEY BASED TABLE WINE"
+    },
+    {
+      "label": "Origin Code",
+      "value": "MICHIGAN"
+    },
+    {
+      "label": "Brand Name",
+      "value": "B. NEKTAR"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "TEQUILA BARREL AGED TUCO-STYLE FREAKOUT"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Grape Varietal(s)",
+      "value": "N/A"
+    },
+    {
+      "label": "Formula",
+      "value": "1299714"
+    },
+    {
+      "label": "Approval Date",
+      "value": "02/11/2020"
+    },
+    {
+      "label": "TTB ID: 20030001000826",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=20030001000826",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=3p75x6-TequilaTuco-Style-Freakout-2.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

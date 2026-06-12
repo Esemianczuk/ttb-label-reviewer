@@ -1,0 +1,66 @@
+{
+  "fixture_id": "ttb_20099001000399_neta",
+  "source_type": "official_public_registry",
+  "ttb_id": "20099001000399",
+  "expected_fields": {
+    "brandName": "NETA",
+    "fancifulName": "TEQUILANA",
+    "classType": "OTHER SPECIALTIES & PROPRIETARIES",
+    "productType": "distilled_spirits",
+    "alcoholContent": "Alc. by Vol. 49%",
+    "netContents": "750 ml",
+    "governmentWarningRequired": true,
+    "isImported": true,
+    "countryOfOrigin": "MEXICO",
+    "responsibleParty": {
+      "name": "PM SPIRITS LLC",
+      "address": "1220 N MARKET ST STE 806, WILMINGTON, DE, 19801"
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_02.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_03.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_04.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Collector note: Approved public registry fixture discovered via distilled_spirits term; brand=NETA; label_images=4.",
+    "Demo audit: ABV, net contents, and responsible party verified from label images."
+  ],
+  "demo_ready": true,
+  "demo_audit": {
+    "status": "ready",
+    "reviewed_common_fields": [
+      "brandName",
+      "classType",
+      "alcoholContent",
+      "netContents",
+      "responsibleParty.name",
+      "governmentWarningRequired",
+      "countryOfOrigin"
+    ],
+    "source": "label images",
+    "note": "Common reviewer criteria were audited against the downloaded label image(s) and official COLA form metadata."
+  }
+}

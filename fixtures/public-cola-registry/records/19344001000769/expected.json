@@ -10,11 +10,11 @@
     "alcoholContent": null,
     "netContents": null,
     "governmentWarningRequired": true,
-    "isImported": null,
+    "isImported": false,
     "countryOfOrigin": null,
     "responsibleParty": {
-      "name": null,
-      "address": null
+      "name": "Aslin Beer Company, Aslin Beer Company",
+      "address": "257 SUNSET PARK DRIVE, Herndon, VA, 20170"
     }
   },
   "assets": [
@@ -31,6 +31,13 @@
   ],
   "known_limitations": [
     "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
-    "Collector note: Public registry search candidate: ale."
-  ]
+    "Collector note: Public registry search candidate: ale.",
+    "Demo audit exclusion: Available image lacks clear alcohol-content and net-contents values."
+  ],
+  "demo_ready": false,
+  "demo_audit": {
+    "status": "excluded",
+    "reason": "Available image lacks clear alcohol-content and net-contents values.",
+    "note": "Retained in the fixture corpus for provenance, but excluded from loaded demo samples."
+  }
 }

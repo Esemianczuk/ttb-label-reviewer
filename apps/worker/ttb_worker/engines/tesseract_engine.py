@@ -60,8 +60,8 @@ class TesseractEngine(OcrEngine):
                     "bbox": {
                         "x": data.get("left", [0])[index],
                         "y": data.get("top", [0])[index],
-                        "w": data.get("width", [0])[index],
-                        "h": data.get("height", [0])[index],
+                        "width": data.get("width", [0])[index],
+                        "height": data.get("height", [0])[index],
                     },
                 }
             )

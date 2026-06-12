@@ -1,0 +1,49 @@
+{
+  "fixture_id": "ttb_20055001000326_whiskey-run-creek-vineyard-winery",
+  "source_type": "official_public_registry",
+  "ttb_id": "20055001000326",
+  "expected_fields": {
+    "brandName": "WHISKEY RUN CREEK VINEYARD & WINERY",
+    "fancifulName": "APPLE PIE WINE",
+    "classType": "DESSERT FLAVORED WINE",
+    "productType": "wine",
+    "alcoholContent": "16% BY VOL",
+    "netContents": "750ML",
+    "governmentWarningRequired": true,
+    "isImported": false,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": "WHISKEY RUN CREEK VINEYARD & WINERY",
+      "address": "702 MAIN ST, BROWNVILLE, NE, 68321"
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Demo audit: ABV, net contents, and responsible party verified from label_01 image."
+  ],
+  "demo_ready": true,
+  "demo_audit": {
+    "status": "ready",
+    "reviewed_common_fields": [
+      "brandName",
+      "classType",
+      "alcoholContent",
+      "netContents",
+      "responsibleParty.name",
+      "governmentWarningRequired"
+    ],
+    "source": "label_01 image",
+    "note": "Common reviewer criteria were audited against the downloaded label image(s) and official COLA form metadata."
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "fixture_id": "ttb_20052001000890_tequila-ocho",
+  "source_type": "official_public_registry",
+  "ttb_id": "20052001000890",
+  "expected_fields": {
+    "brandName": "TEQUILA OCHO",
+    "fancifulName": null,
+    "classType": "TEQUILA FB",
+    "productType": "distilled_spirits",
+    "alcoholContent": "40% alc./vol. (80 PROOF)",
+    "netContents": "750 mL",
+    "governmentWarningRequired": true,
+    "isImported": true,
+    "countryOfOrigin": "MEXICO",
+    "responsibleParty": {
+      "name": "OCHO ASOCIADOS",
+      "address": "1000 BRICKELL AVE STE 915, MIAMI, FL, 33131"
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_02.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_03.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_04.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_05.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Collector note: Approved public registry fixture discovered via distilled_spirits term; brand=TEQUILA OCHO; label_images=5.",
+    "Demo audit: ABV, net contents, and responsible party verified from label_01/02 images."
+  ],
+  "demo_ready": true,
+  "demo_audit": {
+    "status": "ready",
+    "reviewed_common_fields": [
+      "brandName",
+      "classType",
+      "alcoholContent",
+      "netContents",
+      "responsibleParty.name",
+      "governmentWarningRequired",
+      "countryOfOrigin"
+    ],
+    "source": "label_01/02 images",
+    "note": "Common reviewer criteria were audited against the downloaded label image(s) and official COLA form metadata."
+  }
+}

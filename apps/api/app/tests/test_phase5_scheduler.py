@@ -4,6 +4,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import pytest
+from sqlalchemy import select
 
 from apps.api.app import models
 from apps.api.app.config import Settings
@@ -11,6 +12,7 @@ from apps.api.app.db import make_session_factory, init_db
 from apps.api.app.core.scheduler import (
     choose_assignment_for_worker,
     dependencies_satisfied,
+    reclaim_expired_leases,
     score_worker_engine,
     worker_can_run_job,
     worker_is_eligible,
@@ -243,3 +245,25 @@ def test_scheduler_honors_review_stage_dependencies(session):
     third = choose_assignment_for_worker(session, requesting_worker=worker, supported_job_types=["ocr", "evidence_crop", "validation"], session_id="session-a")
     assert third is not None
     assert third.job.job_type == "validation"
+
+
+def test_expired_leases_return_jobs_to_queue_and_release_worker_capacity(session):
+    _, _, job = create_application_job(session)
+    worker = create_worker(session, "lease-worker", active_jobs=1, max_concurrency=2)
+    job.status = "leased"
+    job.assigned_worker_id = worker.id
+    job.lease_expires_at = models.now_utc() - timedelta(seconds=5)
+    session.commit()
+
+    reclaim_expired_leases(session)
+    session.commit()
+
+    session.refresh(job)
+    session.refresh(worker)
+    assert job.status == "queued"
+    assert job.assigned_worker_id is None
+    assert job.lease_expires_at is None
+    assert "Lease expired" in job.error
+    assert worker.active_jobs == 0
+    event = session.scalars(select(models.WorkerEvent).where(models.WorkerEvent.worker_id == worker.id)).one()
+    assert event.event_type == "lease_expired"

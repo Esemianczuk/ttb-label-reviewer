@@ -19,7 +19,12 @@ Terminal 1:
 Terminal 2:
 
 ```bash
+ADMIN_TOKEN="$(curl -sS -X POST http://127.0.0.1:8000/api/auth/demo-login \
+  -H 'Content-Type: application/json' \
+  -d '{"role":"admin"}' | python -c 'import json,sys; print(json.load(sys.stdin)["token"])')"
+
 JOIN_TOKEN="$(curl -sS -X POST http://127.0.0.1:8000/api/cluster/join-token \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"ttlSeconds":900}' | python -c 'import json,sys; print(json.load(sys.stdin)["token"])')"
 ./scripts/dev-worker.sh --session-id local-dev-session --join-token "$JOIN_TOKEN"
@@ -58,7 +63,7 @@ Use this command to inspect the probe without registering:
 - `tesseract`: optional CPU OCR when `tesseract`, `pytesseract`, and Pillow are installed.
 - `easyocr`: optional adapter, warmed only when explicitly selected or `TTB_WORKER_ENABLE_HEAVY_OCR=1`.
 - `paddleocr`: optional adapter, warmed only when explicitly selected or `TTB_WORKER_ENABLE_HEAVY_OCR=1`.
-- `onnx`: placeholder adapter that reports unavailable unless a local model is configured.
+- `onnx`: local-model adapter that reports unavailable unless a local model path is configured.
 
 The worker does not download model weights or require cloud services.
 
@@ -87,11 +92,12 @@ Manual join remains the dependable path:
 
 ```bash
 curl -sS -X POST http://127.0.0.1:8000/api/cluster/join-token \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"ttlSeconds":900}' | python -m json.tool
 ```
 
-The response includes `coordinatorUrl`, `token`, `expiresAt`, and a ready-to-copy command.
+The response includes `coordinatorUrl`, `token`, `expiresAt`, and a ready-to-copy command. The request requires an admin bearer token unless the security defaults are explicitly relaxed for local experiments.
 
 mDNS/zeroconf discovery is optional:
 
@@ -102,7 +108,7 @@ TTB_ENABLE_MDNS=1 TTB_API_HOST=0.0.0.0 ./scripts/dev-local-backend.sh
 python -m ttb_worker --discover --join-token "$JOIN_TOKEN"
 ```
 
-The coordinator never binds beyond localhost by default. If `TTB_API_HOST=0.0.0.0` or `::` is used, scripts print a LAN-mode warning.
+The coordinator never binds beyond localhost by default. If `TTB_API_HOST=0.0.0.0` or `::` is used, scripts print a LAN-mode warning and `/api/health` returns the same warning for the console. Set `TTB_API_CORS_ORIGINS` to exact trusted frontend origins when validating over a LAN.
 
 ## Lab Hosts
 
@@ -129,5 +135,6 @@ For LAN validation, bind the coordinator to a trusted interface and pass the LAN
 TTB_API_HOST=0.0.0.0 \
 TTB_API_PORT=8010 \
 TTB_COORDINATOR_URL=http://<coordinator-lan-ip>:8010 \
+TTB_API_CORS_ORIGINS=http://<coordinator-lan-ip>:8010,http://127.0.0.1:5173 \
 ./scripts/dev-local-backend.sh
 ```

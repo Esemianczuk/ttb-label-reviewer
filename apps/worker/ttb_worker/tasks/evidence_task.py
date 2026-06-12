@@ -48,10 +48,21 @@ def extract_ocr_candidates(ocr_result: dict[str, Any], asset_id: str | None) -> 
                 "assetId": item.get("assetId") or asset_id,
             }
             bbox = item.get("bbox")
-            if isinstance(bbox, dict) and {"x", "y", "width", "height"}.issubset(bbox):
-                candidate["bbox"] = {key: float(bbox[key]) for key in ("x", "y", "width", "height")}
+            normalized_bbox = normalize_bbox(bbox)
+            if normalized_bbox:
+                candidate["bbox"] = normalized_bbox
             candidates.append(candidate)
     return candidates
+
+
+def normalize_bbox(bbox: Any) -> dict[str, float] | None:
+    if not isinstance(bbox, dict) or not {"x", "y"}.issubset(bbox):
+        return None
+    width = bbox.get("width", bbox.get("w"))
+    height = bbox.get("height", bbox.get("h"))
+    if width is None or height is None:
+        return None
+    return {"x": float(bbox["x"]), "y": float(bbox["y"]), "width": float(width), "height": float(height)}
 
 
 def expected_matches_candidate(expected: Any, candidate: dict[str, Any]) -> bool:
