@@ -258,6 +258,9 @@ test("reviewer auto-run checkbox runs current and next automation", async ({ pag
   await expect(page.getByRole("heading", { name: /TRANSCONTINENTAL/i })).toBeVisible();
   await expect(page.getByRole("checkbox", { name: "Auto-run automation" })).toBeChecked();
   await expect(page.getByText("Review in progress")).toBeVisible({ timeout: 5000 });
+  await expect(page.locator(".image-processing-overlay")).toBeVisible();
+  await expect(page.locator(".live-review-pill")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Expand image viewer" })).toBeDisabled();
   await waitForWorkbenchReview(page);
   await expect(page.getByRole("button", { name: /Run automated review|Rerun automated review/i })).toHaveCount(0);
 

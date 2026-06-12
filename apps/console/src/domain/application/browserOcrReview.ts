@@ -1,12 +1,26 @@
 import { BrowserOcrWorkerPool, getRecommendedBrowserOcrWorkerCount } from "@browser-demo/workers/browser-worker-pool.js";
 import { validateLabelPacket } from "@browser-demo/validation/overall.js";
 import { blocksFromText, createOcrResult } from "@browser-demo/ocr/ocr-types.js";
-import type { FieldStatus, LabelImage, ProcessingMode, ReviewApplication, ReviewEvidence, ReviewField, ReviewResult, ReviewStatus, Severity } from "./types";
+import type { EvidenceCrop, FieldStatus, LabelImage, ProcessingMode, ReviewApplication, ReviewEvidence, ReviewField, ReviewResult, ReviewStatus, Severity } from "./types";
 import { cropFromOcrBlock, estimatedCropForField } from "./evidenceCrops";
+
+export type BrowserReviewProgressEvent = {
+  stage: "queued" | "segmenting" | "ocr" | "validating" | "field" | "complete";
+  message: string;
+  percent: number;
+  imageId?: string;
+  imageName?: string;
+  field?: ReviewField;
+  fieldLabel?: string;
+  confidence?: number;
+  crop?: EvidenceCrop;
+  workerLabel?: string;
+};
 
 type BrowserReviewOptions = {
   workerOverride?: string;
   onProgress?: (message: string) => void;
+  onProgressEvent?: (event: BrowserReviewProgressEvent) => void | Promise<void>;
 };
 
 type BrowserValidationField = {
@@ -56,17 +70,75 @@ export async function createBrowserOcrReview(
 
   const startedAt = new Date();
   const workerCount = resolveBrowserOcrWorkerCount(application.images.length, options.workerOverride);
+  await emitReviewProgress(options, {
+    stage: "queued",
+    message: `Queued ${application.images.length} image${application.images.length === 1 ? "" : "s"} for local OCR.`,
+    percent: 8,
+    imageId: application.images[0]?.id,
+    imageName: application.images[0]?.name,
+    workerLabel: `${workerCount} browser worker${workerCount === 1 ? "" : "s"}`
+  });
+  await emitReviewProgress(options, {
+    stage: "segmenting",
+    message: "Segmenting label regions and preparing OCR views.",
+    percent: 18,
+    imageId: application.images[0]?.id,
+    imageName: application.images[0]?.name,
+    workerLabel: `${workerCount} browser worker${workerCount === 1 ? "" : "s"}`
+  });
+  await pauseForReviewAnimation(90);
   options.onProgress?.("Reading label text with local OCR.");
   const imageResults = await recognizeApplicationImages(application, workerCount, options.onProgress);
   const fixtureCount = imageResults.filter((image) => image.ocrSource === "sample-fixture").length;
   const liveCount = imageResults.length - fixtureCount;
+  await emitReviewProgress(options, {
+    stage: "ocr",
+    message: liveCount ? "OCR text captured from browser workers." : "Bundled OCR fixture loaded for this public COLA sample.",
+    percent: 38,
+    imageId: imageResults[0]?.id,
+    imageName: imageResults[0]?.name,
+    workerLabel: liveCount ? `${workerCount} browser worker${workerCount === 1 ? "" : "s"}` : "Fixture OCR cache"
+  });
+  await pauseForReviewAnimation(liveCount ? 70 : 120);
   options.onProgress?.("Validating detected label evidence against expected TTB fields.");
+  await emitReviewProgress(options, {
+    stage: "validating",
+    message: "Classifying extracted evidence against required TTB fields.",
+    percent: 48,
+    imageId: imageResults[0]?.id,
+    imageName: imageResults[0]?.name,
+    workerLabel: "Deterministic validators"
+  });
   const validation = validateLabelPacket(application.expectedFields, imageResults);
-  const fields = (validation.fields as Array<BrowserValidationField | null>)
-    .filter((field): field is BrowserValidationField => Boolean(field))
-    .map((field, index) => mapBrowserField(application, field, index));
+  const validationFields = (validation.fields as Array<BrowserValidationField | null>).filter((field): field is BrowserValidationField => Boolean(field));
+  const fields: ReviewField[] = [];
+  for (const [index, field] of validationFields.entries()) {
+    const mapped = mapBrowserField(application, field, index);
+    fields.push(mapped);
+    await emitReviewProgress(options, {
+      stage: "field",
+      message: `${mapped.label}: ${statusLabel(mapped.status)} at ${Math.round(mapped.confidence * 100)}% confidence.`,
+      percent: Math.min(94, 54 + Math.round(((index + 1) / Math.max(validationFields.length, 1)) * 36)),
+      imageId: mapped.evidence[0]?.sourceImageId,
+      imageName: application.images.find((image) => image.id === mapped.evidence[0]?.sourceImageId)?.name,
+      field: mapped,
+      fieldLabel: mapped.label,
+      confidence: mapped.confidence,
+      crop: mapped.evidence[0]?.crop,
+      workerLabel: mapped.evidence[0]?.pageAnchor || "Evidence scorer"
+    });
+    await pauseForReviewAnimation(liveCount ? 30 : 75);
+  }
   const status = normalizeReviewStatus(validation.overallStatus);
   const completedAt = new Date();
+  await emitReviewProgress(options, {
+    stage: "complete",
+    message: "Evidence review complete.",
+    percent: 100,
+    imageId: imageResults[0]?.id,
+    imageName: imageResults[0]?.name,
+    workerLabel: "Review package ready"
+  });
 
   return {
     id: `review-${application.id}-${Date.now()}`,
@@ -87,6 +159,22 @@ export async function createBrowserOcrReview(
       `${Math.max(1, completedAt.getTime() - startedAt.getTime())} ms elapsed`
     ].filter(Boolean)
   };
+}
+
+async function emitReviewProgress(options: BrowserReviewOptions, event: BrowserReviewProgressEvent): Promise<void> {
+  options.onProgress?.(event.message);
+  await options.onProgressEvent?.(event);
+}
+
+async function pauseForReviewAnimation(ms: number): Promise<void> {
+  if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+  await new Promise((resolve) => globalThis.setTimeout(resolve, ms));
+}
+
+function statusLabel(status: FieldStatus): string {
+  if (status === "PASS" || status === "PASS_WITH_WARNINGS") return "pass";
+  if (status === "FAIL" || status === "NOT_FOUND") return "fail";
+  return "review";
 }
 
 async function recognizeApplicationImages(

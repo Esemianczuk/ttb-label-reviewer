@@ -9,7 +9,7 @@ import {
   createManualApplication,
   createReviewForApplication
 } from "../../domain/application/demoData";
-import { createBrowserOcrReview } from "../../domain/application/browserOcrReview";
+import { createBrowserOcrReview, type BrowserReviewProgressEvent } from "../../domain/application/browserOcrReview";
 import { annotateAuditApplicationNumbers, applicationNumberFor, assignApplicationNumbers } from "../../domain/application/applicationNumber";
 import type {
   AdminSettings,
@@ -337,7 +337,7 @@ export function autoReviewApplication(applicationId: string, mode?: ProcessingMo
 export async function autoReviewApplicationWithBrowserOcr(
   applicationId: string,
   mode?: ProcessingMode,
-  options: { workerOverride?: string; onProgress?: (message: string) => void } = {}
+  options: { workerOverride?: string; onProgress?: (message: string) => void; onProgressEvent?: (event: BrowserReviewProgressEvent) => void | Promise<void> } = {}
 ): Promise<ConsoleSnapshot> {
   const snapshot = getSnapshot();
   const processingMode = mode || snapshot.processingMode;

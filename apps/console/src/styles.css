@@ -468,6 +468,10 @@ body {
   border: 0;
 }
 
+.image-card-preview:disabled {
+  cursor: progress;
+}
+
 .image-card img {
   display: block;
   width: 100%;
@@ -506,6 +510,126 @@ body {
 
 .reviewer-evidence-layout .image-card img {
   height: min(38vh, 420px);
+}
+
+.review-progress-strip > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  color: #0b4f6f;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: capitalize;
+  background: #dff6ff;
+  border: 1px solid #9bd7ef;
+  border-radius: 999px;
+}
+
+.image-processing-overlay {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: #eaf7ff;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgb(8 18 30 / 34%), rgb(9 40 56 / 18%)),
+    linear-gradient(180deg, rgb(4 12 20 / 6%), rgb(4 12 20 / 22%));
+}
+
+.image-processing-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.34;
+  background-image:
+    linear-gradient(rgb(125 211 252 / 24%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(125 211 252 / 18%) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+.image-processing-sweep {
+  position: absolute;
+  inset: 0 auto 0 -32%;
+  width: 32%;
+  background: linear-gradient(90deg, transparent, rgb(125 211 252 / 20%), rgb(255 255 255 / 22%), transparent);
+  transform: skewX(-10deg);
+  animation: evidence-scan-sweep 1.8s linear infinite;
+}
+
+.image-processing-focus {
+  position: absolute;
+  min-width: 48px;
+  min-height: 38px;
+  border: 2px solid #38bdf8;
+  border-radius: 4px;
+  box-shadow:
+    0 0 0 1px rgb(15 23 42 / 45%),
+    0 0 24px rgb(56 189 248 / 42%),
+    inset 0 0 18px rgb(56 189 248 / 18%);
+  animation: evidence-focus-pulse 1.35s ease-in-out infinite;
+}
+
+.image-processing-focus span {
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgb(255 255 255 / 72%);
+  border-radius: 3px;
+}
+
+.image-processing-readout {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  display: flex;
+  width: min(390px, calc(100% - 28px));
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 13px;
+  text-align: left;
+  background: rgb(10 20 35 / 88%);
+  border: 1px solid rgb(125 211 252 / 38%);
+  border-radius: 6px;
+  box-shadow: 0 16px 42px rgb(0 0 0 / 28%);
+}
+
+.image-processing-readout strong {
+  color: #ffffff;
+  font-size: 17px;
+}
+
+.image-processing-readout span,
+.image-processing-readout small {
+  color: #dbeafe;
+}
+
+.image-processing-kicker {
+  color: #a5f3fc !important;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.image-processing-meter {
+  position: relative;
+  height: 5px;
+  margin-top: 4px;
+  overflow: hidden;
+  background: rgb(226 232 240 / 18%);
+  border-radius: 999px;
+}
+
+.image-processing-meter i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #22c55e);
+  border-radius: inherit;
+  transition: width 140ms ease;
+}
+
+.image-card-processing .image-expand-button[disabled] {
+  color: #64748b;
+  background: #eef3f8;
 }
 
 .image-card-fallback {
@@ -581,6 +705,10 @@ body {
   animation: review-issue-table-focus 2.6s ease-out;
 }
 
+.reviewer-field-table .review-field-live > td {
+  animation: live-field-arrival 700ms ease-out;
+}
+
 .reviewer-field-table .ant-segmented {
   max-width: 100%;
 }
@@ -607,6 +735,33 @@ body {
 
 .reviewer-field-card.review-field-focus-highlight {
   animation: review-issue-card-focus 2.6s ease-out;
+}
+
+.reviewer-field-card.review-field-live {
+  animation: live-field-arrival 700ms ease-out;
+}
+
+.live-review-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 9px;
+  color: #0b4f6f;
+  font-size: 12px;
+  font-weight: 800;
+  background: #e0f7ff;
+  border: 1px solid #93d5ef;
+  border-radius: 999px;
+}
+
+.live-review-status {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  color: #26445f;
+  font-size: 13px;
+  background: #f0f9ff;
+  border: 1px solid #c7e7f7;
+  border-radius: 6px;
 }
 
 .reviewer-field-card-header {
@@ -714,6 +869,54 @@ body {
   100% {
     background: #fffaf0;
     box-shadow: 0 0 0 0 rgb(181 71 8 / 0%);
+  }
+}
+
+@keyframes evidence-scan-sweep {
+  0% {
+    transform: translateX(0) skewX(-10deg);
+  }
+
+  100% {
+    transform: translateX(420%) skewX(-10deg);
+  }
+}
+
+@keyframes evidence-focus-pulse {
+  0%,
+  100% {
+    opacity: 0.78;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.018);
+  }
+}
+
+@keyframes live-field-arrival {
+  0% {
+    background: #e0f7ff;
+    box-shadow: inset 4px 0 0 #38bdf8;
+  }
+
+  100% {
+    background: transparent;
+    box-shadow: inset 4px 0 0 rgb(56 189 248 / 0%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image-processing-sweep,
+  .image-processing-focus,
+  .reviewer-field-table .review-field-live > td,
+  .reviewer-field-card.review-field-live {
+    animation: none;
+  }
+
+  .image-processing-meter i {
+    transition: none;
   }
 }
 

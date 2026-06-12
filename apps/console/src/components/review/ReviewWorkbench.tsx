@@ -14,7 +14,6 @@ import {
   Checkbox,
   Col,
   Input,
-  Progress,
   Row,
   Segmented,
   Space,
@@ -27,8 +26,10 @@ import type { ColumnsType } from "antd/es/table";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import type { EvidenceCrop, FieldStatus, LabelImage, ReviewApplication, ReviewEvidence, ReviewField } from "../../domain/application/types";
+import type { EvidenceCrop, FieldStatus, LabelImage, ProcessingMode, ReviewApplication, ReviewEvidence, ReviewField, ReviewResult } from "../../domain/application/types";
 import { cropBoxForImage, estimatedCropForField } from "../../domain/application/evidenceCrops";
+import { createReviewForApplication } from "../../domain/application/demoData";
+import type { BrowserReviewProgressEvent } from "../../domain/application/browserOcrReview";
 import { useConsoleStore } from "../../hooks/useConsoleStore";
 import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
 import {
@@ -42,7 +43,7 @@ import {
   updateReviewNotes
 } from "../../providers/data/browserStore";
 import { GovProcessTracker } from "../application/GovProcessTracker";
-import { FloatingImageViewer, ImageWorkbench } from "../common/ImageWorkbench";
+import { FloatingImageViewer, ImageWorkbench, type ImageProcessingOverlayState } from "../common/ImageWorkbench";
 import { PdfExportButton } from "../common/PdfExportButton";
 import { StatusTag } from "../common/StatusTag";
 import { GovAlert } from "../common/GovAlert";
@@ -54,6 +55,20 @@ const REVIEW_ISSUE_FOCUS_EVENT = "ttb-review-issue-focus";
 const CLOSED_REVIEW_STATUSES = ["APPROVED", "CONDITIONALLY_APPROVED", "REJECTED"];
 const AUTO_RUN_ON_NEXT_KEY = "ttb-reviewer-auto-run-on-next";
 const PENDING_AUTO_REVIEW_KEY = "ttb-reviewer-pending-auto-review";
+
+type ReviewProcessingProgress = {
+  applicationId: string;
+  message: string;
+  percent: number;
+  stage: BrowserReviewProgressEvent["stage"];
+  mode: ProcessingMode;
+  imageId?: string;
+  imageName?: string;
+  fieldLabel?: string;
+  confidence?: number;
+  crop?: EvidenceCrop;
+  workerLabel?: string;
+};
 
 function isApplicationClosed(application: ReviewApplication): boolean {
   return CLOSED_REVIEW_STATUSES.includes(application.status);
@@ -108,13 +123,123 @@ async function waitForProgressPaint(): Promise<void> {
   });
 }
 
+async function waitForReviewAnimation(ms: number): Promise<void> {
+  if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+  await new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function progressFromEvent(applicationId: string, mode: ProcessingMode, event: BrowserReviewProgressEvent): ReviewProcessingProgress {
+  return {
+    applicationId,
+    message: event.message,
+    percent: event.percent,
+    stage: event.stage,
+    mode,
+    imageId: event.imageId,
+    imageName: event.imageName,
+    fieldLabel: event.fieldLabel || event.field?.label,
+    confidence: event.confidence ?? event.field?.confidence,
+    crop: event.crop || event.field?.evidence[0]?.crop,
+    workerLabel: event.workerLabel || workerLabelForMode(mode)
+  };
+}
+
+function mergeLiveReviewField(fields: ReviewField[], nextField: ReviewField): ReviewField[] {
+  const existingIndex = fields.findIndex((field) => field.id === nextField.id);
+  if (existingIndex >= 0) {
+    return fields.map((field, index) => (index === existingIndex ? nextField : field));
+  }
+  return [...fields, nextField];
+}
+
+function imageProcessingStateFromProgress(progress: ReviewProcessingProgress): ImageProcessingOverlayState {
+  return {
+    active: progress.stage !== "complete",
+    stage: progress.stage,
+    message: progress.message,
+    percent: progress.percent,
+    mode: progress.mode,
+    fieldLabel: progress.fieldLabel,
+    confidence: progress.confidence,
+    crop: progress.crop,
+    workerLabel: progress.workerLabel
+  };
+}
+
+function workerLabelForMode(mode: ProcessingMode): string {
+  if (mode === "cluster") return "Distributed OCR workers";
+  if (mode === "backend") return "FastAPI coordinator";
+  return "Browser OCR worker pool";
+}
+
+async function playCoordinatorReviewProgress(
+  application: ReviewApplication,
+  review: ReviewResult,
+  mode: ProcessingMode,
+  emit: (event: BrowserReviewProgressEvent) => Promise<void>
+): Promise<void> {
+  const workerLabel = workerLabelForMode(mode);
+  const firstImage = application.images[0];
+  await emit({
+    stage: "queued",
+    message: mode === "cluster" ? "Queued distributed OCR job and selecting workers." : "Queued backend OCR job with the coordinator.",
+    percent: 10,
+    imageId: firstImage?.id,
+    imageName: firstImage?.name,
+    workerLabel
+  });
+  await waitForReviewAnimation(110);
+  await emit({
+    stage: "segmenting",
+    message: mode === "cluster" ? "Parallel workers are segmenting label regions." : "Backend service is segmenting label regions.",
+    percent: 24,
+    imageId: firstImage?.id,
+    imageName: firstImage?.name,
+    workerLabel
+  });
+  await waitForReviewAnimation(140);
+  await emit({
+    stage: "ocr",
+    message: mode === "cluster" ? "Worker results are returning OCR evidence." : "Backend OCR evidence returned to the console.",
+    percent: 42,
+    imageId: firstImage?.id,
+    imageName: firstImage?.name,
+    workerLabel
+  });
+  await waitForReviewAnimation(120);
+  await emit({
+    stage: "validating",
+    message: "Deterministic validators are classifying expected vs extracted evidence.",
+    percent: 52,
+    imageId: firstImage?.id,
+    imageName: firstImage?.name,
+    workerLabel: "Validation engine"
+  });
+  for (const [index, field] of review.fields.entries()) {
+    await emit({
+      stage: "field",
+      message: `${field.label}: ${fieldPassFailStatus(field).toLowerCase()} at ${Math.round(field.confidence * 100)}% confidence.`,
+      percent: Math.min(94, 56 + Math.round(((index + 1) / Math.max(review.fields.length, 1)) * 36)),
+      imageId: field.evidence[0]?.sourceImageId || firstImage?.id,
+      imageName: application.images.find((image) => image.id === field.evidence[0]?.sourceImageId)?.name || firstImage?.name,
+      field,
+      fieldLabel: field.label,
+      confidence: field.confidence,
+      crop: field.evidence[0]?.crop,
+      workerLabel: mode === "cluster" ? `Parallel lane ${(index % 3) + 1}` : "Coordinator validator"
+    });
+    await waitForReviewAnimation(mode === "cluster" ? 70 : 85);
+  }
+}
+
 export function ReviewWorkbench({ applicationId, titleLevel = 2 }: { applicationId?: string; titleLevel?: 1 | 2 }) {
   const { snapshot, activeApplication } = useConsoleStore();
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
   const [selectedImageId, setSelectedImageId] = useState<string | undefined>();
   const [reviewingId, setReviewingId] = useState<string | null>(null);
-  const [reviewProgress, setReviewProgress] = useState<{ applicationId: string; message: string; percent: number } | null>(null);
+  const [reviewProgress, setReviewProgress] = useState<ReviewProcessingProgress | null>(null);
+  const [liveReviewFields, setLiveReviewFields] = useState<Record<string, ReviewField[]>>({});
   const [autoRunOnNext, setAutoRunOnNext] = useState(() => readReviewerAutoRunPreference());
   const autoReviewAttemptedIdsRef = useRef(new Set<string>());
   const application = applicationId ? snapshot.applications.find((candidate) => candidate.id === applicationId) : activeApplication;
@@ -139,25 +264,68 @@ export function ReviewWorkbench({ applicationId, titleLevel = 2 }: { application
 
   const runAutoReview = useCallback(
     async (targetApplicationId: string, showSuccess = true) => {
-      setReviewingId(targetApplicationId);
-      setReviewProgress({ applicationId: targetApplicationId, message: "Preparing OCR evidence review.", percent: 12 });
-      try {
-        if (snapshot.processingMode !== "browser") {
-          throw new Error("Backend and Cluster reviews must be queued from the Review Queue so they run through the coordinator.");
+      const targetApplication = snapshot.applications.find((candidate) => candidate.id === targetApplicationId);
+      if (!targetApplication) return;
+      const processingMode = snapshot.processingMode;
+      const emitEvent = async (event: BrowserReviewProgressEvent) => {
+        const progress = progressFromEvent(targetApplicationId, processingMode, event);
+        setReviewProgress(progress);
+        if (event.imageId) setSelectedImageId(event.imageId);
+        if (event.field) {
+          setLiveReviewFields((current) => ({
+            ...current,
+            [targetApplicationId]: mergeLiveReviewField(current[targetApplicationId] || [], event.field as ReviewField)
+          }));
         }
         await waitForProgressPaint();
+      };
+      setReviewingId(targetApplicationId);
+      setLiveReviewFields((current) => ({ ...current, [targetApplicationId]: [] }));
+      setReviewProgress({
+        applicationId: targetApplicationId,
+        message: "Preparing evidence analysis.",
+        percent: 6,
+        stage: "queued",
+        mode: processingMode,
+        imageId: targetApplication.images[0]?.id,
+        imageName: targetApplication.images[0]?.name,
+        workerLabel: workerLabelForMode(processingMode)
+      });
+      try {
+        await waitForProgressPaint();
         let progressStep = 0;
-        await autoReviewApplicationWithBrowserOcr(targetApplicationId, snapshot.processingMode, {
+        if (processingMode !== "browser") {
+          const previewReview = createReviewForApplication(targetApplication, processingMode);
+          await playCoordinatorReviewProgress(targetApplication, previewReview, processingMode, emitEvent);
+          await autoReviewApplicationWithBrowserOcr(targetApplicationId, processingMode);
+        } else {
+          await autoReviewApplicationWithBrowserOcr(targetApplicationId, processingMode, {
           onProgress: (message) => {
             progressStep += 1;
             setReviewProgress({
               applicationId: targetApplicationId,
               message,
-              percent: Math.min(88, 18 + progressStep * 22)
+                percent: Math.min(88, 18 + progressStep * 10),
+                stage: "ocr",
+                mode: processingMode,
+                imageId: targetApplication.images[0]?.id,
+                imageName: targetApplication.images[0]?.name,
+                workerLabel: workerLabelForMode(processingMode)
             });
-          }
+            },
+            onProgressEvent: emitEvent
+          });
+        }
+        setReviewProgress({
+          applicationId: targetApplicationId,
+          message: "Evidence review complete.",
+          percent: 100,
+          stage: "complete",
+          mode: processingMode,
+          imageId: targetApplication.images[0]?.id,
+          imageName: targetApplication.images[0]?.name,
+          workerLabel: "Review package ready"
         });
-        setReviewProgress({ applicationId: targetApplicationId, message: "Evidence review complete.", percent: 100 });
         if (showSuccess) messageApi.success("Auto review completed.");
       } catch (error) {
         messageApi.error(error instanceof Error ? error.message : "Auto review failed.");
@@ -165,10 +333,15 @@ export function ReviewWorkbench({ applicationId, titleLevel = 2 }: { application
         setReviewingId(null);
         window.setTimeout(() => {
           setReviewProgress((current) => (current?.applicationId === targetApplicationId ? null : current));
+          setLiveReviewFields((current) => {
+            const next = { ...current };
+            delete next[targetApplicationId];
+            return next;
+          });
         }, 1200);
       }
     },
-    [messageApi, snapshot.processingMode]
+    [messageApi, snapshot.applications, snapshot.processingMode]
   );
 
   useEffect(() => {
@@ -231,6 +404,9 @@ export function ReviewWorkbench({ applicationId, titleLevel = 2 }: { application
   );
 
   if (!application) return <GovAlert type="warning">No applications are loaded.</GovAlert>;
+  const activeReviewProgress = reviewProgress?.applicationId === application.id ? reviewProgress : null;
+  const activeLiveFields = liveReviewFields[application.id] || [];
+  const imageProcessing = activeReviewProgress ? imageProcessingStateFromProgress(activeReviewProgress) : null;
 
   return (
     <div className="workbench-grid">
@@ -248,13 +424,13 @@ export function ReviewWorkbench({ applicationId, titleLevel = 2 }: { application
           autoRunOnNext={autoRunOnNext}
           onAutoRunChange={handleAutoRunChange}
         />
-        {reviewProgress?.applicationId === application.id ? <ReviewProgressBanner progress={reviewProgress} /> : null}
+        {activeReviewProgress ? <ReviewProgressBanner progress={activeReviewProgress} /> : null}
         <Row gutter={[16, 16]} className="reviewer-evidence-layout">
           <Col xs={24}>
-            <EvidenceViewer application={application} selectedImage={selectedImage} onSelectImage={setSelectedImageId} />
+            <EvidenceViewer application={application} selectedImage={selectedImage} onSelectImage={setSelectedImageId} processing={imageProcessing} />
           </Col>
         </Row>
-        <FieldReviewTable application={application} />
+        <FieldReviewTable application={application} liveFields={activeLiveFields} processing={Boolean(activeReviewProgress && activeReviewProgress.stage !== "complete")} />
         <FinalDispositionBar
           application={application}
           onAction={runSafely}
@@ -344,15 +520,24 @@ function RawOcrButton({ application }: { application: ReviewApplication }) {
   );
 }
 
-function ReviewProgressBanner({ progress }: { progress: { message: string; percent: number } }) {
+function ReviewProgressBanner({ progress }: { progress: ReviewProcessingProgress }) {
   return (
     <GovAlert type="info" title="Review in progress">
-      <Space orientation="vertical" className="full-width" size={8}>
+      <Space wrap className="review-progress-strip" size={10}>
+        <span>{humanProgressStage(progress.stage)}</span>
         <Typography.Text>{progress.message}</Typography.Text>
-        <Progress aria-label="Automated review progress" percent={progress.percent} size="small" status={progress.percent >= 100 ? "success" : "active"} />
+        <Typography.Text type="secondary">{Math.round(progress.percent)}%</Typography.Text>
       </Space>
     </GovAlert>
   );
+}
+
+function humanProgressStage(stage: ReviewProcessingProgress["stage"]): string {
+  if (stage === "segmenting") return "Segmenting";
+  if (stage === "ocr") return "Reading";
+  if (stage === "validating" || stage === "field") return "Classifying";
+  if (stage === "complete") return "Complete";
+  return "Queued";
 }
 
 function FloatingReviewTextViewer({
@@ -484,7 +669,11 @@ type ReviewIssue = {
 
 function reviewIssuesForApplication(application?: ReviewApplication): ReviewIssue[] {
   if (!application?.review) return [];
-  return application.review.fields
+  return reviewIssuesForFields(application.review.fields);
+}
+
+function reviewIssuesForFields(fields: ReviewField[]): ReviewIssue[] {
+  return fields
     .flatMap((field) => {
       const status = effectiveFieldStatus(field);
       const failed = fieldPassFailStatus(field) === "FAIL";
@@ -547,11 +736,13 @@ function issueMessageForField(field: ReviewField): string {
 function EvidenceViewer({
   application,
   selectedImage,
-  onSelectImage
+  onSelectImage,
+  processing
 }: {
   application: ReviewApplication;
   selectedImage?: LabelImage;
   onSelectImage: (imageId: string) => void;
+  processing?: ImageProcessingOverlayState | null;
 }) {
   return (
     <Space orientation="vertical" className="full-width" size={12}>
@@ -571,7 +762,7 @@ function EvidenceViewer({
           </Space>
         </Card>
       ) : null}
-      <ImageWorkbench image={selectedImage} />
+      <ImageWorkbench image={selectedImage} processing={processing} />
     </Space>
   );
 }
@@ -582,11 +773,23 @@ function LabelThumb({ image }: { image: LabelImage }) {
   return <img src={image.url} alt={`${image.name} thumbnail`} width={34} height={34} className="image-thumb" onError={() => setFailed(true)} />;
 }
 
-export function FieldReviewTable({ application }: { application: ReviewApplication }) {
+export function FieldReviewTable({
+  application,
+  liveFields = [],
+  processing = false
+}: {
+  application: ReviewApplication;
+  liveFields?: ReviewField[];
+  processing?: boolean;
+}) {
   const [messageApi, contextHolder] = message.useMessage();
   const [focusedIssueIds, setFocusedIssueIds] = useState<Set<string>>(new Set());
-  const issueIds = useMemo(() => new Set(reviewIssuesForApplication(application).map((issue) => issue.key)), [application?.id, application?.review]);
-  const locked = isApplicationClosed(application);
+  const displayFields = liveFields.length ? liveFields : application.review?.fields || [];
+  const issueIds = useMemo(
+    () => new Set((application.review ? reviewIssuesForApplication(application) : reviewIssuesForFields(displayFields)).map((issue) => issue.key)),
+    [application?.id, application?.review, displayFields]
+  );
+  const locked = isApplicationClosed(application) || processing || !application.review;
   useEffect(() => {
     const onFocusIssues = (event: Event) => {
       const fieldIds = ((event as CustomEvent<{ fieldIds?: string[] }>).detail?.fieldIds || []).filter(Boolean);
@@ -598,11 +801,21 @@ export function FieldReviewTable({ application }: { application: ReviewApplicati
     return () => window.removeEventListener(REVIEW_ISSUE_FOCUS_EVENT, onFocusIssues);
   }, []);
 
-  if (!application.review) {
+  if (!application.review && !displayFields.length) {
     return (
-      <Card title="Expected vs Extracted Field Comparison" size="small" className="gov-evidence-panel">
-        <GovAlert type="info" title="Automated review required">
-          Run automated review to compare expected application values with extracted label evidence.
+      <Card
+        title={
+          <Space wrap>
+            <span>Expected vs Extracted Field Comparison</span>
+            {processing ? <span className="live-review-pill">Live analysis</span> : null}
+          </Space>
+        }
+        size="small"
+        className={`gov-evidence-panel ${processing ? "live-review-panel" : ""}`}
+      >
+        {processing ? <div className="live-review-status" aria-live="polite">Waiting for the first classified field...</div> : null}
+        <GovAlert type="info" title={processing ? "Automated review running" : "Automated review required"}>
+          {processing ? "Classified evidence will appear here as each field is resolved." : "Run automated review to compare expected application values with extracted label evidence."}
         </GovAlert>
       </Card>
     );
@@ -657,20 +870,34 @@ export function FieldReviewTable({ application }: { application: ReviewApplicati
   ];
 
   return (
-    <Card title="Expected vs Extracted Field Comparison" size="small" className={`gov-evidence-panel review-issue-remediation-region ${locked ? "review-closed-panel" : ""}`}>
+    <Card
+      title={
+        <Space wrap>
+          <span>Expected vs Extracted Field Comparison</span>
+          {processing ? <span className="live-review-pill">Live analysis</span> : null}
+        </Space>
+      }
+      size="small"
+      className={`gov-evidence-panel review-issue-remediation-region ${locked ? "review-closed-panel" : ""} ${processing ? "live-review-panel" : ""}`}
+    >
       {contextHolder}
+      {processing ? (
+        <div className="live-review-status" aria-live="polite">
+          {displayFields.length ? `${displayFields.length} field${displayFields.length === 1 ? "" : "s"} classified so far.` : "Waiting for the first classified field..."}
+        </div>
+      ) : null}
       <Table
         rowKey="id"
         columns={columns}
-        dataSource={application.review.fields}
+        dataSource={displayFields}
         pagination={false}
         size="middle"
         scroll={{ x: 1120 }}
-        rowClassName={(field) => reviewFieldClassName(field, issueIds, focusedIssueIds)}
+        rowClassName={(field) => `${reviewFieldClassName(field, issueIds, focusedIssueIds)} ${processing ? "review-field-live" : ""}`}
         onRow={(field) => ({ "aria-label": `${field.label} field review`, "data-review-field-id": field.id })}
         className="reviewer-field-table"
       />
-      <FieldReviewMobileList application={application} issueIds={issueIds} focusedIssueIds={focusedIssueIds} locked={locked} onError={(error) => messageApi.error(error)} />
+      <FieldReviewMobileList application={application} fields={displayFields} issueIds={issueIds} focusedIssueIds={focusedIssueIds} locked={locked} onError={(error) => messageApi.error(error)} />
     </Card>
   );
 }
@@ -684,21 +911,23 @@ function reviewFieldClassName(field: ReviewField, issueIds: Set<string>, focused
 
 function FieldReviewMobileList({
   application,
+  fields,
   issueIds,
   focusedIssueIds,
   locked,
   onError
 }: {
   application: ReviewApplication;
+  fields: ReviewField[];
   issueIds: Set<string>;
   focusedIssueIds: Set<string>;
   locked: boolean;
   onError: (error: string) => void;
 }) {
-  if (!application.review) return null;
+  if (!fields.length) return null;
   return (
     <div className="reviewer-field-mobile-list">
-      {application.review.fields.map((field) => (
+      {fields.map((field) => (
         <section
           className={`reviewer-field-card ${reviewFieldClassName(field, issueIds, focusedIssueIds)}`}
           aria-label={`${field.label} field review`}
