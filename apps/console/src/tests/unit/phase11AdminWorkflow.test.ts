@@ -70,11 +70,49 @@ describe("phase 11 admin workflow", () => {
       }
     });
 
-    expect(worker.engines).toEqual(["null"]);
-    expect(worker.capabilities).toEqual(expect.arrayContaining(["null", "ocr", "evidence_crop", "validation"]));
+    expect(worker.engines).toEqual(["fixture fallback only"]);
+    expect(worker.capabilities).toEqual(expect.arrayContaining(["fixture fallback only", "ocr", "evidence_crop", "validation"]));
     expect(worker.cpu).toBe("64 CPU cores");
     expect(worker.ramGb).toBeGreaterThan(120);
     expect(worker.latencyMs).toBe(16);
+  });
+
+  it("hides fixture fallback when PaddleOCR is available", () => {
+    resetSnapshot();
+    const worker = normalizeBackendWorker({
+      id: "worker-paddleocr",
+      hostname: "cuda-host",
+      platform: "linux",
+      arch: "x86_64",
+      status: "online",
+      activeJobs: 0,
+      maxConcurrency: 4,
+      lastSeenAt: "2026-06-12T21:39:25.715017",
+      capabilities: {
+        cpuCount: 64,
+        memory: { totalBytes: 134518153216 },
+        accelerators: { cuda: { available: true, devices: [{ name: "RTX" }] }, appleMps: { available: false } },
+        engineProfile: { preferredEngine: "paddleocr", tier: "custom_paddleocr_cuda" },
+        engines: {
+          paddleocr: { available: true, status: "ok" },
+          easyocr: { available: true, status: "ok" },
+          null: { available: true, status: "ok" }
+        },
+        supportedJobTypes: ["ocr", "evidence_crop", "validation"],
+        warmEngines: ["paddleocr", "easyocr", "null"]
+      },
+      calibration: {
+        engines: {
+          paddleocr: { available: true, status: "ok", steadyStateMs: 650 },
+          easyocr: { available: true, status: "ok", steadyStateMs: 800 },
+          null: { available: true, status: "ok", steadyStateMs: 0 }
+        }
+      }
+    });
+
+    expect(worker.engines).toEqual(["PaddleOCR COLA (CUDA preferred)", "EasyOCR (CUDA preferred)"]);
+    expect(worker.capabilities).not.toContain("null");
+    expect(worker.gpu).toBe("CUDA");
   });
 
   it("supports job retry, cancellation, and priority changes", () => {

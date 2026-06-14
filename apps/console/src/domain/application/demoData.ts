@@ -70,7 +70,7 @@ export function createDemoSnapshot(): ConsoleSnapshot {
 
 export function createDefaultAdminSettings(): AdminSettings {
   return {
-    preferredOcrEngine: "browser-fixture",
+    preferredOcrEngine: "paddleocr",
     browserOcrAllowed: true,
     backendCpuOcrAllowed: true,
     gpuOcrAllowed: false,
@@ -130,7 +130,7 @@ export function createReviewForApplication(application: ReviewApplication, mode:
           : "The automated review found low-confidence evidence requiring an agent decision.",
     rawOcrText: createDemoRawOcrText(application, fields),
     engineTrace: [
-      mode === "browser" ? "Browser fixture OCR" : mode === "backend" ? "FastAPI coordinator review" : "Distributed worker validation",
+      mode === "browser" ? "Browser Tesseract OCR" : mode === "backend" ? "FastAPI PaddleOCR COLA review with deterministic validators" : "Distributed PaddleOCR-first workers with deterministic validator rollup",
       "Deterministic field normalizers",
       "Field-level evidence scorer",
       "Reviewer override audit layer"
@@ -266,7 +266,7 @@ function createDemoWorkers(): WorkerSnapshot[] {
       activeJobs: 1,
       maxConcurrency: 2,
       capabilities: ["browser_ocr", "validation", "pdf_export"],
-      engines: ["browser-fixture", "tesseract-js"],
+      engines: ["tesseract-js"],
       latencyMs: 0,
       throughput: "local",
       avgMsPerImage: 720,
@@ -285,7 +285,7 @@ function createDemoWorkers(): WorkerSnapshot[] {
       activeJobs: 2,
       maxConcurrency: 4,
       capabilities: ["ocr", "evidence_crop", "validation"],
-      engines: ["tesseract", "null-engine"],
+      engines: ["paddleocr", "easyocr", "tesseract"],
       latencyMs: 18,
       throughput: "24 pages/min",
       avgMsPerImage: 410,
@@ -320,7 +320,7 @@ export function createAdminJobsForApplications(applications: ReviewApplication[]
     const base = {
       applicationId: application.id,
       workerId,
-      engine: workerId === "worker-local-browser" ? "browser-fixture" : "tesseract",
+      engine: workerId === "worker-local-browser" ? "tesseract-js" : "paddleocr",
       attempts: index === 2 ? 2 : 1,
       createdAt: new Date(now - (index + 3) * 60_000).toISOString(),
       schedulerReason: index % 2 === 0 ? "Warm OCR engine and low active job count." : "Browser-only session affinity."

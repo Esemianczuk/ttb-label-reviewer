@@ -17,6 +17,17 @@ router = APIRouter(prefix="/api/applications", tags=["applications"])
 
 
 REVIEW_JOB_TYPES = ("ocr", "evidence_crop", "validation")
+REVIEW_FIELD_LABELS = {
+    "brandName": "Brand Name",
+    "fancifulName": "Fanciful Name",
+    "classType": "Class/Type",
+    "alcoholContent": "Alcohol Content",
+    "netContents": "Net Contents",
+    "producerName": "Producer / Bottler / Importer",
+    "countryOfOrigin": "Country of Origin",
+    "governmentWarning": "Government Warning",
+}
+CRITICAL_FIELD_KEYS = {"brandName", "classType", "alcoholContent", "netContents", "governmentWarning"}
 
 
 def require_application(
@@ -45,8 +56,9 @@ def require_application(
     return application
 
 
-def create_review_jobs(application: models.Application, review: models.Review, assets: list[models.Asset], priority: int) -> list[models.Job]:
+def create_review_jobs(application: models.Application, review: models.Review, assets: list[models.Asset], payload: ReviewCreate) -> list[models.Job]:
     jobs: list[models.Job] = []
+    field_targets = review_field_targets(application.expected_fields, preferred_engine=payload.primaryEngine)
     for asset in assets:
         asset_payload = {
             "application_id": application.id,
@@ -56,6 +68,7 @@ def create_review_jobs(application: models.Application, review: models.Review, a
             "mime_type": asset.mime_type,
             "storage_path": asset.storage_path,
             "expected_fields": application.expected_fields,
+            "image_pixels": (asset.width or 0) * (asset.height or 0),
         }
         jobs.append(
             models.Job(
@@ -64,8 +77,20 @@ def create_review_jobs(application: models.Application, review: models.Review, a
                 session_id=application.session_id,
                 job_type="ocr",
                 status="queued",
-                priority=priority,
-                payload_json=asset_payload,
+                priority=payload.priority,
+                payload_json={
+                    **asset_payload,
+                    "field_key": "label",
+                    "field_label": "Label evidence",
+                    "field_expected": "",
+                    "field_critical": True,
+                    "field_ocr": False,
+                    "field_targets": field_targets,
+                    "engine": "auto",
+                    "preferred_engine": payload.primaryEngine,
+                    "ocr_strategy": payload.ocrStrategy,
+                    "target_latency_ms": payload.targetLatencyMs,
+                },
                 required_capabilities={"ocr": True},
             )
         )
@@ -76,7 +101,7 @@ def create_review_jobs(application: models.Application, review: models.Review, a
                 session_id=application.session_id,
                 job_type="evidence_crop",
                 status="queued",
-                priority=priority + 10,
+                priority=payload.priority + 10,
                 payload_json={**asset_payload, "depends_on": "ocr"},
                 required_capabilities={"evidence_crop": True},
             )
@@ -88,18 +113,48 @@ def create_review_jobs(application: models.Application, review: models.Review, a
             session_id=application.session_id,
             job_type="validation",
             status="queued",
-            priority=priority + 20,
+            priority=payload.priority + 20,
             payload_json={
                 "application_id": application.id,
                 "review_id": review.id,
                 "asset_ids": [asset.id for asset in assets],
+                "field_targets": field_targets,
+                "completed_ocr_results": [],
                 "expected_fields": application.expected_fields,
                 "depends_on": ["ocr", "evidence_crop"],
+                "ocr_strategy": payload.ocrStrategy,
+                "primary_engine": payload.primaryEngine,
+                "fallback_engine": payload.fallbackEngine,
+                "fallback_min_confidence": payload.fallbackMinConfidence,
+                "target_latency_ms": payload.targetLatencyMs,
             },
             required_capabilities={"validation": True},
         )
     )
     return jobs
+
+
+def review_field_targets(expected_fields: dict, *, preferred_engine: str = "paddleocr") -> list[dict]:
+    targets: list[dict] = []
+    for key, label in REVIEW_FIELD_LABELS.items():
+        if key == "governmentWarning":
+            if not expected_fields.get("governmentWarningRequired"):
+                continue
+            expected = "Government warning statement required"
+        else:
+            expected = expected_fields.get(key)
+            if expected in (None, ""):
+                continue
+        targets.append(
+            {
+                "fieldKey": key,
+                "label": label,
+                "expected": expected,
+                "critical": key in CRITICAL_FIELD_KEYS,
+                "engine": preferred_engine,
+            }
+        )
+    return targets or [{"fieldKey": "label", "label": "Label evidence", "expected": "", "critical": False, "engine": preferred_engine}]
 
 
 @router.post("", response_model=ApplicationRead, status_code=201)
@@ -253,7 +308,7 @@ def create_review(
     review = models.Review(application_id=application.id, mode=payload.mode, status="queued")
     session.add(review)
     session.flush()
-    for job in create_review_jobs(application, review, assets, payload.priority):
+    for job in create_review_jobs(application, review, assets, payload):
         session.add(job)
     application.status = "IN_REVIEW"
     session.commit()

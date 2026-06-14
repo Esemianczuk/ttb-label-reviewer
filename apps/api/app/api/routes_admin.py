@@ -30,7 +30,7 @@ router = APIRouter(prefix="/api", tags=["admin"])
 
 ADMIN_SETTINGS_KEY = "admin.operations"
 DEFAULT_ADMIN_SETTINGS = {
-    "preferredOcrEngine": "browser-fixture",
+    "preferredOcrEngine": "paddleocr",
     "browserOcrAllowed": True,
     "backendCpuOcrAllowed": True,
     "gpuOcrAllowed": False,

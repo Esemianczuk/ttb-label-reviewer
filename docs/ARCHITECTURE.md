@@ -56,13 +56,14 @@ The scored assignment uses:
 - worker capability flags and supported job types
 - engine availability and warm-engine state
 - calibration metrics per engine
+- PaddleOCR COLA availability for authoritative backend OCR and EasyOCR escalation availability for fallback validation
 - asset size and worker asset cache state
 - network latency and download throughput
 - worker cache disk write throughput
 - recent failure and expired-lease events
 - session pressure for weighted fairness
 
-Jobs with `depends_on` metadata are not scored until predecessor stages finish, so OCR runs before evidence extraction, and validation runs after both OCR and evidence extraction.
+Jobs with `depends_on` metadata are not scored until predecessor stages finish, so OCR runs before evidence extraction, and validation runs after both OCR and evidence extraction. Auto engine selection excludes the deterministic `null` engine when real OCR engines are available. Validation jobs now default to `paddleocr_authoritative`: workers with PaddleOCR are preferred for backend/cluster OCR, and EasyOCR remains a fallback when a payload explicitly enables escalation.
 
 The assignment response includes `worker_id`, `engine_id`, `score_ms`, `reason_codes`, and the score components documented in `packages/shared/schemas/assignment-decision.schema.json`.
 
@@ -164,13 +165,13 @@ From the repository root, `./scripts/dev-worker.sh` sets the package path and ru
 The worker lifecycle is:
 
 1. Probe hostname, OS, architecture, Python version, CPU count, memory, disk throughput, coordinator latency, local accelerators, OCR dependencies, ONNX providers, model cache size, and supported image formats.
-2. Build the engine set. The deterministic null engine is always available; Tesseract/EasyOCR/PaddleOCR/ONNX adapters are optional.
+2. Build the engine set. PaddleOCR, EasyOCR, Tesseract, and ONNX adapters are preferred when available; the deterministic fixture fallback is kept internal and exposed only when no production OCR engine is present.
 3. Calibrate available engines and save `.worker-cache/calibration.json`.
 4. Register with the coordinator, including boolean scheduler capabilities for `ocr`, `evidence_crop`, and `validation`.
 5. Heartbeat every five seconds and extend leased jobs.
 6. Claim session-scoped work, download needed assets through coordinator routes, process the task, and complete or fail with structured results.
 
-The current worker intentionally avoids bundling model weights or requiring native OCR packages. Tesseract is used only when `pytesseract`, Pillow, and the local `tesseract` binary are available. EasyOCR and PaddleOCR report availability but are warmed only when explicitly selected or when `TTB_WORKER_ENABLE_HEAVY_OCR=1` is set, because those libraries may need local model files. ONNX reports unavailable unless a local model path is configured.
+The current worker intentionally avoids bundling large model weights or requiring native OCR packages in the default test install. PaddleOCR reports availability after installing `apps/worker[ocr,paddleocr]` and is the preferred backend/cluster OCR engine. If exported custom COLA model dirs exist under `models/ocr/paddle-cola/current/{det,rec,cls}` or are supplied with `TTB_PADDLEOCR_*_MODEL_DIR`, the PaddleOCR adapter uses them automatically; otherwise it uses PaddleOCR's pretrained baseline. EasyOCR remains an optional fallback after installing `apps/worker[ocr,easyocr]`. Tesseract is used when `pytesseract`, Pillow, and the local `tesseract` binary are available. ONNX reports unavailable unless a local model path is configured.
 
 ## Security Boundaries
 

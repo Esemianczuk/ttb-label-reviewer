@@ -13,7 +13,7 @@ npm install
 npm run console:dev
 ```
 
-Open the printed Vite URL, normally `http://127.0.0.1:5174/`, click **Continue as Reviewer**, open the queue, and use **Run automated review** or **Process** when you want OCR/validation to run. Browser Only mode requires no backend and no cloud AI.
+Open the printed Vite URL, normally `http://127.0.0.1:5174/`, click **Continue as Reviewer**, open the queue, choose a packet, and use **Run automation** on the workbench when you want OCR/validation to run. Browser Only mode requires no backend and no cloud AI.
 
 For exact click steps, screenshots, backend/worker setup, and expected outcomes, start with [docs/EVALUATOR_GUIDE.md](docs/EVALUATOR_GUIDE.md).
 
@@ -26,6 +26,18 @@ python scripts/ttb_launcher.py
 ```
 
 The launcher can install dependencies, start Browser Only dev mode, start the FastAPI backend, issue a worker join token, run a local worker, print remote worker commands for cluster mode, open the right URL, tail logs, and stop only the processes it started. It also discovers nvm Node 20+ automatically when launched from a thin desktop/server environment.
+
+One-command backend plus local worker path:
+
+```bash
+./scripts/smart-demo.sh
+```
+
+For a stronger OCR worker on a machine where the larger PaddleOCR/EasyOCR install is acceptable:
+
+```bash
+./scripts/smart-demo.sh --install-heavy-ocr
+```
 
 Quick non-interactive status check:
 
@@ -81,7 +93,7 @@ npm run dev
 
 Current browser mode includes a bounded dedicated Web Worker pool for uploaded image batches, and the worker count is visible and adjustable. The CDN fallback is development-only and must be enabled explicitly with `VITE_ALLOW_TESSERACT_CDN_FALLBACK=1`.
 
-### Local Backend Mode
+### Backend Mode
 
 The optional FastAPI coordinator in `apps/api` can serve the built frontend, persist applications and reviews, store uploaded assets locally, assign review jobs to local worker agents, and back the console admin operations for live workers, jobs, audit events, settings, and retention actions. Browser-only mode remains available when the backend is not running.
 
@@ -98,7 +110,7 @@ export TTB_API_DATABASE_URL="postgresql+psycopg://user:password@localhost:5432/t
 
 The backend serves `apps/console/dist` from `/` when a production console build exists. `TTB_API_STATIC_DIR` can point to another static build, and defaults to `apps/console/dist`.
 
-In the browser, choose **Local Backend** from Processing Mode. The app probes the configured URL, uses demo auth, creates backend applications, uploads image assets, starts backend reviews from the queue, listens to live session updates, and displays backend worker/job/audit resources. If the backend is unavailable, the console offers an explicit **Use Browser Only** action; backend/cluster actions do not silently fake a browser review.
+In the console, continue as **Admin** to switch Processing Mode to **Backend**. The app probes the configured URL, uses demo auth, creates backend applications, uploads image assets, starts backend reviews from the reviewer workbench, listens to live session updates, and displays backend worker/job/audit resources. If the backend is unavailable, the console offers an explicit **Use Browser Only** action; backend/cluster actions do not silently fake a browser review. Switch back to **Reviewer** from the role selector when you want to work packets.
 
 ### Distributed Cluster Mode
 
@@ -109,7 +121,7 @@ The Python worker agent in `apps/worker` lets trusted local machines register wi
 ```
 
 Worker registration requires a short-lived join token by default. Issue one from `POST /api/cluster/join-token`, or from the Admin cluster view, then pass it as `TTB_WORKER_JOIN_TOKEN` or `--join-token` for the first registration. The worker stores a persistent secret after registration, so later heartbeats, claims, completes, and failures use `Authorization: Bearer <worker secret>`.
-The worker starts with `null,tesseract` engines by default: deterministic null OCR is always present, while Tesseract is used when the local binary and Python bindings are installed.
+The worker uses `auto` engines by default: PaddleOCR is the preferred backend OCR path when installed, EasyOCR remains an optional fallback, Tesseract is used when the binary and Python bindings are installed, and the deterministic fixture fallback is hidden from admin views unless no production OCR engine is available. CUDA and Apple MPS capability probes are reported to the coordinator. Backend reviews create OCR jobs per image, so the scheduler can split work across multiple workers. Critical fields prefer PaddleOCR-capable workers, especially when a custom COLA recognition model is staged under `models/ocr/paddle-cola/current`; validation aggregates completed OCR results and keeps deterministic validators as the authority.
 Cluster mode uses the same backend review API while the browser uses demo admin auth to show worker cards, throughput counters, and recent scheduler assignment reasons from `/api/workers/events`.
 
 Backend security defaults are assessment-oriented: CORS is limited to localhost development origins unless `TTB_API_CORS_ORIGINS` is set to an explicit comma-separated list, uploads are size/MIME/magic-byte/decode checked before storage, and LAN binding prints and displays a prominent warning.
@@ -137,7 +149,7 @@ scripts/check-all.sh          Local verification entrypoint
 
 ### Government-style UI
 
-The console uses a USWDS-inspired visual language implemented with Ant Design tokens. It intentionally avoids official seals, official banners, and any claim of affiliation. The persistent prototype notice makes this clear on every page.
+The console uses a USWDS-inspired visual language implemented with Ant Design tokens. It intentionally avoids official seals, official banners, `.gov` trust language, and any claim of affiliation. Assessment-scope language stays in the role entry, documentation, and page guidance so the working screens remain focused.
 
 ```bash
 npm install --prefix apps/console
@@ -172,7 +184,11 @@ Equivalent explicit editable command:
 python -m pip install -e "apps/api[test]" -e "apps/worker[test]" -e ".[test]"
 ```
 
-The default Python test environment includes `pytest`, `httpx`, `alembic`, `sqlalchemy`, `fastapi`, `uvicorn`, and `pydantic`. It does not install optional OCR/CUDA packages; worker tests use the deterministic `null` engine path.
+The default Python test environment includes `pytest`, `httpx`, `alembic`, `sqlalchemy`, `fastapi`, `uvicorn`, and `pydantic`. It does not install optional OCR/CUDA packages; worker tests use deterministic fake/null engine paths. To enable stronger backend PaddleOCR workers on a capable machine, install the optional worker extra:
+
+```bash
+python -m pip install -e "apps/worker[ocr,paddleocr,easyocr]"
+```
 
 Run the deterministic unit/build checks:
 

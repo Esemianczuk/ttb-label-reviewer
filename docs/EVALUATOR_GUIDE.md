@@ -22,10 +22,12 @@ Requires Node 20 or newer. If your shell uses nvm, run `source ~/.nvm/nvm.sh && 
 For the least manual path, run the terminal launcher:
 
 ```bash
-python scripts/ttb_launcher.py
+./scripts/smart-demo.sh
 ```
 
-Choose `One-click local demo` to set up dependencies if needed, start the FastAPI backend, issue a worker join token, start one local worker, and open the backend-served console. The launcher is plain standard-library Python, so it works over SSH and on headless machines. It writes process logs to `logs/launcher/` and only stops processes it started.
+This sets up missing dependencies if needed, starts the FastAPI backend, issues a worker join token, starts one local worker, and opens the backend-served console. Use `./scripts/smart-demo.sh --install-heavy-ocr` on a capable machine when you want the optional PaddleOCR/EasyOCR worker stack installed too.
+
+For a menu-driven version of the same flow, run `python scripts/ttb_launcher.py` and choose `One-click local demo`. The launcher is plain standard-library Python, so it works over SSH and on headless machines. It writes process logs to `logs/launcher/` and only stops processes it started.
 
 Manual browser-only path:
 
@@ -43,10 +45,10 @@ http://127.0.0.1:5174/
 What to click:
 
 1. Click `Continue as Reviewer`.
-2. Confirm the header says `Browser Only`.
+2. Confirm the reviewer dashboard opens with the role switcher and `Reset Demo` visible in the shell.
 3. Open `Review Queue`.
 4. Open `TRANSCONTINENTAL OTHER FOREIGN RUM record`.
-5. Click `Run automated review` if no automated findings are present.
+5. Click `Run automation` if no automated findings are present.
 6. Confirm `Expected vs Extracted Field Comparison` has field rows and evidence snippets.
 7. Click `Next Application` to open the next reviewable packet.
 8. Confirm missing public-registry values, such as alcohol content or net contents, are clearly marked for review instead of being invented.
@@ -54,7 +56,7 @@ What to click:
 10. Type decision rationale in the reviewer note panel.
 11. Click `PDF` to download the packet report.
 12. Click `Expand image viewer`, then use zoom buttons and drag the image to pan.
-13. Use `Reset Demo` from the header/dev controls to restore the sample queue, decisions, notes, and active position.
+13. Use `Reset Demo` from the header to restore the sample queue, decisions, notes, and first packet position.
 
 Expected outcome:
 
@@ -167,6 +169,15 @@ TTB_WORKER_COORDINATOR=http://<coordinator-lan-ip>:8000 \
 TTB_WORKER_JOIN_TOKEN="$JOIN_TOKEN" \
 ./scripts/dev-worker.sh --session-id local-dev-session
 ```
+
+The worker uses `auto` engine selection by default. PaddleOCR is the preferred backend OCR path on machines where the optional dependency is installed, and EasyOCR remains available as a fallback:
+
+```bash
+python -m pip install -e "apps/worker[ocr,paddleocr,easyocr]"
+TTB_WORKER_ENGINES=auto ./scripts/dev-worker.sh --session-id local-dev-session
+```
+
+Backend and Cluster reviews create OCR jobs before validation. That lets one application fan out across workers instead of serializing every OCR pass on one machine. Critical fields such as the government warning, class/type, ABV, net contents, and brand prefer PaddleOCR-capable workers, using exported custom COLA model dirs when staged. The final validation step aggregates the completed OCR output and applies deterministic validators.
 
 Optional lab hosts, if reachable from your network:
 

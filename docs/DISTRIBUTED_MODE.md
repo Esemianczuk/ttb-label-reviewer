@@ -6,9 +6,17 @@ Phase 5 adds hardware-aware assignment scoring. Workers still pull jobs from the
 
 Phase 6 adds secure worker discovery and join. Manual join is the reliable default; mDNS is optional.
 
-Phase 7 exposes those workers in the browser operations dashboard. Browser clients can switch between Browser Only, Local Backend, and Cluster modes without losing the local-only fallback.
+Phase 7 exposes those workers in the browser operations dashboard. Admin users can switch between Browser Only, Backend, and Cluster modes without losing the local-only fallback; reviewers stay focused on packet review and inherit the selected processing provider.
 
 ## Start
+
+One-command local backend plus worker:
+
+```bash
+./scripts/smart-demo.sh
+```
+
+Use `./scripts/smart-demo.sh --install-heavy-ocr` if you want the launcher to install optional PaddleOCR/EasyOCR support for a stronger local worker. For manual startup, use two terminals.
 
 Terminal 1:
 
@@ -47,7 +55,7 @@ At startup the worker probes:
 - CUDA and Apple MPS availability when Torch is installed
 - ONNX Runtime providers when installed
 - Tesseract binary and Python OCR library availability
-- EasyOCR and PaddleOCR import availability
+- PaddleOCR and EasyOCR import availability
 - local model cache size
 - supported image formats
 
@@ -59,13 +67,17 @@ Use this command to inspect the probe without registering:
 
 ## Engines
 
-- `null`: deterministic fixture OCR, always available for tests and demos.
+- internal fixture fallback: deterministic OCR used only for tests or when no production OCR engine is available; admin views label this as `fixture fallback only`.
 - `tesseract`: optional CPU OCR when `tesseract`, `pytesseract`, and Pillow are installed.
-- `easyocr`: optional adapter, warmed only when explicitly selected or `TTB_WORKER_ENABLE_HEAVY_OCR=1`.
-- `paddleocr`: optional adapter, warmed only when explicitly selected or `TTB_WORKER_ENABLE_HEAVY_OCR=1`.
+- `paddleocr`: preferred backend OCR adapter. Install with `python -m pip install -e "apps/worker[ocr,paddleocr]"`; workers report whether they are using the pretrained baseline or custom COLA model dirs from `models/ocr/paddle-cola/current`.
+- `easyocr`: optional fallback OCR adapter. Install with `python -m pip install -e "apps/worker[ocr,easyocr]"`; workers report it unavailable when the dependency is missing.
 - `onnx`: local-model adapter that reports unavailable unless a local model path is configured.
 
 The worker does not download model weights or require cloud services.
+
+Workers default to `TTB_WORKER_ENGINES=auto`. Auto mode advertises the real engines that are importable or installed on that machine and hides the fixture fallback whenever PaddleOCR, EasyOCR, Tesseract, or ONNX OCR is available. CUDA and Apple MPS probes are reported in the worker capability profile. The scheduler gives critical OCR a quality bonus for PaddleOCR and an additional preference for accelerated workers, while ordinary fields can still route to faster available CPU workers when no PaddleOCR worker is online.
+
+Backend review jobs default to `paddleocr_authoritative`. The coordinator creates OCR work before validation, attaches completed OCR results to the validation job, and then applies deterministic validators. `tesseract_first_easyocr_escalation` is still accepted for older saved payloads, but it is no longer the default path. Validation records `enginesUsed[]` plus an `escalation` object; if distributed field OCR results are not present, validation can still fall back to the worker-local OCR path.
 
 ## Job Flow
 
@@ -78,11 +90,12 @@ The worker does not download model weights or require cloud services.
 7. Coordinator leases a queued session-scoped job only when the claiming worker is the best candidate.
 8. Worker downloads needed assets through `/api/assets/{asset_id}/content` with `X-Session-Id`.
 9. Downloaded assets are cached locally and reported on future heartbeats.
-10. OCR jobs return text, confidence, lines, words, timings, and engine metadata.
-11. Evidence jobs return auditable field candidates.
-12. Validation jobs rerun OCR over application assets and return a final deterministic `ReviewResult`.
-13. Heartbeats keep leases alive; failures are reported with structured errors and retryable jobs return to the queue.
-14. Browser dashboards read `/api/workers`, `/api/workers/events`, `/api/cluster/status`, and `WS /api/ws/sessions/{session_id}` for worker cards, scheduler reasons, and live session snapshots.
+10. OCR jobs are scoped to one asset and one expected field, and return text, confidence, lines, words, timings, field metadata, and engine metadata.
+11. Completed OCR jobs are appended to the sibling validation job so validation can aggregate distributed field output.
+12. Evidence jobs return auditable field candidates once OCR dependencies are complete.
+13. Validation jobs aggregate completed field OCR, apply deterministic validators, optionally escalate when needed, and return a final deterministic `ReviewResult`.
+14. Heartbeats keep leases alive; failures are reported with structured errors and retryable jobs return to the queue.
+15. Browser dashboards read `/api/workers`, `/api/workers/events`, `/api/cluster/status`, and `WS /api/ws/sessions/{session_id}` for worker cards, scheduler reasons, and live session snapshots.
 
 See [SCHEDULER.md](SCHEDULER.md) for the assignment score model.
 

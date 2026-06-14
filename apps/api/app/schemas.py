@@ -101,6 +101,11 @@ class AssetRead(BaseModel):
 class ReviewCreate(BaseModel):
     mode: Literal["backend", "distributed"] = "backend"
     priority: int = 100
+    ocrStrategy: Literal["paddleocr_authoritative", "tesseract_first_easyocr_escalation", "primary_only"] = "paddleocr_authoritative"
+    primaryEngine: str = "paddleocr"
+    fallbackEngine: str = "easyocr"
+    fallbackMinConfidence: float = Field(default=0.86, ge=0.5, le=0.99)
+    targetLatencyMs: int = Field(default=5000, ge=1000, le=30000)
 
 
 class ReviewRead(BaseModel):

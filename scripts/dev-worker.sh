@@ -8,7 +8,7 @@ export PYTHONPATH="$ROOT_DIR/apps/worker:$ROOT_DIR${PYTHONPATH:+:$PYTHONPATH}"
 export TTB_WORKER_COORDINATOR="${TTB_WORKER_COORDINATOR:-http://127.0.0.1:8000}"
 export TTB_WORKER_DATA_DIR="${TTB_WORKER_DATA_DIR:-$ROOT_DIR/.worker-cache}"
 export TTB_WORKER_SECRET_FILE="${TTB_WORKER_SECRET_FILE:-$TTB_WORKER_DATA_DIR/worker-secret.txt}"
-export TTB_WORKER_ENGINES="${TTB_WORKER_ENGINES:-null,tesseract}"
+export TTB_WORKER_ENGINES="${TTB_WORKER_ENGINES:-auto}"
 
 EXTRA_ARGS=()
 if [[ -n "${TTB_WORKER_JOIN_TOKEN:-}" ]]; then
@@ -20,6 +20,7 @@ fi
 
 echo "Worker coordinator: $TTB_WORKER_COORDINATOR"
 echo "Worker engines:     $TTB_WORKER_ENGINES"
+echo "Worker OCR policy:  auto prefers PaddleOCR COLA when installed; EasyOCR remains a fallback; deterministic fixture fallback is internal only"
 if [[ -z "${TTB_WORKER_JOIN_TOKEN:-}" && -z "${TTB_WORKER_SECRET:-}" && ! -f "$TTB_WORKER_SECRET_FILE" ]]; then
   echo "Worker join token:  not set; issue one from /api/cluster/join-token for first registration."
 fi

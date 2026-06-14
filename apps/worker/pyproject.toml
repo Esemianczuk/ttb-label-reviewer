@@ -19,6 +19,18 @@ ocr = [
   "Pillow>=10,<13",
   "pytesseract>=0.3.13,<1",
 ]
+easyocr = [
+  "easyocr>=1.7,<2",
+]
+paddleocr = [
+  "paddleocr>=2.7,<4",
+]
+all-ocr = [
+  "pytesseract>=0.3.13,<1",
+  "Pillow>=10,<13",
+  "easyocr>=1.7,<2",
+  "paddleocr>=2.7,<4",
+]
 test = [
   "pytest>=8",
 ]

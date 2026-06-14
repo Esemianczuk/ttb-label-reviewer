@@ -206,6 +206,8 @@ def score_worker_engine(
     disk_penalty_ms = disk_penalty(worker, asset_size_bytes, cached, reason_codes)
     model_warmup_penalty_ms = model_warmup_penalty(worker, engine_id, reason_codes)
     ocr_estimate_ms = ocr_estimate(job, worker, engine_id, asset_size_bytes, reason_codes)
+    quality_bonus_ms = quality_engine_bonus(job, worker, engine_id, reason_codes)
+    escalation_bonus_ms = escalation_bonus(job, worker, reason_codes)
     reliability_penalty_ms = reliability_penalty(worker, now, failure_counts, reason_codes)
     session_fairness_penalty_ms = session_fairness_penalty(job, active_by_session, queued_by_session, reason_codes)
 
@@ -215,6 +217,8 @@ def score_worker_engine(
         "disk_penalty_ms": disk_penalty_ms,
         "model_warmup_penalty_ms": model_warmup_penalty_ms,
         "ocr_estimate_ms": ocr_estimate_ms,
+        "quality_bonus_ms": quality_bonus_ms,
+        "escalation_bonus_ms": escalation_bonus_ms,
         "reliability_penalty_ms": reliability_penalty_ms,
         "session_fairness_penalty_ms": session_fairness_penalty_ms,
     }
@@ -298,7 +302,14 @@ def candidate_engines(worker: models.Worker, job: models.Job) -> list[str]:
         if isinstance(health, dict) and (health.get("available") is True or health.get("status") == "ok")
     ]
     if not available:
+        if requested and requested != "auto":
+            return [requested]
         available = ["auto"]
+    allow_fixture = bool(payload.get("allow_fixture_engine") or payload.get("allowFixtureEngine") or payload.get("fixture_ocr_text") or payload.get("fixtureOcrText"))
+    if requested == "auto" and not allow_fixture:
+        non_null = [engine_id for engine_id in available if engine_id != "null"]
+        if non_null:
+            available = non_null
     if requested and requested != "auto":
         return [requested] if requested in available or requested == "auto" else []
     return available
@@ -424,6 +435,60 @@ def ocr_estimate(job: models.Job, worker: models.Worker, engine_id: str, asset_s
 
     size_mb = asset_size_bytes / (1024 * 1024)
     return base + (size_mb * 300.0)
+
+
+def quality_engine_bonus(job: models.Job, worker: models.Worker, engine_id: str, reason_codes: list[str]) -> float:
+    payload = job.payload_json or {}
+    if job.job_type != "ocr":
+        return 0.0
+    prefer_quality = bool(
+        payload.get("field_critical")
+        or payload.get("fieldCritical")
+        or payload.get("prefer_quality")
+        or payload.get("preferQuality")
+        or payload.get("ocr_strategy") in {"paddleocr_authoritative", "tesseract_first_easyocr_escalation"}
+    )
+    if not prefer_quality:
+        return 0.0
+    bonus = 0.0
+    if engine_id == "paddleocr":
+        reason_codes.append("quality_paddleocr_preferred")
+        bonus -= 1900.0
+    elif engine_id == "easyocr":
+        reason_codes.append("quality_easyocr_fallback_available")
+        bonus -= 700.0
+    elif engine_id == "onnx":
+        reason_codes.append("quality_heavy_engine_available")
+        bonus -= 500.0
+    if worker_has_accelerator(worker):
+        reason_codes.append("accelerated_worker_preferred")
+        bonus -= 450.0
+    return bonus
+
+
+def escalation_bonus(job: models.Job, worker: models.Worker, reason_codes: list[str]) -> float:
+    if job.job_type != "validation":
+        return 0.0
+    payload = job.payload_json or {}
+    strategy = str(payload.get("ocr_strategy") or payload.get("ocrStrategy") or "")
+    fallback_engine = str(payload.get("fallback_engine") or payload.get("fallbackEngine") or "")
+    if strategy in {"off", "none", "primary_only"} or not fallback_engine:
+        return 0.0
+    if not worker_has_engine(worker, fallback_engine):
+        return 0.0
+    reason_codes.append(f"{fallback_engine}_escalation_available")
+    return -350.0
+
+
+def worker_has_engine(worker: models.Worker, engine_id: str) -> bool:
+    engine_health = (worker.capabilities or {}).get("engines") or {}
+    health = engine_health.get(engine_id)
+    return isinstance(health, dict) and (health.get("available") is True or health.get("status") == "ok")
+
+
+def worker_has_accelerator(worker: models.Worker) -> bool:
+    accelerators = (worker.capabilities or {}).get("accelerators") or {}
+    return bool((accelerators.get("cuda") or {}).get("available") or (accelerators.get("appleMps") or {}).get("available"))
 
 
 def reliability_penalty(worker: models.Worker, now: datetime, failure_counts: dict[str, int], reason_codes: list[str]) -> float:

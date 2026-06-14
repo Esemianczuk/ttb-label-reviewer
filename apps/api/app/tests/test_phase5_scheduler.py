@@ -80,8 +80,10 @@ def create_worker(
     latency_ms: int = 10,
     active_jobs: int = 0,
     max_concurrency: int = 1,
+    engines: dict[str, dict] | None = None,
 ):
     cached_asset_ids = cached_asset_ids or []
+    engines = engines or {"null": {"available": True, "status": "ok"}}
     worker = models.Worker(
         id=worker_id,
         hostname=f"{worker_id}.local",
@@ -95,15 +97,15 @@ def create_worker(
         capabilities={
             "ocr": True,
             "supportedJobTypes": ["ocr", "evidence_crop", "validation"],
-            "engines": {"null": {"available": True, "status": "ok"}},
-            "warmEngines": ["null"],
+            "engines": engines,
+            "warmEngines": list(engines.keys()),
             "assetCache": {"assetIds": cached_asset_ids},
             "cachedAssetIds": cached_asset_ids,
             "network": {"latencyMs": latency_ms, "downloadBytesPerSecond": download_bps},
             "disk": {"writeBytesPerSecond": 100 * 1024 * 1024},
             "accelerators": {"cuda": {"available": False, "devices": []}, "appleMps": {"available": False}},
         },
-        calibration={"engines": {"null": {"available": True, "steadyStateMs": ocr_ms, "warmupMs": 0}}},
+        calibration={"engines": {engine_id: {"available": True, "steadyStateMs": ocr_ms, "warmupMs": 0} for engine_id in engines}},
     )
     session.add(worker)
     session.commit()
@@ -186,6 +188,113 @@ def test_scheduler_rejects_stale_or_incapable_workers(session):
     worker.last_seen_at = models.now_utc() - timedelta(seconds=120)
     session.commit()
     assert worker_is_eligible(worker, models.now_utc()) is False
+
+
+def test_scheduler_prefers_worker_with_easyocr_escalation_for_hard_validation(session):
+    application, asset, _ = create_application_job(session)
+    session.query(models.Job).delete()
+    review = models.Review(application_id=application.id, mode="distributed", status="queued")
+    session.add(review)
+    session.flush()
+    validation = models.Job(
+        application_id=application.id,
+        review_id=review.id,
+        session_id=application.session_id,
+        job_type="validation",
+        status="queued",
+        priority=100,
+        payload_json={
+            "asset_ids": [asset.id],
+            "expected_fields": application.expected_fields,
+            "ocr_strategy": "tesseract_first_easyocr_escalation",
+            "primary_engine": "tesseract",
+            "fallback_engine": "easyocr",
+            "target_latency_ms": 5000,
+        },
+        required_capabilities={"validation": True},
+    )
+    session.add(validation)
+    tesseract_only = create_worker(
+        session,
+        "tesseract-only",
+        cached_asset_ids=[asset.id],
+        ocr_ms=250,
+        engines={"tesseract": {"available": True, "status": "ok"}},
+    )
+    escalation_ready = create_worker(
+        session,
+        "easyocr-ready",
+        cached_asset_ids=[asset.id],
+        ocr_ms=250,
+        engines={"tesseract": {"available": True, "status": "ok"}, "easyocr": {"available": True, "status": "ok"}},
+    )
+
+    assert choose_assignment_for_worker(
+        session,
+        requesting_worker=tesseract_only,
+        supported_job_types=["validation"],
+        session_id="session-a",
+    ) is None
+    assignment = choose_assignment_for_worker(
+        session,
+        requesting_worker=escalation_ready,
+        supported_job_types=["validation"],
+        session_id="session-a",
+    )
+
+    assert assignment is not None
+    assert assignment.worker.id == "easyocr-ready"
+    assert "easyocr_escalation_available" in assignment.decision.reason_codes
+
+
+def test_scheduler_prefers_accelerated_paddleocr_for_critical_field_ocr(session):
+    _, asset, job = create_application_job(session, size_bytes=2 * 1024 * 1024)
+    job.payload_json = {
+        **(job.payload_json or {}),
+        "asset_id": asset.id,
+        "engine": "auto",
+        "field_key": "governmentWarning",
+        "field_label": "Government Warning",
+        "field_critical": True,
+        "ocr_strategy": "paddleocr_authoritative",
+    }
+    session.commit()
+    tesseract_only = create_worker(
+        session,
+        "tesseract-field-worker",
+        cached_asset_ids=[asset.id],
+        ocr_ms=250,
+        engines={"tesseract": {"available": True, "status": "ok"}},
+    )
+    accelerated_paddle = create_worker(
+        session,
+        "cuda-paddle-worker",
+        cached_asset_ids=[asset.id],
+        ocr_ms=250,
+        engines={"tesseract": {"available": True, "status": "ok"}, "paddleocr": {"available": True, "status": "ok"}, "easyocr": {"available": True, "status": "ok"}},
+    )
+    accelerated_paddle.capabilities["accelerators"] = {"cuda": {"available": True, "devices": [{"name": "Test CUDA"}]}, "appleMps": {"available": False}}
+    accelerated_paddle.calibration["engines"]["paddleocr"] = {"available": True, "steadyStateMs": 800, "warmupMs": 0}
+    session.commit()
+
+    assert choose_assignment_for_worker(
+        session,
+        requesting_worker=tesseract_only,
+        supported_job_types=["ocr"],
+        session_id="session-a",
+    ) is None
+    assignment = choose_assignment_for_worker(
+        session,
+        requesting_worker=accelerated_paddle,
+        supported_job_types=["ocr"],
+        session_id="session-a",
+    )
+
+    assert assignment is not None
+    assert assignment.worker.id == "cuda-paddle-worker"
+    assert assignment.decision.engine_id == "paddleocr"
+    assert "quality_paddleocr_preferred" in assignment.decision.reason_codes
+    assert "accelerated_worker_preferred" in assignment.decision.reason_codes
 
 
 def test_scheduler_honors_review_stage_dependencies(session):

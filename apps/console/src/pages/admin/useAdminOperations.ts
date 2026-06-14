@@ -154,7 +154,9 @@ function normalizeWorker(row: any): WorkerSnapshot {
 
 function engineNames(row: any): string[] {
   const capabilities = row?.capabilities || {};
+  const preferredEngine = capabilities.engineProfile?.preferredEngine;
   const names = [
+    preferredEngine,
     ...stringList(row?.engines),
     ...enabledObjectKeys(row?.engines),
     ...stringList(row?.calibration?.engines),
@@ -163,7 +165,7 @@ function engineNames(row: any): string[] {
     ...enabledObjectKeys(capabilities.engines),
     ...stringList(capabilities.warmEngines)
   ];
-  return uniqueStrings(names);
+  return publicEngineNames(names, capabilities);
 }
 
 function capabilityNames(row: any, engines: string[]): string[] {
@@ -216,6 +218,50 @@ function booleanCapabilityKeys(value: unknown): string[] {
 
 function numberValue(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function publicEngineNames(names: string[], capabilities: any): string[] {
+  const normalized = uniqueStrings(names.map(normalizeEngineName).filter(Boolean));
+  const production = normalized.filter((engine) => !fixtureEngineNames.has(engine));
+  if (production.length) return sortEngineNames(production, capabilities);
+  return normalized.some((engine) => fixtureEngineNames.has(engine)) ? ["fixture fallback only"] : [];
+}
+
+function normalizeEngineName(value: string): string {
+  const engine = String(value || "").trim().toLowerCase();
+  if (engine === "null" || engine === "null-engine") return "fixture fallback";
+  if (engine === "easyocr") return "easyocr";
+  if (engine === "tesseract-js" || engine === "browser-tesseract") return "tesseract-js";
+  if (engine === "paddleocr") return "paddleocr";
+  if (engine === "onnx") return "onnx";
+  return engine;
+}
+
+const fixtureEngineNames = new Set(["fixture fallback", "fixture fallback only"]);
+
+function sortEngineNames(engines: string[], capabilities: any): string[] {
+  const cuda = capabilities?.accelerators?.cuda?.available;
+  const mps = capabilities?.accelerators?.appleMps?.available;
+  const labels = engines.map((engine) => {
+    if (engine === "paddleocr" && cuda) return "PaddleOCR COLA (CUDA preferred)";
+    if (engine === "paddleocr") return "PaddleOCR COLA";
+    if (engine === "easyocr" && cuda) return "EasyOCR (CUDA preferred)";
+    if (engine === "easyocr" && mps) return "EasyOCR (Metal detected)";
+    if (engine === "easyocr") return "EasyOCR";
+    if (engine === "tesseract-js") return "Tesseract.js";
+    if (engine === "tesseract") return "Tesseract";
+    if (engine === "onnx") return "ONNX OCR";
+    return engine;
+  });
+  const rank = (label: string) => {
+    const lower = label.toLowerCase();
+    if (lower.includes("paddle")) return 0;
+    if (lower.includes("easyocr")) return 1;
+    if (lower.includes("onnx")) return 2;
+    if (lower.includes("tesseract")) return 3;
+    return 10;
+  };
+  return uniqueStrings(labels).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
 }
 
 function uniqueStrings(values: string[]): string[] {

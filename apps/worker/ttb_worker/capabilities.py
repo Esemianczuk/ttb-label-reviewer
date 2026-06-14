@@ -16,6 +16,8 @@ import httpx
 
 def probe_capabilities(coordinator_url: str, data_dir: Path) -> dict[str, Any]:
     data_dir.mkdir(parents=True, exist_ok=True)
+    accelerators = probe_accelerators()
+    ocr = probe_ocr_dependencies()
     return {
         "hostname": socket.gethostname(),
         "platform": platform.system().lower(),
@@ -26,8 +28,9 @@ def probe_capabilities(coordinator_url: str, data_dir: Path) -> dict[str, Any]:
         "memory": probe_memory(),
         "disk": probe_disk(data_dir),
         "network": probe_network(coordinator_url),
-        "accelerators": probe_accelerators(),
-        "ocr": probe_ocr_dependencies(),
+        "accelerators": accelerators,
+        "ocr": ocr,
+        "engineProfile": engine_profile(accelerators, ocr),
         "onnxRuntime": probe_onnxruntime(),
         "modelCacheBytes": directory_size(data_dir / "models"),
         "supportedImageFormats": supported_image_formats(),
@@ -134,11 +137,70 @@ def probe_accelerators() -> dict[str, Any]:
 
 
 def probe_ocr_dependencies() -> dict[str, Any]:
+    try:
+        from .engines.paddleocr_engine import resolve_model_config
+
+        paddle_model = resolve_model_config()
+        paddle_model_info = {
+            "customModel": paddle_model.custom,
+            "customRecognition": paddle_model.custom_recognition,
+            "modelRoot": str(paddle_model.root) if paddle_model.root else None,
+            "requireCustom": paddle_model.require_custom,
+            "modelDirs": paddle_model.kwargs,
+        }
+    except Exception as error:
+        paddle_model_info = {"customModel": False, "customRecognition": False, "error": str(error)}
     return {
         "tesseractBinary": tesseract_binary_info(),
         "pytesseract": {"available": importlib.util.find_spec("pytesseract") is not None},
         "easyocr": {"available": importlib.util.find_spec("easyocr") is not None},
-        "paddleocr": {"available": importlib.util.find_spec("paddleocr") is not None},
+        "paddleocr": {"available": importlib.util.find_spec("paddleocr") is not None, **paddle_model_info},
+    }
+
+
+def engine_profile(accelerators: dict[str, Any], ocr: dict[str, Any]) -> dict[str, Any]:
+    cuda = bool((accelerators.get("cuda") or {}).get("available"))
+    mps = bool((accelerators.get("appleMps") or {}).get("available"))
+    paddle = bool((ocr.get("paddleocr") or {}).get("available"))
+    paddle_custom = bool((ocr.get("paddleocr") or {}).get("customRecognition") or (ocr.get("paddleocr") or {}).get("customModel"))
+    easyocr = bool((ocr.get("easyocr") or {}).get("available"))
+    tesseract = bool((ocr.get("tesseractBinary") or {}).get("available") and (ocr.get("pytesseract") or {}).get("available"))
+    if paddle and paddle_custom and cuda:
+        tier = "custom_paddleocr_cuda"
+        preferred = "paddleocr"
+    elif paddle and paddle_custom:
+        tier = "custom_paddleocr_cpu"
+        preferred = "paddleocr"
+    elif paddle and cuda:
+        tier = "paddleocr_cuda_pretrained"
+        preferred = "paddleocr"
+    elif paddle:
+        tier = "paddleocr_cpu_pretrained"
+        preferred = "paddleocr"
+    elif easyocr and cuda:
+        tier = "fallback_easyocr_cuda"
+        preferred = "easyocr"
+    elif easyocr and mps:
+        tier = "fallback_easyocr_metal_candidate"
+        preferred = "easyocr"
+    elif easyocr:
+        tier = "fallback_easyocr_cpu"
+        preferred = "easyocr"
+    elif tesseract:
+        tier = "tesseract_cpu"
+        preferred = "tesseract"
+    else:
+        tier = "null_fixture_only"
+        preferred = "null"
+    return {
+        "tier": tier,
+        "preferredEngine": preferred,
+        "cuda": cuda,
+        "appleMps": mps,
+        "paddleocr": paddle,
+        "paddleocrCustom": paddle_custom,
+        "easyocr": easyocr,
+        "tesseract": tesseract,
     }
 
 

@@ -253,7 +253,7 @@ class LauncherState:
     backend_port: int = DEFAULT_BACKEND_PORT
     console_port: int = DEFAULT_CONSOLE_PORT
     session_id: str = DEFAULT_SESSION_ID
-    worker_engines: str = "null,tesseract"
+    worker_engines: str = "auto"
     worker_name: str = "auto"
     worker_concurrency: str = "auto"
     worker_data_dir: Path = DEFAULT_WORKER_DIR
@@ -353,21 +353,32 @@ class Launcher:
             print("  - none started by this launcher")
         print()
 
-    def one_click_local_demo(self) -> None:
+    def one_click_local_demo(
+        self,
+        *,
+        noninteractive: bool = False,
+        open_browser: bool = True,
+        install_heavy_ocr: bool = False,
+        lan: bool = False,
+    ) -> None:
         print("\nThis will start a local backend, issue a worker token, start one worker, and open the console.")
         print("It uses SQLite under data/ and worker cache under .worker-cache/.")
         if not self.dependencies_look_ready():
-            if yes_no("Dependencies look incomplete. Run setup now?", default=True):
-                self.run_setup()
+            if noninteractive or yes_no("Dependencies look incomplete. Run setup now?", default=True):
+                self.run_setup(install_heavy_ocr=install_heavy_ocr)
             else:
                 print("Continuing without setup. Some commands may fail.")
-        self.start_backend(build_console=True, lan=False)
+        elif install_heavy_ocr:
+            self.install_heavy_ocr()
+        self.start_backend(build_console=True, lan=lan, prompt_rebuild=not noninteractive, open_browser=False, force_build=noninteractive)
         self.wait_for_backend()
         self.ensure_join_token()
         self.start_worker()
-        self.open_url(self.state.backend_url)
+        if open_browser:
+            self.open_url(self.state.backend_url)
         self.print_mode_instructions()
-        pause()
+        if not noninteractive:
+            pause()
 
     def browser_only_menu(self) -> None:
         print()
@@ -589,8 +600,8 @@ class Launcher:
             and venv_python().exists()
         )
 
-    def run_setup(self) -> None:
-        self.run_portable_setup()
+    def run_setup(self, *, install_heavy_ocr: bool = False) -> None:
+        self.run_portable_setup(install_heavy_ocr=install_heavy_ocr)
 
     def start_console_dev(self) -> None:
         self.start_process(
@@ -608,10 +619,18 @@ class Launcher:
             url="http://127.0.0.1:5173",
         )
 
-    def start_backend(self, *, build_console: bool, lan: bool) -> None:
+    def start_backend(
+        self,
+        *,
+        build_console: bool,
+        lan: bool,
+        prompt_rebuild: bool = True,
+        open_browser: bool = True,
+        force_build: bool = False,
+    ) -> None:
         if build_console:
             dist = ROOT / "apps" / "console" / "dist" / "index.html"
-            if not dist.exists() or yes_no("Rebuild the backend-served console first?", default=False):
+            if force_build or not dist.exists() or (prompt_rebuild and yes_no("Rebuild the backend-served console first?", default=False)):
                 self.build_console()
         host = "0.0.0.0" if lan else self.state.backend_host
         if lan:
@@ -647,6 +666,7 @@ class Launcher:
             ],
             env=env,
             url=self.state.backend_url,
+            open_browser=open_browser,
         )
 
     def start_worker(self, *, once: bool = False, coordinator_url: str | None = None) -> None:
@@ -685,7 +705,7 @@ class Launcher:
         }
         if self.state.join_token and not secret_file.exists():
             env["TTB_WORKER_JOIN_TOKEN"] = self.state.join_token
-        self.start_process("worker-once" if once else "worker", command, env=env)
+        self.start_process("worker-once" if once else "worker", command, env=env, open_browser=False)
 
     def run_worker_probe(self) -> None:
         env = {"PYTHONPATH": pythonpath_env()}
@@ -752,10 +772,10 @@ class Launcher:
     def print_mode_instructions(self) -> None:
         print()
         print("In the browser:")
-        print("  1. Continue as Admin or Reviewer.")
-        print("  2. Switch Processing Mode to Backend to use FastAPI.")
-        print("  3. Switch Processing Mode to Cluster after the worker appears under Admin > Workers.")
-        print("  4. Run automated review or batch review to create jobs and audit events.")
+        print("  1. Continue as Admin if you want to switch Backend or Cluster mode.")
+        print("  2. Use Admin > Workers to confirm the local worker heartbeat.")
+        print("  3. Switch to Reviewer from the role selector and open a packet.")
+        print("  4. Click Run automation on the workbench, or use Batch Review for selected packets.")
         print()
         print(f"Backend console: {self.state.backend_url}")
         print(f"Backend health:  {self.state.backend_url}/api/health")
@@ -770,7 +790,11 @@ class Launcher:
         print(f"cd {ROOT}")
         print(f'TTB_WORKER_COORDINATOR="{coordinator}" \\')
         print(f'TTB_WORKER_JOIN_TOKEN="{token}" \\')
+        print('TTB_WORKER_ENGINES="auto" \\')
         print(f'./scripts/dev-worker.sh --session-id "{self.state.session_id}"')
+        print()
+        print("For strongest OCR on a capable Python environment, install PaddleOCR COLA support first:")
+        print(f'{python_bin()} -m pip install -e "{ROOT / "apps" / "worker"}[ocr,paddleocr,easyocr]"')
         print()
         print("On Windows PowerShell, set the variables first:")
         print(f'$env:TTB_WORKER_COORDINATOR="{coordinator}"')
@@ -800,11 +824,19 @@ class Launcher:
         print(f"\n--- {log_path} ---")
         print(tail_text(log_path, lines=80))
 
-    def start_process(self, name: str, command: list[str], env: dict[str, str], url: str | None = None) -> None:
+    def start_process(
+        self,
+        name: str,
+        command: list[str],
+        env: dict[str, str],
+        url: str | None = None,
+        *,
+        open_browser: bool = True,
+    ) -> None:
         existing = self.state.processes.get(name)
         if existing and existing.running():
             print(f"{name} is already running with pid {existing.process.pid}.")
-            if url and yes_no(f"Open {url}?", default=True):
+            if url and open_browser and yes_no(f"Open {url}?", default=True):
                 self.open_url(url)
             return
         log_path = LOG_DIR / f"{safe_name(name)}-{time.strftime('%Y%m%d-%H%M%S')}.log"
@@ -838,7 +870,7 @@ class Launcher:
         print(f"Log:     {log_path}")
         if url:
             print(f"URL:     {url}")
-            if yes_no(f"Open {url}?", default=True):
+            if open_browser and yes_no(f"Open {url}?", default=True):
                 self.open_url(url)
 
     def stop_process(self, name: str, managed: ManagedProcess) -> None:
@@ -882,7 +914,7 @@ class Launcher:
             print(f"Command not found: {error.filename}")
             return 127
 
-    def run_portable_setup(self) -> int:
+    def run_portable_setup(self, *, install_heavy_ocr: bool = False) -> int:
         print("\nRunning portable setup from Python.")
         print("This creates .venv, installs Python packages, installs npm packages, and installs Chromium for Playwright.")
         commands = [
@@ -893,6 +925,8 @@ class Launcher:
             [npm_bin(), "install", "--prefix", "apps/console"],
             [npm_bin(), "run", "playwright:install"],
         ]
+        if install_heavy_ocr:
+            commands.insert(3, [python_bin(), "-m", "pip", "install", "-e", "apps/worker[ocr,paddleocr,easyocr]"])
         for command in commands:
             code = self.run_foreground("setup step", command)
             if code != 0:
@@ -900,6 +934,11 @@ class Launcher:
                 return code
         print("\nSetup complete.")
         return 0
+
+    def install_heavy_ocr(self) -> int:
+        print("\nInstalling optional OCR extras for backend/cluster workers.")
+        print("This enables PaddleOCR COLA as the preferred backend OCR path and EasyOCR as a fallback when the Python stack supports it.")
+        return self.run_foreground("worker OCR extras", [python_bin(), "-m", "pip", "install", "-e", "apps/worker[ocr,paddleocr,easyocr]"])
 
     def open_url(self, url: str) -> None:
         print(f"Opening {url}")
@@ -957,9 +996,12 @@ def shell_script_command(script_name: str) -> list[str]:
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Terminal launcher for TTB Label Reviewer.")
     parser.add_argument("--status", action="store_true", help="Print health/status and exit.")
+    parser.add_argument("--smart-demo", action="store_true", help="One-command setup/start path: backend, token, worker, console URL.")
     parser.add_argument("--backend", action="store_true", help="Start backend and exit after printing URL.")
     parser.add_argument("--worker", action="store_true", help="Start local worker and exit after printing log path.")
     parser.add_argument("--console", action="store_true", help="Start console dev server and exit after printing URL.")
+    parser.add_argument("--no-open", action="store_true", help="Do not attempt to open a browser.")
+    parser.add_argument("--install-heavy-ocr", action="store_true", help="Install optional worker OCR extras, including PaddleOCR and EasyOCR.")
     parser.add_argument("--host", default=DEFAULT_BACKEND_HOST)
     parser.add_argument("--port", type=int, default=DEFAULT_BACKEND_PORT)
     parser.add_argument("--session-id", default=DEFAULT_SESSION_ID)
@@ -978,8 +1020,18 @@ def main(argv: list[str] | None = None) -> int:
     if args.status:
         launcher.print_header()
         return 0
+    if args.smart_demo:
+        launcher.one_click_local_demo(
+            noninteractive=True,
+            open_browser=not args.no_open,
+            install_heavy_ocr=args.install_heavy_ocr,
+            lan=args.lan,
+        )
+        return 0
     if args.backend:
-        launcher.start_backend(build_console=True, lan=args.lan)
+        if args.install_heavy_ocr:
+            launcher.install_heavy_ocr()
+        launcher.start_backend(build_console=True, lan=args.lan, prompt_rebuild=False, open_browser=not args.no_open)
         return 0
     if args.worker:
         launcher.ensure_join_token()

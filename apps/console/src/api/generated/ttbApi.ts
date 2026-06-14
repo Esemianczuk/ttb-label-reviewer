@@ -28,6 +28,8 @@ export interface ApplicationCreate {
   source?: ApplicationCreateSource;
 }
 
+export type ApplicationMetadataApplicationNumber = string | null;
+
 export type ApplicationMetadataCreatedAt = string | null;
 
 export type ApplicationMetadataNotes = string | null;
@@ -37,6 +39,7 @@ export type ApplicationMetadataSourceUrl = string | null;
 export type ApplicationMetadataTtbId = string | null;
 
 export interface ApplicationMetadata {
+  applicationNumber?: ApplicationMetadataApplicationNumber;
   createdAt?: ApplicationMetadataCreatedAt;
   notes?: ApplicationMetadataNotes;
   sourceUrl?: ApplicationMetadataSourceUrl;
@@ -409,9 +412,32 @@ export const ReviewCreateMode = {
   distributed: 'distributed',
 } as const;
 
+export type ReviewCreateOcrStrategy = typeof ReviewCreateOcrStrategy[keyof typeof ReviewCreateOcrStrategy];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ReviewCreateOcrStrategy = {
+  paddleocr_authoritative: 'paddleocr_authoritative',
+  tesseract_first_easyocr_escalation: 'tesseract_first_easyocr_escalation',
+  primary_only: 'primary_only',
+} as const;
+
 export interface ReviewCreate {
+  fallbackEngine?: string;
+  /**
+   * @minimum 0.5
+   * @maximum 0.99
+   */
+  fallbackMinConfidence?: number;
   mode?: ReviewCreateMode;
+  ocrStrategy?: ReviewCreateOcrStrategy;
+  primaryEngine?: string;
   priority?: number;
+  /**
+   * @minimum 1000
+   * @maximum 30000
+   */
+  targetLatencyMs?: number;
 }
 
 export type ReviewReadCompletedAt = string | null;
@@ -575,6 +601,78 @@ limit?: number;
 };
 
 /**
+ * @summary List Application Versions
+ */
+export type listApplicationVersionsApiAdminApplicationVersionsGetResponse200 = {
+  data: unknown
+  status: 200
+}
+
+export type listApplicationVersionsApiAdminApplicationVersionsGetResponseSuccess = (listApplicationVersionsApiAdminApplicationVersionsGetResponse200) & {
+  headers: Headers;
+};
+;
+
+export type listApplicationVersionsApiAdminApplicationVersionsGetResponse = (listApplicationVersionsApiAdminApplicationVersionsGetResponseSuccess)
+
+export const getListApplicationVersionsApiAdminApplicationVersionsGetUrl = () => {
+
+
+
+
+  return `/api/admin/application-versions`
+}
+
+export const listApplicationVersionsApiAdminApplicationVersionsGet = async ( options?: RequestInit): Promise<listApplicationVersionsApiAdminApplicationVersionsGetResponse> => {
+
+  return apiFetch<listApplicationVersionsApiAdminApplicationVersionsGetResponse>(getListApplicationVersionsApiAdminApplicationVersionsGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+/**
+ * @summary List Assets
+ */
+export type listAssetsApiAdminAssetsGetResponse200 = {
+  data: unknown
+  status: 200
+}
+
+export type listAssetsApiAdminAssetsGetResponseSuccess = (listAssetsApiAdminAssetsGetResponse200) & {
+  headers: Headers;
+};
+;
+
+export type listAssetsApiAdminAssetsGetResponse = (listAssetsApiAdminAssetsGetResponseSuccess)
+
+export const getListAssetsApiAdminAssetsGetUrl = () => {
+
+
+
+
+  return `/api/admin/assets`
+}
+
+export const listAssetsApiAdminAssetsGet = async ( options?: RequestInit): Promise<listAssetsApiAdminAssetsGetResponse> => {
+
+  return apiFetch<listAssetsApiAdminAssetsGetResponse>(getListAssetsApiAdminAssetsGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+/**
  * @summary List Benchmark Results
  */
 export type listBenchmarkResultsApiAdminBenchmarksResultsGetResponse200 = {
@@ -649,6 +747,114 @@ export const runBenchmarkApiAdminBenchmarksRunPost = async (benchmarkRunRequest:
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
       benchmarkRunRequest,)
+  }
+);}
+
+
+
+/**
+ * @summary List Correction Requests
+ */
+export type listCorrectionRequestsApiAdminCorrectionRequestsGetResponse200 = {
+  data: unknown
+  status: 200
+}
+
+export type listCorrectionRequestsApiAdminCorrectionRequestsGetResponseSuccess = (listCorrectionRequestsApiAdminCorrectionRequestsGetResponse200) & {
+  headers: Headers;
+};
+;
+
+export type listCorrectionRequestsApiAdminCorrectionRequestsGetResponse = (listCorrectionRequestsApiAdminCorrectionRequestsGetResponseSuccess)
+
+export const getListCorrectionRequestsApiAdminCorrectionRequestsGetUrl = () => {
+
+
+
+
+  return `/api/admin/correction-requests`
+}
+
+export const listCorrectionRequestsApiAdminCorrectionRequestsGet = async ( options?: RequestInit): Promise<listCorrectionRequestsApiAdminCorrectionRequestsGetResponse> => {
+
+  return apiFetch<listCorrectionRequestsApiAdminCorrectionRequestsGetResponse>(getListCorrectionRequestsApiAdminCorrectionRequestsGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+/**
+ * @summary List Fixtures
+ */
+export type listFixturesApiAdminFixturesGetResponse200 = {
+  data: unknown
+  status: 200
+}
+
+export type listFixturesApiAdminFixturesGetResponseSuccess = (listFixturesApiAdminFixturesGetResponse200) & {
+  headers: Headers;
+};
+;
+
+export type listFixturesApiAdminFixturesGetResponse = (listFixturesApiAdminFixturesGetResponseSuccess)
+
+export const getListFixturesApiAdminFixturesGetUrl = () => {
+
+
+
+
+  return `/api/admin/fixtures`
+}
+
+export const listFixturesApiAdminFixturesGet = async ( options?: RequestInit): Promise<listFixturesApiAdminFixturesGetResponse> => {
+
+  return apiFetch<listFixturesApiAdminFixturesGetResponse>(getListFixturesApiAdminFixturesGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+/**
+ * @summary List Reports
+ */
+export type listReportsApiAdminReportsGetResponse200 = {
+  data: unknown
+  status: 200
+}
+
+export type listReportsApiAdminReportsGetResponseSuccess = (listReportsApiAdminReportsGetResponse200) & {
+  headers: Headers;
+};
+;
+
+export type listReportsApiAdminReportsGetResponse = (listReportsApiAdminReportsGetResponseSuccess)
+
+export const getListReportsApiAdminReportsGetUrl = () => {
+
+
+
+
+  return `/api/admin/reports`
+}
+
+export const listReportsApiAdminReportsGet = async ( options?: RequestInit): Promise<listReportsApiAdminReportsGetResponse> => {
+
+  return apiFetch<listReportsApiAdminReportsGetResponse>(getListReportsApiAdminReportsGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
   }
 );}
 
@@ -798,6 +1004,78 @@ export const purgeRawImagesApiAdminRetentionPurgeRawImagesPost = async ( options
   {
     ...options,
     method: 'POST'
+
+
+  }
+);}
+
+
+
+/**
+ * @summary List Review Decisions
+ */
+export type listReviewDecisionsApiAdminReviewDecisionsGetResponse200 = {
+  data: unknown
+  status: 200
+}
+
+export type listReviewDecisionsApiAdminReviewDecisionsGetResponseSuccess = (listReviewDecisionsApiAdminReviewDecisionsGetResponse200) & {
+  headers: Headers;
+};
+;
+
+export type listReviewDecisionsApiAdminReviewDecisionsGetResponse = (listReviewDecisionsApiAdminReviewDecisionsGetResponseSuccess)
+
+export const getListReviewDecisionsApiAdminReviewDecisionsGetUrl = () => {
+
+
+
+
+  return `/api/admin/review-decisions`
+}
+
+export const listReviewDecisionsApiAdminReviewDecisionsGet = async ( options?: RequestInit): Promise<listReviewDecisionsApiAdminReviewDecisionsGetResponse> => {
+
+  return apiFetch<listReviewDecisionsApiAdminReviewDecisionsGetResponse>(getListReviewDecisionsApiAdminReviewDecisionsGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+/**
+ * @summary List Admin Users
+ */
+export type listAdminUsersApiAdminUsersGetResponse200 = {
+  data: unknown
+  status: 200
+}
+
+export type listAdminUsersApiAdminUsersGetResponseSuccess = (listAdminUsersApiAdminUsersGetResponse200) & {
+  headers: Headers;
+};
+;
+
+export type listAdminUsersApiAdminUsersGetResponse = (listAdminUsersApiAdminUsersGetResponseSuccess)
+
+export const getListAdminUsersApiAdminUsersGetUrl = () => {
+
+
+
+
+  return `/api/admin/users`
+}
+
+export const listAdminUsersApiAdminUsersGet = async ( options?: RequestInit): Promise<listAdminUsersApiAdminUsersGetResponse> => {
+
+  return apiFetch<listAdminUsersApiAdminUsersGetResponse>(getListAdminUsersApiAdminUsersGetUrl(),
+  {
+    ...options,
+    method: 'GET'
 
 
   }

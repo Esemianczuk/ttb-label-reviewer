@@ -301,7 +301,17 @@ function SettingsForm({ title, settings, fields, onUpdate }: { title: string; se
 function settingControl(key: keyof AdminSettings, value: AdminSettings[keyof AdminSettings]) {
   if (typeof value === "boolean") return <Switch />;
   if (key === "preferredOcrEngine") {
-    return <Select options={["browser-fixture", "tesseract", "null-engine", "vision-precheck"].map((engine) => ({ value: engine, label: engine }))} />;
+    return (
+      <Select
+        options={[
+          { value: "paddleocr", label: "PaddleOCR COLA preferred" },
+          { value: "paddleocr+easyocr-fallback", label: "PaddleOCR with EasyOCR fallback" },
+          { value: "easyocr", label: "EasyOCR fallback mode" },
+          { value: "tesseract", label: "Tesseract only" },
+          { value: "browser-tesseract", label: "Browser Tesseract.js" }
+        ]}
+      />
+    );
   }
   if (key === "warningStrictness") {
     return <Select options={["lenient", "standard", "strict"].map((level) => ({ value: level, label: level }))} />;

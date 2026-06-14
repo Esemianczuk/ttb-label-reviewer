@@ -174,16 +174,44 @@ def test_review_queue_fake_worker_and_report_flow(client: TestClient):
     worker = register_worker(client)
     secret = worker["workerSecret"]
 
-    ocr_job = claim_job(client, "ocr", secret)
-    heartbeat = client.post("/api/workers/worker-test-1/heartbeat", headers=worker_auth(secret), json={"activeJobs": 1, "status": "online"})
-    assert heartbeat.status_code == 200
-    complete_job(client, ocr_job["id"], {"text": "Hollow Ridge", "status": "OCR_DONE"}, secret)
+    completed_ocr_jobs = []
+    while True:
+        claim_response = client.post(
+            "/api/workers/worker-test-1/claim",
+            headers=worker_auth(secret),
+            json={"sessionId": "session-a", "supportedJobTypes": ["ocr", "evidence_crop", "validation"]},
+        )
+        assert claim_response.status_code == 200, claim_response.text
+        claim_body = claim_response.json()
+        assert claim_body["job"]
+        assert {"queued_job", "available_worker", "session_scoped"}.issubset(set(claim_body["assignment"]["reason_codes"]))
+        ocr_job = claim_body["job"]
+        if ocr_job["jobType"] != "ocr":
+            evidence_job = ocr_job
+            break
+        heartbeat = client.post("/api/workers/worker-test-1/heartbeat", headers=worker_auth(secret), json={"activeJobs": 1, "status": "online"})
+        assert heartbeat.status_code == 200
+        complete_job(
+            client,
+            ocr_job["id"],
+            {
+                "text": "Hollow Ridge",
+                "status": "OCR_DONE",
+                "engine": "paddleocr",
+                "assetId": ocr_job["payload"]["asset_id"],
+                "fieldKey": ocr_job["payload"].get("field_key", "label"),
+                "fieldLabel": ocr_job["payload"].get("field_label", "Label evidence"),
+            },
+            secret,
+        )
+        completed_ocr_jobs.append(ocr_job)
     assert client.get(f"/api/reviews/{review['id']}", headers=auth_headers(client, "reviewer")).json()["status"] == "processing"
+    assert len(completed_ocr_jobs) == 1
 
-    evidence_job = claim_job(client, "evidence_crop", secret)
     complete_job(client, evidence_job["id"], {"crops": [{"field": "brandName", "confidence": 0.99}]}, secret)
 
     validation_job = claim_job(client, "validation", secret)
+    assert len(validation_job["payload"]["completed_ocr_results"]) == len(completed_ocr_jobs)
     final_result = {
         "overallStatus": "PASS",
         "review_result": {
@@ -271,7 +299,7 @@ def test_admin_operations_endpoints_manage_backend_jobs_settings_and_workers(cli
     updated = client.patch("/api/settings/admin.operations", json={"value": {"maxConcurrency": 7}}, headers=admin_headers)
     assert updated.status_code == 200, updated.text
     assert updated.json()["value"]["maxConcurrency"] == 7
-    assert updated.json()["value"]["preferredOcrEngine"] == "browser-fixture"
+    assert updated.json()["value"]["preferredOcrEngine"] == "paddleocr"
 
     worker = register_worker(client)
     drained = client.post(f"/api/workers/{worker['id']}/drain", headers=admin_headers)
