@@ -15,13 +15,14 @@ services:
       TTB_API_HOST: 0.0.0.0
       TTB_API_PORT: "8000"
       TTB_API_LAN_MODE: ${TTB_API_LAN_MODE:-0}
+      TTB_API_CORS_ORIGINS: ${TTB_API_CORS_ORIGINS:-}
       TTB_COORDINATOR_URL: http://api:8000
       TTB_REQUIRE_WORKER_JOIN_TOKEN: "1"
       TTB_DEMO_TOKEN_SECRET: ${TTB_DEMO_TOKEN_SECRET:-local-compose-demo-token-secret}
       TTB_SEED_DEMO: ${TTB_SEED_DEMO:-1}
       TTB_WORKER_STALE_SECONDS: ${TTB_WORKER_STALE_SECONDS:-60}
     ports:
-      - "127.0.0.1:${TTB_DOCKER_API_PORT:-8000}:8000"
+      - "${TTB_DOCKER_BIND_IP:-127.0.0.1}:${TTB_DOCKER_API_PORT:-8000}:8000"
     volumes:
       - api-data:/data
       - ./benchmarks/results:/app/benchmarks/results

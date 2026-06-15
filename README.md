@@ -457,6 +457,7 @@ ttb_validation/                deterministic validation package
 - [Reviewer workbench](docs/REVIEWER_WORKBENCH.md)
 - [Admin operations](docs/ADMIN_OPERATIONS.md)
 - [Docker quick start](docs/DOCKER.md)
+- [Deployment](docs/DEPLOYMENT.md)
 - [Benchmarks](docs/BENCHMARKS.md)
 - [Fixtures](docs/FIXTURES.md)
 - [Known limitations](docs/Known_LIMITATIONS.md)
