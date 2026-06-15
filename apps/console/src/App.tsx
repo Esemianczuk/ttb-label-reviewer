@@ -135,10 +135,27 @@ function ReviewerDemoEntry() {
   const { snapshot } = useConsoleStore();
   const { setRole } = useCurrentRole();
   const [ready, setReady] = useState(false);
-  const targetApplication = useMemo(
+  const [entryApplicationId, setEntryApplicationId] = useState<string | undefined>();
+  const entryCandidate = useMemo(
     () => reviewerEntryApplication(snapshot.applications, snapshot.activeApplicationId),
     [snapshot.activeApplicationId, snapshot.applications]
   );
+  const targetApplication = useMemo(
+    () => {
+      if (entryApplicationId) {
+        const selected = snapshot.applications.find((application) => application.id === entryApplicationId);
+        if (selected) return selected;
+      }
+      return entryCandidate;
+    },
+    [entryApplicationId, entryCandidate, snapshot.applications]
+  );
+
+  useEffect(() => {
+    if (!entryApplicationId && entryCandidate) {
+      setEntryApplicationId(entryCandidate.id);
+    }
+  }, [entryApplicationId, entryCandidate?.id]);
 
   useEffect(() => {
     setRole("reviewer");
