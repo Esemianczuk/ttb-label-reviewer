@@ -4,6 +4,17 @@
 
 Live Demo Link https://demo.sherpa-map.com/ttb-review-demo.html
 
+## Quickstart Guide
+
+<img src="Reviewer_Quickstart.png" alt="Annotated reviewer quickstart showing the role switcher, reset demo button, reviewer dashboard navigation, batch review, and run automation controls" width="900">
+
+1. Open the live demo or local app and start on the reviewer dashboard.
+2. Use **Switch demo role** to move between Reviewer, Applicant, and Admin.
+3. Use **Reset Demo** to reset applications, decisions, notes, and review progress for your session.
+4. Click **Run automation** on the first application to run OCR, field extraction, matching, and evidence generation.
+5. Leave **Auto-run automation** checked to process the next application automatically when moving forward.
+6. Use **Batch Review** to select multiple applications and run batch OCR, extraction, and matching.
+
 TTB Label Reviewer is a local-first assessment project for reviewing alcohol label applications against label-image evidence. It is not an official TTB, Treasury, or legal determination system.
 
 The primary demo path runs everything on the evaluator machine:
