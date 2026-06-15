@@ -7,6 +7,7 @@ services:
       dockerfile: docker/api.Dockerfile
       args:
         VITE_TTB_BACKEND_URL: ${VITE_TTB_BACKEND_URL:-http://127.0.0.1:8000}
+        VITE_BASE_PATH: ${VITE_BASE_PATH:-/}
     image: ttb-label-reviewer-api:local
     environment:
       TTB_API_DATABASE_URL: sqlite:////data/api.sqlite3

@@ -15,7 +15,9 @@ COPY fixtures/public-cola-registry ./fixtures/public-cola-registry
 COPY packages ./packages
 
 ARG VITE_TTB_BACKEND_URL=http://127.0.0.1:8000
+ARG VITE_BASE_PATH=/
 ENV VITE_TTB_BACKEND_URL=${VITE_TTB_BACKEND_URL}
+ENV VITE_BASE_PATH=${VITE_BASE_PATH}
 RUN npm --prefix apps/console run build
 
 FROM python:3.10-slim-bookworm AS runtime

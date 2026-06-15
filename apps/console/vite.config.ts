@@ -4,7 +4,7 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [react()],
-  base: process.env.VITE_BASE_PATH || "./",
+  base: process.env.VITE_BASE_PATH || "/",
   publicDir: path.resolve(__dirname, "../../browser-demo/public"),
   resolve: {
     alias: {
