@@ -25,6 +25,12 @@ The demo includes a complete role-based access control flow:
 
 The current demo data is built from real public COLA registry records. Collector scripts under `tools/ttb_collector/` were used to pull public detail pages from `ttbonline.gov/colasonline/viewColaDetails.do`, save raw detail HTML, parse application metadata, download printable COLA forms and public label image assets, normalize expected fields, and write the bundled fixture manifests. Earlier prototypes used synthetic AI-generated packets; the current reviewer demo is seeded from the public COLA fixture set.
 
+## Fixture Provenance
+
+All bundled demo records are derived from publicly available approved COLA records. Pending, private, rejected, or in-process applications are not used. Fixture directories retain source identifiers, raw public detail HTML when available, parsed metadata, expected field JSON, manifest rows, and downloaded public label or printable assets so the dataset can be audited against the public source material.
+
+The collector is intentionally small and curated rather than a bulk scraper. It uses known public TTB identifiers, cached discovery helpers, conservative request delays, and a manual promotion step before records are added to the bundled `fixtures/public-cola-registry/records/` dataset.
+
 The repository stores **75 public COLA record directories**, with **66 demo-ready application examples** loaded into the active reviewer queue. The remaining records are retained for provenance and collector validation when their label or metadata evidence is not strong enough for the main demo. Each browser session receives its own seeded demo state, so multiple evaluators can test at the same time. **Reset Demo** clears applications, matches, notes, and review progress for that session only.
 
 Custom examples can be added from the **Applicant** role with **Create application packet**. The applicant form supports manual entry, label-image upload, and optional drag-and-drop import of COLA registry JSON, XML, HTML, or text exports.

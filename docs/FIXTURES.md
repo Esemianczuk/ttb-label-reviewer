@@ -8,9 +8,15 @@ fixtures/public-cola-registry/records/
 
 Each record directory contains parsed application metadata, the original raw detail page when available, a printable COLA HTML form, and one or more downloaded label images. The reviewer queue is seeded from these records as if they were already in an application database.
 
+## Fixture Provenance
+
+All bundled demo records are derived from publicly available approved COLA records. Pending, private, rejected, or in-process applications are not used. The checked records retain source identifiers, raw public detail HTML when available, parsed metadata, normalized expected fields, manifest rows, and downloaded public label or printable COLA assets so the corpus can be audited and reproduced from the collector tooling.
+
+The collector is intentionally small and curated rather than a bulk scraper. Candidate records are discovered or selected from known public TTB identifiers, cached locally, and only promoted into `fixtures/public-cola-registry/records/` after the downloaded image/form evidence can support the expected reviewer fields.
+
 ## Loaded Public Records
 
-The checked fixture corpus includes 50 public records. The console demo loads the 41 records whose common reviewer criteria could be supported from the downloaded label image(s) or official COLA form metadata. Records with no defensible alcohol content/net contents evidence are retained in the corpus for provenance but marked `demo_ready: false` and excluded from the demo queue.
+The checked fixture corpus includes 75 public records. The console demo loads the 66 records whose common reviewer criteria could be supported from the downloaded label image(s) or official COLA form metadata. The remaining 9 records are retained in the corpus for provenance and collector testing, but are marked `demo_ready: false` and excluded from the active reviewer queue.
 
 Representative loaded examples:
 
@@ -18,7 +24,7 @@ Representative loaded examples:
 - `app-ttb-19346001000245`: DEVILS BACKBONE, GIN AND TONIC, one label image.
 - `app-ttb-19350001000429`: CHLOE, RUM BARREL AGED COCONUT BALTIC, one label image, starts in correction-needed state for applicant edit testing.
 
-The demo does not invent match-to values. If alcohol content, net contents, responsible party, or imported country of origin could not be verified from the image/form assets, that record is not loaded as a reviewer sample.
+The demo does not invent match-to values. If alcohol content, net contents, responsible party, imported country of origin, or government warning evidence could not be verified from the image/form assets, that record is not loaded as a reviewer sample.
 
 ## Applicant Import Testing
 
@@ -49,7 +55,7 @@ The collector tooling is under:
 tools/ttb_collector/
 ```
 
-Bulk downloads, caches, and generated datasets are ignored by git. The collector is designed for small, polite, curated pulls rather than broad crawling.
+Bulk downloads, caches, and generated datasets are ignored by git. The collector is designed for small, polite, curated pulls rather than broad crawling. The checked `records/` directory is the reviewed, promoted fixture set.
 
 High-signal expansion for OCR/model evaluation uses:
 
