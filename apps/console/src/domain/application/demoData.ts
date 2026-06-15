@@ -73,13 +73,16 @@ export function createDemoSnapshot(): ConsoleSnapshot {
 export function createDemoOcrModelStatus(): OcrModelStatus[] {
   return [
     {
-      id: "layoutlmv3-cola",
-      status: "baseline",
+      id: "paddleocr-field-alignment",
+      status: "active",
       trainedModelLoaded: false,
-      mode: "paddleocr-baseline-weak-alignment",
-      modelDir: "models/field-extractor/layoutlmv3-cola/current",
-      message: "Backend review uses PaddleOCR full-image OCR with conservative weak field alignment unless a promoted LayoutLMv3 model passes the runtime gate.",
-      modelCard: null,
+      mode: "paddleocr-weak-field-alignment",
+      modelDir: null,
+      message: "Backend review uses PaddleOCR full-image OCR, then aligns expected fields to OCR token spans for evidence crops.",
+      modelCard: {
+        name: "PaddleOCR full-image field alignment",
+        runtimePolicy: "PaddleOCR recognition plus deterministic validators"
+      },
       metrics: null,
       failureReport: null
     }

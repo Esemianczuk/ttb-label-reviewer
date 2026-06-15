@@ -8,7 +8,7 @@ from ..core.statuses import canonical_application_status, canonical_review_run_s
 
 PRODUCTION_ENGINE_KEYS = {"paddleocr"}
 FIELD_EXTRACTOR_KEYS = {"fieldExtractor"}
-STALE_ENGINE_KEYS = {"tesseract", "tesseract-js", "browser-tesseract", "easyocr", "onnx"}
+STALE_ENGINE_KEYS = {"tesseract", "tesseract-js", "browser-tesseract", "onnx"}
 
 
 def application_to_read(application: models.Application):
@@ -106,7 +106,7 @@ def sanitize_worker_capabilities(capabilities: dict | None) -> dict:
     if not isinstance(capabilities, dict):
         return {}
     cleaned = deepcopy(capabilities)
-    for key in ("onnxRuntime", "easyocrRuntime", "tesseractRuntime"):
+    for key in ("onnxRuntime", "tesseractRuntime"):
         cleaned.pop(key, None)
 
     engines = cleaned.get("engines")

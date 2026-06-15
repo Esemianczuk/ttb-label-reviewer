@@ -757,7 +757,7 @@ const guidanceRoutes: RouteMatcher[] = [
           items: [
             "Browser fallback should remain local to the browser.",
             "Backend extraction should preserve deterministic validation as the authority.",
-            "Engine status should not imply LayoutLMv3 is active unless the model is promoted and loaded."
+            "Engine status should show PaddleOCR field alignment as the backend authority and browser OCR only as fallback."
           ]
         }
       ]

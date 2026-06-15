@@ -1,8 +1,8 @@
 import {
   AuditOutlined,
   BarChartOutlined,
-  ClusterOutlined,
   DatabaseOutlined,
+  DeploymentUnitOutlined,
   ExclamationCircleOutlined,
   FileSearchOutlined,
   FolderOpenOutlined,
@@ -27,7 +27,7 @@ import { useAdminOperations } from "./useAdminOperations";
 const adminRoutes = [
   { to: "/admin/users", label: "Users", icon: <TeamOutlined /> },
   { to: "/admin/roles", label: "Roles", icon: <SafetyCertificateOutlined /> },
-  { to: "/admin/workers", label: "Workers", icon: <ClusterOutlined /> },
+  { to: "/admin/workers", label: "Workers", icon: <DeploymentUnitOutlined /> },
   { to: "/admin/jobs", label: "Jobs", icon: <FileSearchOutlined /> },
   { to: "/admin/engines", label: "Engines", icon: <ToolOutlined /> },
   { to: "/admin/benchmarks", label: "Benchmarks", icon: <BarChartOutlined /> },
@@ -63,7 +63,7 @@ export function AdminPortal() {
       <Row gutter={[16, 16]}>
         <MetricCard title="Applications today" value={metrics.applicationsToday} icon={<DatabaseOutlined />} />
         <MetricCard title="Needs review" value={metrics.needsReview} icon={<AuditOutlined />} />
-        <MetricCard title="Active workers" value={metrics.activeWorkers} icon={<ClusterOutlined />} />
+        <MetricCard title="Active workers" value={metrics.activeWorkers} icon={<DeploymentUnitOutlined />} />
         <MetricCard title="Queue depth" value={metrics.queueDepth} icon={<FileSearchOutlined />} />
         <MetricCard title="Images per minute" value={metrics.imagesPerMinute} icon={<BarChartOutlined />} />
         <MetricCard title="Failed jobs" value={metrics.failedJobs} icon={<ExclamationCircleOutlined />} danger={metrics.failedJobs > 0} />
@@ -101,10 +101,8 @@ export function AdminPortal() {
           </Descriptions.Item>
           <Descriptions.Item label="Field Extractor">
             <Space>
-              <Tag color={fieldExtractor?.trainedModelLoaded ? "green" : "gold"}>
-                {fieldExtractor?.trainedModelLoaded ? "Enhanced OCR active" : "Guarded baseline"}
-              </Tag>
-              <Typography.Text>{fieldExtractor?.mode || "paddleocr-baseline-weak-alignment"}</Typography.Text>
+              <Tag color={fieldExtractor?.status === "unavailable" ? "red" : "green"}>PaddleOCR alignment</Tag>
+              <Typography.Text>{fieldExtractor?.mode || "paddleocr-weak-field-alignment"}</Typography.Text>
             </Space>
           </Descriptions.Item>
           <Descriptions.Item label="Active Packet">

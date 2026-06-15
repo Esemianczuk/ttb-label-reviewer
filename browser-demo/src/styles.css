@@ -244,7 +244,7 @@ h3 {
 }
 
 .queue-table-panel,
-.cluster-panel,
+.worker-panel,
 .throughput-panel {
   min-width: 0;
 }
@@ -328,7 +328,7 @@ h3 {
   text-underline-offset: 3px;
 }
 
-.cluster-dashboard {
+.worker-dashboard {
   display: grid;
   gap: 1rem;
 }

@@ -36,5 +36,4 @@ docs/chatgpt_pro_review/
 
 # Model weights are runtime artifacts. Mount ./models read-only instead of baking
 # large local experiments into Docker images.
-models/field-extractor/layoutlmv3-cola/current/
 models/ocr/paddle-cola/current/

@@ -85,13 +85,12 @@ export async function checkBackendHealth(backendUrl, { timeoutMs = 1400 } = {}) 
   }
 }
 
-export async function fetchClusterSnapshot(backendUrl, { sessionId } = {}) {
-  const [workers, events, clusterStatus] = await Promise.all([
+export async function fetchWorkerSnapshot(backendUrl, { sessionId } = {}) {
+  const [workers, events] = await Promise.all([
     requestJson('/api/workers', { backendUrl, sessionId, authRole: 'admin' }),
     requestJson('/api/workers/events?limit=20', { backendUrl, sessionId, authRole: 'admin' }),
-    requestJson('/api/cluster/status', { backendUrl, sessionId, authRole: 'admin' }).catch(() => null),
   ]);
-  return { workers, events, clusterStatus };
+  return { workers, events };
 }
 
 export async function createRemoteApplication({ backendUrl, sessionId, expected, application }) {
@@ -165,8 +164,8 @@ export async function startRemoteReview({ backendUrl, sessionId, applicationId, 
     sessionId,
     method: 'POST',
     body: {
-      mode: mode === 'cluster' ? 'distributed' : 'backend',
-      priority: mode === 'cluster' ? 80 : 100,
+      mode: 'backend',
+      priority: 100,
     },
   });
 }
@@ -260,8 +259,8 @@ export function remoteReviewToFrontendReview(remoteReview, { expected, images, a
       engine: result.enginesUsed?.[0]?.displayName || result.files?.[index]?.engine || 'backend-worker',
       processingTimeMs: Math.round((result.timings?.ocrMs || totalMs || 0) / Math.max(images.length, 1)),
       rawText: result.combinedText || result.files?.[index]?.text || '',
-      source: processingMode === 'cluster' ? 'cluster-backend' : 'local-backend',
-      preprocessingNotes: [`Processed by ${processingMode === 'cluster' ? 'cluster workers' : 'local backend'}.`],
+      source: 'local-backend',
+      preprocessingNotes: ['Processed by local backend.'],
       variants: [],
     },
   }));
@@ -284,7 +283,7 @@ export function remoteReviewToFrontendReview(remoteReview, { expected, images, a
   return {
     ...result,
     id: result.id || remoteReview.id,
-    mode: processingMode === 'cluster' ? 'cluster' : 'backend',
+    mode: 'backend',
     overallStatus: mapStatus(result.overallStatus || remoteReview.status),
     fields,
     files,

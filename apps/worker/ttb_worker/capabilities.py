@@ -155,7 +155,7 @@ def probe_accelerators() -> dict[str, Any]:
 def probe_ocr_dependencies() -> dict[str, Any]:
     try:
         from .engines.paddleocr_engine import resolve_model_config
-        from .extraction.model_status import layoutlmv3_model_status
+        from .extraction.model_status import paddleocr_field_extractor_status
 
         paddle_model = resolve_model_config()
         paddle_model_info = {
@@ -165,7 +165,7 @@ def probe_ocr_dependencies() -> dict[str, Any]:
             "requireCustom": paddle_model.require_custom,
             "modelDirs": paddle_model.kwargs,
         }
-        field_extractor = layoutlmv3_model_status()
+        field_extractor = paddleocr_field_extractor_status()
     except Exception as error:
         paddle_model_info = {"customModel": False, "customRecognition": False, "error": str(error)}
         field_extractor = {"status": "unavailable", "trainedModelLoaded": False, "error": str(error)}
@@ -180,7 +180,6 @@ def engine_profile(accelerators: dict[str, Any], ocr: dict[str, Any]) -> dict[st
     mps = bool((accelerators.get("appleMps") or {}).get("available"))
     paddle = bool((ocr.get("paddleocr") or {}).get("available"))
     paddle_custom = bool((ocr.get("paddleocr") or {}).get("customRecognition") or (ocr.get("paddleocr") or {}).get("customModel"))
-    field_extractor_trained = bool((ocr.get("fieldExtractor") or {}).get("trainedModelLoaded"))
     if paddle and paddle_custom and cuda:
         tier = "custom_paddleocr_cuda"
         preferred = "paddleocr"
@@ -203,7 +202,7 @@ def engine_profile(accelerators: dict[str, Any], ocr: dict[str, Any]) -> dict[st
         "appleMps": mps,
         "paddleocr": paddle,
         "paddleocrCustom": paddle_custom,
-        "fieldExtractorTrained": field_extractor_trained,
+        "fieldExtractorTrained": False,
         "fieldExtractorMode": (ocr.get("fieldExtractor") or {}).get("mode"),
     }
 

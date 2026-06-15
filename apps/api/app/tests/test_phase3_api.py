@@ -300,8 +300,8 @@ def test_admin_operations_endpoints_manage_backend_jobs_settings_and_workers(cli
 
     ocr_status = client.get("/api/admin/ocr-model-status", headers=admin_headers)
     assert ocr_status.status_code == 200, ocr_status.text
-    assert ocr_status.json()[0]["id"] == "layoutlmv3-cola"
-    assert "trainedModelLoaded" in ocr_status.json()[0]
+    assert ocr_status.json()[0]["id"] == "paddleocr-field-alignment"
+    assert ocr_status.json()[0]["mode"] == "paddleocr-weak-field-alignment"
 
     worker = register_worker(client)
     drained = client.post(f"/api/workers/{worker['id']}/drain", headers=admin_headers)

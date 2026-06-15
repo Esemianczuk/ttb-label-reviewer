@@ -7,7 +7,7 @@ import {
 import { canAccess } from "../../providers/access/permissionMatrix";
 import { browserDataProvider } from "../../providers/data/browserDataProvider";
 import { adminMetrics } from "../../pages/admin/adminUtils";
-import { normalizeBackendWorker } from "../../pages/admin/useAdminOperations";
+import { normalizeBackendWorker, normalizeOcrModelStatus } from "../../pages/admin/useAdminOperations";
 
 describe("phase 11 admin workflow", () => {
   it("keeps admin permissions observational except for benchmark runs", () => {
@@ -99,6 +99,25 @@ describe("phase 11 admin workflow", () => {
     expect(worker.engines).toEqual(["PaddleOCR COLA (CUDA preferred)"]);
     expect(worker.capabilities).not.toContain("null");
     expect(worker.gpu).toBe("CUDA");
+  });
+
+  it("normalizes OCR status to the hardened PaddleOCR field-alignment policy", () => {
+    expect(normalizeOcrModelStatus({})).toMatchObject({
+      id: "paddleocr-field-alignment",
+      status: "active",
+      mode: "paddleocr-weak-field-alignment",
+      modelDir: null,
+      trainedModelLoaded: false
+    });
+
+    expect(
+      normalizeOcrModelStatus({
+        id: "paddleocr-field-alignment",
+        status: "active",
+        mode: "paddleocr-weak-field-alignment",
+        message: "Backend review uses PaddleOCR full-image OCR."
+      }).message
+    ).toContain("PaddleOCR");
   });
 
   it("rejects hidden destructive admin actions in browser fallback mode", async () => {

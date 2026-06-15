@@ -2,7 +2,7 @@
 
 TTB Label Reviewer is a local-first assessment prototype. It is not an official TTB or Treasury system and does not make legal determinations.
 
-No cloud AI service is required. Use the backend path for FastAPI persistence plus a local PaddleOCR worker. If the backend is absent, the console falls back to browser-local OCR automatically. Backend workers use a promoted LayoutLMv3 extractor only when it passes the runtime gate; otherwise they use conservative weak alignment.
+No cloud AI service is required. Use the backend path for FastAPI persistence plus a local PaddleOCR worker. If the backend is absent, the console falls back to browser-local OCR automatically. Backend workers use PaddleOCR full-image OCR with conservative field alignment from OCR token boxes.
 
 ## Fastest Path
 
@@ -119,7 +119,7 @@ Open **Admin**:
 
 - **Workers** should show the local PaddleOCR worker.
 - **Jobs** should show OCR, evidence, validation, and report job state.
-- **OCR Engines** should show whether enhanced LayoutLMv3 extraction is active or baseline weak alignment is being used.
+- **OCR Engines** should show PaddleOCR field alignment as the backend authority.
 - **Benchmarks** should read JSON from `benchmarks/results`.
 - **Audit Log** should show role changes, review actions, permission failures, and retention operations.
 

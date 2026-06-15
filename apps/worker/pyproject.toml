@@ -22,26 +22,10 @@ paddleocr = [
   "paddleocr==3.2.0",
   "paddlex==3.2.0",
 ]
-layoutlmv3 = [
-  "transformers>=4.40,<6",
-  "torch>=2,<3",
-]
-layoutlmv3-training = [
-  "datasets>=2.18",
-  "accelerate>=0.28",
-  "evaluate>=0.4",
-  "seqeval>=1.2",
-]
 all-ocr = [
   "Pillow>=10,<12",
   "paddleocr==3.2.0",
   "paddlex==3.2.0",
-  "transformers>=4.40,<6",
-  "torch>=2,<3",
-  "datasets>=2.18",
-  "accelerate>=0.28",
-  "evaluate>=0.4",
-  "seqeval>=1.2",
 ]
 test = [
   "pytest>=8",

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from ttb_validation.layoutlm_fields import attach_layoutlmv3_field_entities
+from ttb_validation.field_entities import attach_weak_field_entities
 from ttb_worker.engines.paddleocr_engine import (
     RecoveryRegion,
     map_recovered_items_to_original,
@@ -66,7 +66,7 @@ def test_rotated_recovered_boxes_are_mapped_back_to_original_image_coordinates()
 
 
 def test_warning_weak_entity_starts_at_government_warning_not_previous_tokens():
-    payloads = attach_layoutlmv3_field_entities(
+    payloads = attach_weak_field_entities(
         {"governmentWarningRequired": True},
         [
             {
@@ -86,7 +86,6 @@ def test_warning_weak_entity_starts_at_government_warning_not_previous_tokens():
                 ],
             }
         ],
-        predictions=None,
         source="test",
     )
 

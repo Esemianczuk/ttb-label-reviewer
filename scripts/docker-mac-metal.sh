@@ -21,8 +21,8 @@ Docker is required for the macOS backend API container.
 Install Docker Desktop or Colima, start it, then rerun:
   ./scripts/docker-mac-metal.sh
 
-The worker itself runs as a native macOS process so Apple Metal/MPS can be used
-by the LayoutLMv3 extractor when a promoted model is present.
+The worker itself runs as a native macOS process. PaddleOCR uses the best
+available local runtime and falls back to CPU when no accelerator is available.
 EOF
   exit 2
 fi
@@ -122,11 +122,11 @@ source "$VENV_DIR/bin/activate"
 python -m pip install --upgrade pip >/dev/null
 
 if ! python - <<'PY' >/dev/null 2>&1
-import paddleocr, paddle, torch, transformers
+import paddleocr, paddle
 PY
 then
-  echo "Installing Mac native PaddleOCR/LayoutLMv3 runtime dependencies..."
-  python -m pip install -e "apps/worker[ocr,paddleocr,layoutlmv3]"
+  echo "Installing Mac native PaddleOCR runtime dependencies..."
+  python -m pip install -e "apps/worker[ocr,paddleocr]"
   if ! python - <<'PY' >/dev/null 2>&1
 import paddle
 PY
@@ -142,7 +142,6 @@ export TTB_WORKER_SECRET_FILE="${TTB_WORKER_SECRET_FILE:-$TTB_WORKER_DATA_DIR/wo
 export TTB_WORKER_ENGINES="${TTB_WORKER_ENGINES:-paddleocr}"
 export TTB_WORKER_NAME="${TTB_WORKER_NAME:-mac-metal-paddleocr}"
 export TTB_WORKER_ENABLE_HEAVY_OCR="${TTB_WORKER_ENABLE_HEAVY_OCR:-1}"
-export TTB_LAYOUTLMV3_REQUIRE_MODEL="${TTB_LAYOUTLMV3_REQUIRE_MODEL:-0}"
 
 EXTRA_ARGS=()
 if [[ -f "$TTB_WORKER_SECRET_FILE" ]]; then
@@ -179,7 +178,7 @@ TTB Label Reviewer is running in macOS Metal-capable mode.
 
 Console: http://127.0.0.1:$PORT/
 API:     Docker Compose service
-Worker:  native macOS process using $PYTHON_BIN and PaddleOCR; PyTorch MPS is available to a promoted LayoutLMv3 extractor.
+Worker:  native macOS process using $PYTHON_BIN and PaddleOCR with CPU fallback.
 
 Press Ctrl+C to stop the worker and API container.
 EOF

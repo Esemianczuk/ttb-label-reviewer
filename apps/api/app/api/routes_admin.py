@@ -181,18 +181,17 @@ def ocr_model_status(session: Session = Depends(get_session), current_user: mode
     if str(worker_path) not in sys.path:
         sys.path.append(str(worker_path))
     try:
-        from ttb_worker.extraction.model_status import layoutlmv3_model_status
+        from ttb_worker.extraction.model_status import paddleocr_field_extractor_status
 
-        return [layoutlmv3_model_status()]
+        return [paddleocr_field_extractor_status()]
     except Exception as error:
-        default_dir = repo_root / "models" / "field-extractor" / "layoutlmv3-cola" / "current"
         return [
             {
-                "id": "layoutlmv3-cola",
+                "id": "paddleocr-field-alignment",
                 "status": "unavailable",
                 "trainedModelLoaded": False,
-                "mode": "paddleocr-baseline-weak-alignment",
-                "modelDir": str(default_dir),
+                "mode": "paddleocr-weak-field-alignment",
+                "modelDir": None,
                 "message": f"Unable to inspect field extractor model status: {error}",
                 "modelCard": None,
                 "metrics": None,

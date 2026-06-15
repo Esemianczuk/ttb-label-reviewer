@@ -517,7 +517,7 @@ def get_candidate_texts(ocr_result: dict[str, Any]) -> list[dict[str, Any]]:
                     "assetId": entity.get("assetId"),
                     "engine": entity.get("engine"),
                     "workerId": entity.get("workerId"),
-                    "method": entity.get("method") or "layoutlmv3-token-classifier",
+                    "method": entity.get("method") or "paddleocr-weak-field-alignment",
                 }
             )
     seen = set()
@@ -697,7 +697,7 @@ def find_best_text_candidate(expected_value: str, ocr_result: dict[str, Any], *,
                     "score": score,
                     "confidence": entity.get("confidence"),
                     "block": entity,
-                    "method": entity.get("method") or "layoutlmv3-token-classifier",
+                    "method": entity.get("method") or "paddleocr-weak-field-alignment",
                 }
 
     candidates = get_candidate_texts(ocr_result)

@@ -102,8 +102,6 @@ NET_CONTENTS_HINT_RE = re.compile(
 WARNING_TERMS = ("GOVERNMENT WARNING", "SURGEON GENERAL", "PREGNANCY", "BIRTH DEFECTS", "OPERATE MACHINERY")
 RESPONSIBLE_PARTY_HINT_RE = re.compile(r"\b(?:BOTTLED|PRODUCED|IMPORTED|CANNED|BREWED|DISTILLED)\s+BY\b", re.IGNORECASE)
 
-_EASYOCR_READER: Any | None = None
-
 
 @dataclass(frozen=True)
 class SearchQuery:
@@ -438,27 +436,7 @@ def quick_ocr_image_text(image: Any) -> tuple[str, set[str], list[str]]:
     except Exception as error:
         errors.append(f"tesseract: {error}")
 
-    if not normalize_space("\n".join(texts)):
-        try:
-            import numpy as np
-
-            reader = easyocr_reader()
-            results = reader.readtext(np.array(image), detail=1, paragraph=False, rotation_info=[90, 180, 270])
-            for _bbox, text, _confidence in results:
-                texts.append(str(text))
-            engines.add("easyocr")
-        except Exception as error:
-            errors.append(f"easyocr: {error}")
     return "\n".join(texts), engines, errors
-
-
-def easyocr_reader() -> Any:
-    global _EASYOCR_READER
-    if _EASYOCR_READER is None:
-        import easyocr
-
-        _EASYOCR_READER = easyocr.Reader(["en"], gpu=False, verbose=False)
-    return _EASYOCR_READER
 
 
 def select_balanced(preflighted: list[dict[str, Any]], target: int) -> list[dict[str, Any]]:

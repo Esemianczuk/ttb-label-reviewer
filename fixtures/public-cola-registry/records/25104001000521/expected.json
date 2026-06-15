@@ -71,7 +71,7 @@
     "ocrHints": {
       "available": true,
       "engines": [
-        "easyocr"
+        "ocr-preflight"
       ],
       "textLength": 501,
       "alcoholHints": [

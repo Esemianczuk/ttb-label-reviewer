@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cloneExpectedFields, createInitialState } from '../app-state.js';
-import { checkBackendHealth, createRemoteApplication, fetchClusterSnapshot, remoteReviewToFrontendReview } from '../api/backend-client.js';
+import { checkBackendHealth, createRemoteApplication, fetchWorkerSnapshot, remoteReviewToFrontendReview } from '../api/backend-client.js';
 import { renderApp } from '../ui/render.js';
 import { STATUS } from '../validation/status.js';
 
@@ -58,9 +58,9 @@ describe('hybrid backend client', () => {
     ).resolves.toMatchObject({ id: 'app-1' });
   });
 
-  it('uses admin auth for cluster telemetry', async () => {
+  it('uses admin auth for backend worker telemetry', async () => {
     const fetchMock = vi.fn(async (url, init = {}) => {
-      if (url === 'http://cluster.test/api/auth/demo-login') {
+      if (url === 'http://backend.test/api/auth/demo-login') {
         expect(JSON.parse(init.body)).toEqual({ role: 'admin' });
         return {
           ok: true,
@@ -70,15 +70,13 @@ describe('hybrid backend client', () => {
       expect(init.headers.Authorization).toBe('Bearer ttb_demo_admin_test');
       if (url.endsWith('/api/workers')) return { ok: true, json: async () => [] };
       if (url.endsWith('/api/workers/events?limit=20')) return { ok: true, json: async () => [] };
-      if (url.endsWith('/api/cluster/status')) return { ok: true, json: async () => ({ mdnsService: '_ttb-label-reviewer._tcp.local.' }) };
       throw new Error(`Unexpected URL ${url}`);
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(fetchClusterSnapshot('http://cluster.test', { sessionId: 'browser-test' })).resolves.toMatchObject({
+    await expect(fetchWorkerSnapshot('http://backend.test', { sessionId: 'browser-test' })).resolves.toMatchObject({
       workers: [],
       events: [],
-      clusterStatus: { mdnsService: '_ttb-label-reviewer._tcp.local.' },
     });
   });
 
@@ -116,24 +114,24 @@ describe('hybrid backend client', () => {
         expected,
         images: [{ id: 'image-1', name: 'front.png', url: '/front.png' }],
         application: { title: 'Hollow Ridge' },
-        processingMode: 'cluster',
+        processingMode: 'backend',
       },
     );
 
     expect(frontendReview.overallStatus).toBe(STATUS.PASS);
     expect(frontendReview.fields[0].field).toBe('Brand Name');
-    expect(frontendReview.files[0].ocrResult.source).toBe('cluster-backend');
+    expect(frontendReview.files[0].ocrResult.source).toBe('local-backend');
   });
 });
 
 describe('hybrid dashboard rendering', () => {
   it('renders fake worker data and scheduler reasons for tests', () => {
     const state = createInitialState();
-    state.processingMode = 'cluster';
+    state.processingMode = 'backend';
     state.backendStatus = 'online';
     state.backendMessage = 'Backend online at http://localhost:8000';
     state.backendSessionId = 'browser-test';
-    state.clusterWorkers = [
+    state.backendWorkers = [
       {
         id: 'worker-bigbertha',
         hostname: 'bigbertha',
@@ -151,7 +149,7 @@ describe('hybrid dashboard rendering', () => {
         calibration: { engines: { null: { ocrMs: 5 } } },
       },
     ];
-    state.clusterEvents = [
+    state.backendEvents = [
       {
         workerId: 'worker-bigbertha',
         eventType: 'job_claimed',

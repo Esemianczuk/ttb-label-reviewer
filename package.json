@@ -17,6 +17,7 @@
     "console:test": "npm --prefix apps/console test",
     "console:e2e": "npm --prefix apps/console run test:e2e",
     "test:js": "npm run browser:test && npm run console:test",
+    "regression:fast": "./scripts/regression-fast.sh",
     "test": "npm --prefix browser-demo test && npm --prefix apps/console test",
     "build": "npm --prefix browser-demo run build && npm --prefix apps/console run build",
     "playwright:install": "npm --prefix browser-demo exec playwright install chromium && npm --prefix apps/console exec playwright install chromium",

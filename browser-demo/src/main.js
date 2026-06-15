@@ -4,7 +4,7 @@ import {
   checkBackendHealth,
   connectSessionStream,
   createRemoteApplication,
-  fetchClusterSnapshot,
+  fetchWorkerSnapshot,
   getOrCreateSessionId,
   getStoredBackendUrl,
   remoteReviewToFrontendReview,
@@ -219,7 +219,7 @@ function setImageStatus(imageId, status, message) {
 }
 
 function backendCapableMode() {
-  return state.processingMode === 'backend' || state.processingMode === 'cluster';
+  return state.processingMode === 'backend';
 }
 
 function effectiveProcessingMode() {
@@ -235,29 +235,27 @@ async function refreshBackendStatus({ renderAfter = true } = {}) {
     state.backendHealth = await checkBackendHealth(state.backendUrl);
     state.backendStatus = 'online';
     state.backendMessage = `Backend online at ${state.backendUrl}`;
-    await refreshClusterTelemetry({ renderAfter: false });
+    await refreshWorkerTelemetry({ renderAfter: false });
     startBackendStream();
   } catch (error) {
     state.backendHealth = null;
     state.backendStatus = 'offline';
     state.backendMessage = `Backend unavailable. Browser Only remains ready.`;
-    state.clusterWorkers = [];
-    state.clusterEvents = [];
-    state.clusterStatus = null;
+    state.backendWorkers = [];
+    state.backendEvents = [];
     stopBackendStream();
   }
   if (renderAfter) render();
 }
 
-async function refreshClusterTelemetry({ renderAfter = true } = {}) {
+async function refreshWorkerTelemetry({ renderAfter = true } = {}) {
   if (state.backendStatus !== 'online') return;
   try {
-    const snapshot = await fetchClusterSnapshot(state.backendUrl, { sessionId: state.backendSessionId });
-    state.clusterWorkers = snapshot.workers || [];
-    state.clusterEvents = snapshot.events || [];
-    state.clusterStatus = snapshot.clusterStatus || null;
+    const snapshot = await fetchWorkerSnapshot(state.backendUrl, { sessionId: state.backendSessionId });
+    state.backendWorkers = snapshot.workers || [];
+    state.backendEvents = snapshot.events || [];
   } catch {
-    state.clusterEvents = state.clusterEvents || [];
+    state.backendEvents = state.backendEvents || [];
   }
   if (renderAfter) render();
 }
@@ -274,8 +272,8 @@ function startBackendStream() {
       }
       if (message.type === 'session_snapshot') {
         state.streamConnected = true;
-        state.clusterWorkers = message.workers || state.clusterWorkers;
-        state.clusterEvents = message.events || state.clusterEvents;
+        state.backendWorkers = message.workers || state.backendWorkers;
+        state.backendEvents = message.events || state.backendEvents;
         render();
       }
     },
@@ -491,8 +489,8 @@ async function runRemoteReview(startedAt, processingMode) {
     mode: processingMode,
   });
   state.backendReviewId = queuedReview.id;
-  appendProgress(`${processingMode === 'cluster' ? 'Cluster' : 'Local backend'} review queued. Waiting for worker results...`);
-  await refreshClusterTelemetry({ renderAfter: true });
+  appendProgress('Local backend review queued. Waiting for worker results...');
+  await refreshWorkerTelemetry({ renderAfter: true });
 
   const remoteReview = await waitForRemoteReview({
     backendUrl: state.backendUrl,
@@ -501,7 +499,7 @@ async function runRemoteReview(startedAt, processingMode) {
     signal: activeReviewAbortController.signal,
     onPoll: (review) => {
       appendProgress(`Backend status: ${review.status}.`);
-      refreshClusterTelemetry({ renderAfter: false });
+      refreshWorkerTelemetry({ renderAfter: false });
     },
   });
 
@@ -515,7 +513,7 @@ async function runRemoteReview(startedAt, processingMode) {
   });
   state.review = initializeReviewerFields(await attachEvidenceCrops(frontendReview));
   const totalMs = Math.round(performance.now() - startedAt);
-  const workerCount = Math.max(1, state.clusterWorkers.filter((worker) => worker.status === 'online').length);
+  const workerCount = Math.max(1, state.backendWorkers.filter((worker) => worker.status === 'online').length);
   state.batchStats = {
     imageCount: state.images.length,
     workerCount,

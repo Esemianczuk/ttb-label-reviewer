@@ -56,10 +56,10 @@ The CUDA overlay builds `ttb-label-reviewer-worker-cuda:local` and registers the
 This mode intentionally runs the API in Docker and the worker as a native macOS process:
 
 - Docker container: FastAPI, SQLite demo data, static console.
-- Native macOS worker: PaddleOCR runtime plus PyTorch/Transformers dependencies.
-- Metal/MPS: available to the LayoutLMv3 extractor when a promoted model is present.
+- Native macOS worker: PaddleOCR runtime.
+- Accelerator behavior: Linux CUDA is used when Docker GPU passthrough is available; macOS worker falls back to CPU when no compatible PaddleOCR accelerator is available.
 
-Why hybrid? Docker Desktop on macOS runs Linux containers, while Apple Metal acceleration is exposed to native macOS PyTorch through the `mps` device. Keeping the worker native is the simplest reliable way to support a future promoted extractor on Metal.
+Why hybrid? Docker Desktop on macOS runs Linux containers. Keeping the worker native avoids container-specific OCR limitations and keeps setup simple.
 
 Requirements:
 
@@ -85,7 +85,7 @@ The compose stack uses:
 - `api`: FastAPI coordinator serving `apps/console/dist`.
 - `worker`: local PaddleOCR worker.
 - Named volumes for API data, worker secrets, and model caches.
-- Read-only bind mount for `./models` so promoted extractor artifacts can be used without committing model weights.
+- Read-only bind mount for `./models` so optional local OCR artifacts can be used without committing model weights.
 
 The backend path is:
 
@@ -93,7 +93,7 @@ The backend path is:
 PaddleOCR full-image OCR -> conservative field alignment -> deterministic validators
 ```
 
-If `models/field-extractor/layoutlmv3-cola/current` contains a promoted model that passes the model gate, the worker also uses LayoutLMv3 token classification for field evidence. The deterministic validators remain the authority for pass/fail.
+Evidence crops are generated from aligned OCR token boxes. The deterministic validators remain the authority for pass/fail.
 
 ## Reset
 

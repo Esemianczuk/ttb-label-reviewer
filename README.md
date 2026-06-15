@@ -4,7 +4,7 @@ TTB Label Reviewer is a local-first alcohol label review assessment project for 
 
 The project now has one recommended run path plus one fallback:
 
-- **Backend primary**: FastAPI coordinator plus one local PaddleOCR worker. A promoted LayoutLMv3 field extractor is used only when it passes the runtime gate; otherwise the backend uses conservative weak alignment.
+- **Backend primary**: FastAPI coordinator plus one local PaddleOCR worker. PaddleOCR reads full label images and conservative field alignment maps OCR token spans to TTB evidence crops.
 - **Browser fallback**: private local fallback with packaged browser OCR assets and deterministic validators when the backend is not reachable.
 
 No cloud AI service is required.
@@ -23,7 +23,7 @@ It starts the backend-served console at:
 http://127.0.0.1:8000/
 ```
 
-Linux auto-detects CUDA-capable Docker GPU access and otherwise uses the CPU PaddleOCR worker. macOS uses `scripts/docker-mac-metal.sh`, which runs the API in Docker and the worker natively so a promoted LayoutLMv3 extractor can use Apple Metal/MPS.
+Linux auto-detects CUDA-capable Docker GPU access and otherwise uses the CPU PaddleOCR worker. macOS uses `scripts/docker-mac-metal.sh`, which runs the API in Docker and the worker natively with CPU fallback.
 
 Detailed Docker paths are in [Docker Quick Start](docs/DOCKER.md).
 
@@ -35,7 +35,7 @@ From the repository root:
 ./scripts/smart-demo.sh
 ```
 
-The script creates/uses `.venv`, installs missing backend and PaddleOCR/LayoutLMv3 runtime dependencies, builds the console, starts FastAPI, issues a worker token, starts one local PaddleOCR worker, and opens the backend-served console.
+The script creates/uses `.venv`, installs missing backend and PaddleOCR runtime dependencies, builds the console, starts FastAPI, issues a worker token, starts one local PaddleOCR worker, and opens the backend-served console.
 
 Default URL:
 
@@ -83,7 +83,7 @@ JOIN_TOKEN="$(curl -sS -X POST http://127.0.0.1:8000/api/workers/join-token \
 TTB_WORKER_JOIN_TOKEN="$JOIN_TOKEN" ./scripts/dev-worker.sh
 ```
 
-Backend reviews use PaddleOCR full-image OCR. If `models/field-extractor/layoutlmv3-cola/current` contains a promoted model that passes `model_gate.py`, workers use LayoutLMv3 token classification for field evidence. Otherwise they use conservative weak alignment. Deterministic validators remain the authority for pass/fail decisions.
+Backend reviews use PaddleOCR full-image OCR followed by conservative field alignment from OCR token boxes. Deterministic validators remain the authority for pass/fail decisions.
 
 ## Documentation
 
@@ -94,7 +94,6 @@ Backend reviews use PaddleOCR full-image OCR. If `models/field-extractor/layoutl
 - [Applicant workflow](docs/APPLICANT_WORKFLOW.md): create, upload, submit, edit, archive.
 - [Reviewer workbench](docs/REVIEWER_WORKBENCH.md): queue, evidence table, image viewer, notes, reports.
 - [Admin operations](docs/ADMIN_OPERATIONS.md): workers, jobs, settings, audit, benchmarks, retention.
-- [Backend worker mode](docs/DISTRIBUTED_MODE.md): local worker lifecycle and token flow.
 - [Docker quick start](docs/DOCKER.md): Linux CPU, Linux CUDA, and macOS Metal launch paths.
 - [Benchmarks](docs/BENCHMARKS.md): browser/backend benchmark JSON and admin display.
 - [Fixtures](docs/FIXTURES.md): public COLA registry records and upload testing.

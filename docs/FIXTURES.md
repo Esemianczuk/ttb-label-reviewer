@@ -86,14 +86,6 @@ python tools/ttb_collector/promote_high_signal_records.py \
   --apply
 ```
 
-OCR training/evaluation staging lives under:
-
-```text
-tools/ocr_lab/
-```
-
-Use `stage_training_data.py` for record-grouped train/validation/test splits and `oriented_text_pipeline.py` for rotated/perspective-corrected text crops.
-
 ## Browser Upload Fixtures
 
 For manual testing, use any PNG/JPG/WebP label image. Browser fallback keeps uploaded images in the browser session. Backend mode stores decoded and validated images under the local `data/assets` object store.

@@ -37,11 +37,11 @@ then
 fi
 
 if ! python - <<'PY' >/dev/null 2>&1
-import paddleocr, PIL, transformers, torch
+import paddleocr, PIL
 PY
 then
-  echo "Installing PaddleOCR and LayoutLMv3 runtime dependencies..."
-  python -m pip install -e "apps/worker[ocr,paddleocr,layoutlmv3]"
+  echo "Installing PaddleOCR runtime dependencies..."
+  python -m pip install -e "apps/worker[ocr,paddleocr]"
   if ! python - <<'PY' >/dev/null 2>&1
 import paddle
 PY
@@ -66,7 +66,6 @@ export TTB_API_STATIC_DIR="${TTB_API_STATIC_DIR:-$ROOT_DIR/apps/console/dist}"
 export TTB_API_HOST="${TTB_API_HOST:-127.0.0.1}"
 export TTB_API_PORT="${TTB_API_PORT:-8000}"
 export TTB_REQUIRE_WORKER_JOIN_TOKEN="${TTB_REQUIRE_WORKER_JOIN_TOKEN:-1}"
-export TTB_LAYOUTLMV3_REQUIRE_MODEL="${TTB_LAYOUTLMV3_REQUIRE_MODEL:-0}"
 export TTB_WORKER_COORDINATOR="${TTB_WORKER_COORDINATOR:-http://127.0.0.1:$TTB_API_PORT}"
 export TTB_WORKER_DATA_DIR="${TTB_WORKER_DATA_DIR:-$ROOT_DIR/.worker-cache}"
 export TTB_WORKER_SECRET_FILE="${TTB_WORKER_SECRET_FILE:-$TTB_WORKER_DATA_DIR/worker-secret.txt}"
@@ -185,8 +184,8 @@ Logs:      streaming in this terminal and saved to:
            $BACKEND_LOG
            $WORKER_LOG
 
-Backend extraction uses PaddleOCR full-image OCR. If a trained LayoutLMv3 model is staged at
-models/field-extractor/layoutlmv3-cola/current, it is used; otherwise conservative weak alignment is used.
+Backend extraction uses PaddleOCR full-image OCR followed by conservative field alignment.
+Deterministic validators remain the authority for pass/fail decisions.
 
 Press Ctrl+C to stop the backend and worker.
 EOF

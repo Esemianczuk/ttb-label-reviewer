@@ -208,33 +208,24 @@ function RuntimePolicyPanel({ settings }: { settings: AdminSettings }) {
   );
 }
 
-function FieldExtractorStatusPanel({ status }: { status?: { trainedModelLoaded: boolean; status: string; mode: string; modelDir: string; message: string; modelCard?: Record<string, unknown> | null; metrics?: Record<string, unknown> | null; failureReport?: Record<string, unknown> | null } }) {
+function FieldExtractorStatusPanel({ status }: { status?: { trainedModelLoaded: boolean; status: string; mode: string; modelDir: string | null; message: string; modelCard?: Record<string, unknown> | null; metrics?: Record<string, unknown> | null; failureReport?: Record<string, unknown> | null } }) {
   if (!status) return null;
-  const candidate = (status.metrics?.candidate || (status.modelCard?.metrics as any)?.candidate || {}) as Record<string, unknown>;
-  const baseline = (status.metrics?.baseline || (status.modelCard?.metrics as any)?.baseline || {}) as Record<string, unknown>;
   return (
     <Card
       size="small"
-      title="Enhanced OCR Field Extraction"
-      extra={<Tag color={status.trainedModelLoaded ? "green" : status.status === "unavailable" ? "red" : "gold"}>{status.trainedModelLoaded ? "trained model active" : status.status}</Tag>}
+      title="Backend OCR Field Extraction"
+      extra={<Tag color={status.status === "unavailable" ? "red" : "green"}>{status.status}</Tag>}
     >
       <Space orientation="vertical" className="full-width" size={12}>
-        {!status.trainedModelLoaded ? (
-          <GovAlert type="warning" title="Guarded baseline extraction is active">
-            Backend workers will use PaddleOCR full-image OCR plus conservative weak alignment until a promoted LayoutLMv3 model is staged.
-          </GovAlert>
-        ) : (
-          <GovAlert type="success" title="Guarded enhanced extraction is active">
-            PaddleOCR reads the full image, LayoutLMv3 proposes field evidence, deterministic plausibility checks accept safe spans, and weak alignment backfills misses.
-          </GovAlert>
-        )}
+        <GovAlert type={status.status === "unavailable" ? "warning" : "success"} title="PaddleOCR field alignment is the backend authority">
+          Backend workers run full-image PaddleOCR, align expected fields to OCR token boxes for evidence crops, and leave pass/fail authority to deterministic validators.
+        </GovAlert>
         <Typography.Text>{status.message}</Typography.Text>
         {typeof status.modelCard?.runtimePolicy === "string" ? <Typography.Text>{status.modelCard.runtimePolicy}</Typography.Text> : null}
-        <Typography.Text code>{status.modelDir}</Typography.Text>
         <Row gutter={[12, 12]}>
-          <Col xs={24} md={8}><ModelMetric label="Pure model field recall" value={metricPercent(candidate.fieldRecall)} /></Col>
-          <Col xs={24} md={8}><ModelMetric label="Pure model false-pass rate" value={metricPercent(candidate.falsePassRate)} /></Col>
-          <Col xs={24} md={8}><ModelMetric label="Baseline field recall" value={metricPercent(baseline.fieldRecall)} /></Col>
+          <Col xs={24} md={8}><ModelMetric label="OCR engine" value="PaddleOCR" /></Col>
+          <Col xs={24} md={8}><ModelMetric label="Extraction policy" value="Field alignment" /></Col>
+          <Col xs={24} md={8}><ModelMetric label="Decision authority" value="Validators" /></Col>
         </Row>
       </Space>
     </Card>
@@ -248,10 +239,6 @@ function ModelMetric({ label, value }: { label: string; value: string }) {
       <Typography.Title level={4}>{value}</Typography.Title>
     </div>
   );
-}
-
-function metricPercent(value: unknown): string {
-  return typeof value === "number" ? `${Math.round(value * 1000) / 10}%` : "Not measured";
 }
 
 export function AdminSettingsPage() {

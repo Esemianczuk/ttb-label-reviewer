@@ -226,10 +226,10 @@ export type BenchmarkRun = {
 
 export type OcrModelStatus = {
   id: string;
-  status: "trained" | "baseline" | "unavailable";
+  status: "active" | "unavailable";
   trainedModelLoaded: boolean;
   mode: string;
-  modelDir: string;
+  modelDir: string | null;
   message: string;
   modelCard?: Record<string, unknown> | null;
   metrics?: Record<string, unknown> | null;

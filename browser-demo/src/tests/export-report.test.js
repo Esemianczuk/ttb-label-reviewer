@@ -5,9 +5,9 @@ import { STATUS } from '../validation/status.js';
 describe('review report export', () => {
   it('preserves backend mode, engine, worker, timing, overrides, and notes', () => {
     const report = buildJsonReport({
-      mode: 'cluster',
+      mode: 'backend',
       overallStatus: STATUS.PASS,
-      application: { title: 'Cluster Smoke' },
+      application: { title: 'Backend Smoke' },
       expectedApplication: { brandName: 'HOLLOW RIDGE' },
       timings: { totalMs: 1200, queueMs: 100, ocrMs: 900, validationMs: 200 },
       enginesUsed: [{ id: 'null', displayName: 'Null OCR' }],
@@ -18,8 +18,8 @@ describe('review report export', () => {
           ocrResult: {
             processingTimeMs: 900,
             engine: 'null',
-            source: 'cluster-backend',
-            preprocessingNotes: ['Processed by cluster workers.'],
+            source: 'local-backend',
+            preprocessingNotes: ['Processed by local backend.'],
             rawText: 'HOLLOW RIDGE',
           },
         },
@@ -41,7 +41,7 @@ describe('review report export', () => {
       ],
     });
 
-    expect(report.mode).toBe('cluster');
+    expect(report.mode).toBe('backend');
     expect(report.timings.totalMs).toBe(1200);
     expect(report.enginesUsed[0].id).toBe('null');
     expect(report.workersUsed[0].id).toBe('phase7-bigbertha');

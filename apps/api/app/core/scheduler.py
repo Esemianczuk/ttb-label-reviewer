@@ -462,8 +462,7 @@ def quality_engine_bonus(job: models.Job, worker: models.Worker, engine_id: str,
 
 def escalation_bonus(job: models.Job, worker: models.Worker, reason_codes: list[str]) -> float:
     # The hardened evaluator path uses one backend OCR engine: PaddleOCR.
-    # LayoutLMv3, when promoted, enriches field evidence inside validation rather
-    # than adding a second OCR-engine escalation path.
+    # Field evidence is attached from PaddleOCR token boxes during validation.
     return 0.0
 
 

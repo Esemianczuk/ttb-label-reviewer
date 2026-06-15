@@ -53,7 +53,6 @@ services:
       TTB_WORKER_JOIN_TTL_SECONDS: "86400"
       TTB_WORKER_ENABLE_HEAVY_OCR: "1"
       PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK: "True"
-      TTB_LAYOUTLMV3_REQUIRE_MODEL: ${TTB_LAYOUTLMV3_REQUIRE_MODEL:-0}
     volumes:
       - worker-cache:/worker-cache
       - worker-model-cache:/root/.paddlex

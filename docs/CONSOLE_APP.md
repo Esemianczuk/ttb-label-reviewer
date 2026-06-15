@@ -17,6 +17,6 @@ Admins can inspect the active runtime path, but cannot switch modes from the UI.
 
 ## Backend OCR
 
-Backend automation uses PaddleOCR full-image OCR. If a trained LayoutLMv3 field extractor is staged at `models/field-extractor/layoutlmv3-cola/current`, backend workers use it to select field evidence. If the model is absent, the worker reports baseline mode and uses conservative weak alignment.
+Backend automation uses PaddleOCR full-image OCR. The worker aligns expected TTB fields to OCR token spans for evidence crops, then deterministic validators decide pass/fail.
 
 Deterministic validators remain the pass/fail authority.

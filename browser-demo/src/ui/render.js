@@ -501,7 +501,6 @@ function processingModePanel(state) {
           <select id="processing-mode-select" ${state.isProcessing ? 'disabled' : ''}>
             <option value="browser" ${state.processingMode === 'browser' ? 'selected' : ''}>Browser Only</option>
             <option value="backend" ${state.processingMode === 'backend' ? 'selected' : ''}>Backend</option>
-            <option value="cluster" ${state.processingMode === 'cluster' ? 'selected' : ''}>Cluster</option>
           </select>
         </label>
         <label>
@@ -517,7 +516,7 @@ function processingModePanel(state) {
       </div>
       <div class="mode-metrics">
         <span>${escapeHtml(state.workerCount)} browser worker${state.workerCount === 1 ? '' : 's'} ready</span>
-        <span>${escapeHtml(state.clusterWorkers.length)} backend worker${state.clusterWorkers.length === 1 ? '' : 's'} seen</span>
+        <span>${escapeHtml(state.backendWorkers.length)} backend worker${state.backendWorkers.length === 1 ? '' : 's'} seen</span>
         <span>Session ${escapeHtml(state.backendSessionId || 'browser-local')}</span>
       </div>
     </section>
@@ -667,22 +666,22 @@ function schedulerReason(event) {
   return reasons.length ? reasons.join(', ') : event.eventType.replaceAll('_', ' ');
 }
 
-function clusterDashboard(state) {
+function workerDashboard(state) {
   const stats = throughputStats(state);
   return `
-    <section class="cluster-dashboard">
-      <div class="panel cluster-panel">
+    <section class="worker-dashboard">
+      <div class="panel worker-panel">
         <div class="panel-heading">
           <div>
-            <p class="eyebrow">Cluster dashboard</p>
+            <p class="eyebrow">Backend dashboard</p>
             <h2>Worker Agents</h2>
           </div>
           <span class="status ${state.backendStatus === 'online' ? 'pass' : 'needs-review'}">${escapeHtml(state.backendStatus)}</span>
         </div>
         <div class="worker-card-grid">
           ${
-            state.clusterWorkers.length
-              ? state.clusterWorkers
+            state.backendWorkers.length
+              ? state.backendWorkers
                   .map(
                     (worker) => `
                       <article class="worker-card">
@@ -727,8 +726,8 @@ function clusterDashboard(state) {
         <div class="scheduler-log">
           <h3>Scheduler Explanation</h3>
           ${
-            state.clusterEvents.length
-              ? state.clusterEvents
+            state.backendEvents.length
+              ? state.backendEvents
                   .slice(0, 8)
                   .map(
                     (event) => `
@@ -751,7 +750,7 @@ function operationsDashboard(state) {
   return `
     <section class="operations-dashboard">
       ${batchQueuePanel(state)}
-      ${clusterDashboard(state)}
+      ${workerDashboard(state)}
     </section>
   `;
 }
@@ -793,11 +792,11 @@ export function renderApp(state) {
         <div class="title-block">
           <p class="eyebrow">Hybrid TTB review workspace</p>
           <h1>Alcohol Label Reviewer</h1>
-          <p>Agent queue for matching one application image against expected COLA fields, evidence, and reviewer decisions across browser, local backend, and cluster modes.</p>
+          <p>Agent queue for matching one application image against expected COLA fields, evidence, and reviewer decisions through backend PaddleOCR with browser fallback.</p>
         </div>
         <aside class="privacy-note">
           <strong>Demo controls</strong>
-          <span>Browser mode is always available. Backend modes use the configured coordinator when it is online.</span>
+          <span>Backend mode uses the configured coordinator when it is online. Browser mode remains available as a private fallback.</span>
           <button class="secondary reset-demo" data-action="reset-demo" type="button">Reset Demo</button>
         </aside>
       </section>

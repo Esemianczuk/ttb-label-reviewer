@@ -317,13 +317,13 @@ function normalizeBenchmark(row: any): BenchmarkRun {
   return row as BenchmarkRun;
 }
 
-function normalizeOcrModelStatus(row: any): OcrModelStatus {
+export function normalizeOcrModelStatus(row: any): OcrModelStatus {
   return {
-    id: row?.id || "layoutlmv3-cola",
-    status: row?.status || "baseline",
+    id: row?.id || "paddleocr-field-alignment",
+    status: row?.status || "active",
     trainedModelLoaded: Boolean(row?.trainedModelLoaded),
-    mode: row?.mode || "paddleocr-baseline-weak-alignment",
-    modelDir: row?.modelDir || "models/field-extractor/layoutlmv3-cola/current",
+    mode: row?.mode || "paddleocr-weak-field-alignment",
+    modelDir: row?.modelDir || null,
     message: row?.message || "Field extractor status unavailable.",
     modelCard: row?.modelCard || null,
     metrics: row?.metrics || null,

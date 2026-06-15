@@ -13,7 +13,7 @@ from ttb_worker.capabilities import probe_capabilities
 from ttb_worker.agent import WorkerAgent, WorkerConfig, resolve_concurrency
 from ttb_worker.engines.base import EngineEstimate, EngineHealth, OcrResult
 from ttb_worker.engines.paddleocr_engine import resolve_model_config
-from ttb_worker.extraction.model_status import layoutlmv3_model_status
+from ttb_worker.extraction.model_status import paddleocr_field_extractor_status
 from ttb_worker.heartbeat import HeartbeatCadence
 from ttb_worker.engines.null_engine import GOVERNMENT_WARNING_TEXT, NullOcrEngine
 from ttb_worker.tasks.evidence_task import normalize_bbox
@@ -244,44 +244,14 @@ def test_paddleocr_model_config_prefers_exported_custom_recognition(tmp_path: Pa
     assert config.det_model_dir == str((model_root / "det").resolve())
 
 
-def test_layoutlmv3_model_status_reports_promoted_model(tmp_path: Path, monkeypatch):
-    model_root = tmp_path / "field-extractor" / "current"
-    model_root.mkdir(parents=True)
-    (model_root / "config.json").write_text("{}", encoding="utf-8")
-    (model_root / "model.safetensors").write_bytes(b"not-a-real-model-for-status-test")
-    (model_root / "model-card.json").write_text('{"status":"promoted","name":"test model"}', encoding="utf-8")
-    (model_root / "eval-metrics.json").write_text(
-        '{"baseline":{"fieldRecall":0.88,"falsePassRate":0.01},"candidate":{"fieldRecall":0.91,"falsePassRate":0.0}}',
-        encoding="utf-8",
-    )
-    (model_root / "failure-report.json").write_text('{"failures":[{"id":"a"},{"id":"b"}]}', encoding="utf-8")
-    monkeypatch.setenv("TTB_LAYOUTLMV3_MODEL_DIR", str(model_root))
+def test_field_extractor_status_reports_authoritative_paddleocr_alignment():
+    status = paddleocr_field_extractor_status()
 
-    status = layoutlmv3_model_status()
-
-    assert status["trainedModelLoaded"] is True
-    assert status["mode"] == "enhanced-ocr-field-extraction-hybrid-guarded"
-    assert status["metrics"]["candidate"]["fieldRecall"] == 0.91
-    assert status["failureReport"]["failureCount"] == 2
-
-
-def test_layoutlmv3_model_status_blocks_unpromoted_failed_artifact(tmp_path: Path, monkeypatch):
-    model_root = tmp_path / "field-extractor" / "current"
-    model_root.mkdir(parents=True)
-    (model_root / "config.json").write_text("{}", encoding="utf-8")
-    (model_root / "model.safetensors").write_bytes(b"not-a-real-model-for-status-test")
-    (model_root / "model-card.json").write_text('{"status":"local-default-hybrid-guarded","name":"test model"}', encoding="utf-8")
-    (model_root / "eval-metrics.json").write_text(
-        '{"baseline":{"fieldRecall":1.0,"falsePassRate":0.0},"candidate":{"fieldRecall":0.40,"falsePassRate":0.82}}',
-        encoding="utf-8",
-    )
-    monkeypatch.setenv("TTB_LAYOUTLMV3_MODEL_DIR", str(model_root))
-
-    status = layoutlmv3_model_status()
-
+    assert status["id"] == "paddleocr-field-alignment"
+    assert status["status"] == "active"
+    assert status["mode"] == "paddleocr-weak-field-alignment"
     assert status["trainedModelLoaded"] is False
-    assert status["mode"] == "paddleocr-baseline-weak-alignment"
-    assert "not promoted" in status["message"]
+    assert "PaddleOCR full-image OCR" in status["message"]
 
 
 def test_auto_engine_selection_prefers_paddleocr_over_null_fixture_engine():
@@ -384,8 +354,7 @@ def test_validation_uses_single_paddleocr_candidate_even_when_requested_to_escal
     assert {engine["engineId"] for engine in review["enginesUsed"]} == {"paddleocr"}
 
 
-def test_validation_uses_paddleocr_as_authoritative_default(monkeypatch, tmp_path: Path):
-    monkeypatch.setenv("TTB_LAYOUTLMV3_MODEL_DIR", str(tmp_path / "missing-model"))
+def test_validation_uses_paddleocr_as_authoritative_default():
     expected_fields = {
         "brandName": "Hollow Ridge",
         "classType": "Bourbon Whiskey",
@@ -422,15 +391,11 @@ def test_validation_uses_paddleocr_as_authoritative_default(monkeypatch, tmp_pat
     assert review["escalation"]["strategy"] == "paddleocr_authoritative"
     assert review["escalation"]["attempted"] is False
     assert review["enginesUsed"] == [{"engineId": "paddleocr", "displayName": "PaddleOCR COLA", "timingMs": 900}]
-    assert review["fieldExtractor"]["name"] == "PaddleOCR baseline with weak field alignment"
+    assert review["fieldExtractor"]["name"] == "PaddleOCR field extraction"
     assert review["fieldExtractor"]["trainedModelActive"] is False
 
 
-def test_validation_prefers_layoutlmv3_field_entities_with_evidence_boxes(monkeypatch):
-    monkeypatch.setattr(
-        "ttb_worker.tasks.validation_task.layoutlmv3_predictions",
-        lambda _payloads: [{"entity": "BRAND_NAME", "fieldKey": "brandName", "tokenIndexes": [0, 1], "confidence": 0.98}],
-    )
+def test_validation_attaches_paddleocr_field_entities_with_evidence_boxes():
     expected_fields = {
         "brandName": "Hollow Ridge",
         "classType": "Bourbon Whiskey",
@@ -438,21 +403,21 @@ def test_validation_prefers_layoutlmv3_field_entities_with_evidence_boxes(monkey
         "netContents": "750 mL",
     }
     job = {
-        "id": "validation-layoutlm-test",
-        "applicationId": "app-worker-layoutlm",
+        "id": "validation-field-entities-test",
+        "applicationId": "app-worker-field-entities",
         "payload": {"expected_fields": expected_fields},
     }
     result = process_validation_job(
         job,
         _NoopClient(),
         [_BoxedFakeOcrEngine()],
-        "worker-layoutlm",
+        "worker-field-entities",
     )
 
     review = result["review_result"]
     brand = next(field for field in review["fields"] if field["fieldKey"] == "brandName")
     assert review["fieldExtractor"]["byField"]["brandName"] >= 1
-    assert brand["evidence"][0]["method"].startswith("layoutlmv3-token-classifier")
+    assert brand["evidence"][0]["method"].startswith("paddleocr-weak-field-alignment")
     assert brand["evidence"][0]["bbox"]["x"] == 100.0
 
 
@@ -521,7 +486,7 @@ class _BoxedFakeOcrEngine(NullOcrEngine):
     display_name = "Fake PaddleOCR"
 
     def estimate(self, task: dict, capabilities: dict) -> EngineEstimate:
-        return EngineEstimate(self.id, 900, 0.95, ["fake", "layoutlm"])
+        return EngineEstimate(self.id, 900, 0.95, ["fake", "paddleocr"])
 
     def healthcheck(self) -> EngineHealth:
         return EngineHealth(self.id, True, "ok", "fake boxed OCR")
@@ -544,7 +509,7 @@ class _BoxedFakeOcrEngine(NullOcrEngine):
             lines=[],
             words=words,
             elapsed_ms=900,
-            metadata={"imageWidth": 1000, "imageHeight": 1000, "layoutlmv3Ready": True},
+            metadata={"imageWidth": 1000, "imageHeight": 1000},
         )
 
 

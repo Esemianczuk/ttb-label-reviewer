@@ -22,7 +22,7 @@ This file is intentionally explicit so evaluators can tell prototype scope from 
 - Some browser-snapshot conveniences do not yet have complete persisted backend parity, especially every draft/correction/reviewer field-decision detail.
 - WebSocket live updates are derived from polling/database snapshots, not database triggers.
 - SQLite is the default no-Docker evaluator database; Postgres is supported by configuration but not required for the demo.
-- Multi-host cluster mode is intentionally out of scope for the hardened shippable demo.
+- Multi-host worker orchestration is intentionally out of scope for the hardened shippable demo.
 
 ## OCR And Validation
 

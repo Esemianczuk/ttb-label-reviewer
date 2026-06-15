@@ -31,7 +31,7 @@
     },
     "mode": {
       "type": "string",
-      "enum": ["browser", "backend", "distributed"]
+      "enum": ["browser", "backend"]
     },
     "overallStatus": {
       "$ref": "#/$defs/ReviewStatus"
@@ -219,7 +219,7 @@
         "workerId": { "type": "string" },
         "hostname": { "type": "string" },
         "platform": { "type": "string" },
-        "mode": { "type": "string", "enum": ["browser", "backend", "distributed"] }
+        "mode": { "type": "string", "enum": ["browser", "backend"] }
       }
     }
   }

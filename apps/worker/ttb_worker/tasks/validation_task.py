@@ -6,10 +6,9 @@ from time import monotonic
 from typing import Any
 
 from ttb_validation import validate_label_packet
-from ttb_validation.layoutlm_fields import attach_layoutlmv3_field_entities
+from ttb_validation.field_entities import attach_weak_field_entities
 
 from ..engines.base import OcrEngine, OcrResult
-from ..extraction import layoutlmv3_predictions
 from ..transport import CoordinatorClient
 from .ocr_task import choose_engine, load_job_image
 
@@ -311,16 +310,7 @@ def ocr_result_to_validator_payload(result: OcrResult, *, asset_id: str | None, 
 def attach_field_extractor_entities(expected_fields: dict[str, Any], ocr_payloads: list[dict[str, Any]], *, payload_label: str) -> list[dict[str, Any]]:
     if not expected_fields:
         return ocr_payloads
-    model_predictions = layoutlmv3_predictions(ocr_payloads)
-    predictions = list(model_predictions or [])
-    model_active = model_predictions is not None
-    for payload in ocr_payloads:
-        for prediction in payload.get("layoutlmv3Predictions") or []:
-            if isinstance(prediction, dict):
-                predictions.append(prediction)
-                model_active = True
-    source = "layoutlmv3-token-classifier" if model_active else f"paddleocr-weak-field-alignment:{payload_label}"
-    return attach_layoutlmv3_field_entities(expected_fields, ocr_payloads, predictions=predictions if model_active else None, source=source)
+    return attach_weak_field_entities(expected_fields, ocr_payloads, source=f"paddleocr-weak-field-alignment:{payload_label}")
 
 
 def field_extractor_summary(ocr_payloads: list[dict[str, Any]]) -> dict[str, Any]:
@@ -331,14 +321,13 @@ def field_extractor_summary(ocr_payloads: list[dict[str, Any]]) -> dict[str, Any
         if key:
             by_field[key] = by_field.get(key, 0) + 1
     methods = sorted({str(entity.get("method") or "") for entity in entities if entity.get("method")})
-    trained = any(method == "layoutlmv3-token-classifier" or method.startswith("layoutlmv3-token-classifier:") for method in methods)
     return {
-        "name": "Enhanced OCR field extraction" if trained else "PaddleOCR baseline with weak field alignment",
+        "name": "PaddleOCR field extraction",
         "entityCount": len(entities),
         "byField": dict(sorted(by_field.items())),
         "methods": methods,
-        "trainedModelActive": trained,
-        "note": "Entities label OCR tokens as evidence. Deterministic validators still decide pass/fail.",
+        "trainedModelActive": False,
+        "note": "PaddleOCR reads the full image; conservative field alignment labels OCR tokens as evidence. Deterministic validators still decide pass/fail.",
     }
 
 

@@ -164,7 +164,7 @@ class PaddleOcrEngine(OcrEngine):
                 "modelDirs": self.model_config.kwargs,
                 "imageWidth": image_width,
                 "imageHeight": image_height,
-                "layoutlmv3Ready": True,
+                "fieldEntityBoxesReady": True,
                 "ocrContract": "full-image-paddleocr-lines-and-token-boxes-v2",
                 "orientationRecovery": recovery_metadata,
             },

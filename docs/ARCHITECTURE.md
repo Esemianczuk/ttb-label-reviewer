@@ -4,7 +4,7 @@ TTB Label Reviewer is local-first. The browser can run alone, and the backend pa
 
 ## Runtime Path
 
-- **Backend primary**: FastAPI persistence, local asset storage, worker/job/audit resources, WebSocket live updates, PaddleOCR OCR, guarded LayoutLMv3 field extraction only when promoted, and deterministic Python validators.
+- **Backend primary**: FastAPI persistence, local asset storage, worker/job/audit resources, WebSocket live updates, PaddleOCR OCR, conservative field alignment from OCR token boxes, and deterministic Python validators.
 - **Browser fallback**: local snapshot store, packaged Tesseract assets, deterministic JavaScript validators, reviewer edits, and PDF export when the backend is absent.
 
 There is no supported user-facing multi-host processing mode in the shippable demo.
@@ -24,7 +24,7 @@ There is no supported user-facing multi-host processing mode in the shippable de
 3. Reviewer starts automation.
 4. Backend mode creates OCR, evidence, validation, and report work.
 5. Worker runs PaddleOCR full-image OCR.
-6. LayoutLMv3 field entities are attached only when a promoted trained model passes the runtime gate; otherwise weak alignment is used conservatively.
+6. Conservative field entities are attached from PaddleOCR OCR tokens and boxes.
 7. Deterministic validators compare expected fields against extracted evidence.
 8. Reviewer confirms or overrides pass/fail decisions and notes.
 9. PDF export records expected values, extracted evidence, statuses, notes, and audit context.
@@ -38,7 +38,7 @@ OCR payloads keep a stable shape:
 - `lines`
 - `words`
 - `metadata`
-- `fieldEntities[]` from guarded model spans or conservative weak alignment
+- `fieldEntities[]` from conservative field alignment
 
 Evidence crops come from OCR/entity bounding boxes with padding and image-boundary clamping. Model output is evidence only; deterministic validators remain the compliance authority.
 
