@@ -8,7 +8,7 @@
 
 ## Take-Home Submission Contents
 
-This repository includes the full source code for the console, API, worker, validation package, fixture collector, Docker setup, tests, and deployment helpers. The setup and run paths are documented below for Docker, native Linux, native macOS, CUDA Linux, and hosted evaluation.
+This repository includes the full source code for the console, API, worker, validation package, public COLA sample collector, Docker setup, tests, and deployment helpers. The setup and run paths are documented below for Docker, native Linux, native macOS, CUDA Linux, and hosted evaluation.
 
 Brief approach: the reviewer workflow uses full-image PaddleOCR on the backend to read COLA label images, aligns recognized text and OCR boxes to expected TTB fields, generates evidence crops from those boxes, and then applies deterministic validation rules. OCR output is evidence only; deterministic validators and reviewer action remain the pass/fail authority.
 
@@ -31,17 +31,17 @@ The demo includes a complete role-based access control flow:
 
 - **Reviewer** users process submitted COLA applications, run OCR-backed automation, inspect evidence, override field outcomes, download reports, and close decisions.
 - **Applicant** users can create and edit application packets, upload label images, import COLA registry data when available, submit packets, archive records, and respond to correction requests by updating the packet.
-- **Admin** users can inspect worker health, OCR engine status, jobs, audit events, benchmarks, settings, and retained fixture state without destructive controls.
+- **Admin** users can inspect worker health, OCR engine status, jobs, audit events, benchmarks, settings, and retained sample-record state without destructive controls.
 
-The current demo data is built from real public COLA registry records. Collector scripts under `tools/ttb_collector/` were used to pull public detail pages from `ttbonline.gov/colasonline/viewColaDetails.do`, save raw detail HTML, parse application metadata, download printable COLA forms and public label image assets, normalize expected fields, and write the bundled fixture manifests. Earlier prototypes used synthetic AI-generated packets; the current reviewer demo is seeded from the public COLA fixture set.
+The current demo data is built from real public COLA registry records. Collector scripts under `tools/ttb_collector/` were used to pull public detail pages from `ttbonline.gov/colasonline/viewColaDetails.do`, save raw detail HTML, parse application metadata, download printable COLA forms and public label image assets, normalize expected fields, and write the bundled sample manifests. Earlier prototypes used synthetic AI-generated packets; the current reviewer demo is seeded from bundled public COLA sample records.
 
-## Fixture Provenance
+## Sample Record Provenance
 
-All bundled demo records are derived from publicly available approved COLA records. Pending, private, rejected, or in-process applications are not used. Fixture directories retain source identifiers, raw public detail HTML when available, parsed metadata, expected field JSON, manifest rows, and downloaded public label or printable assets so the dataset can be audited against the public source material.
+All bundled public COLA sample records are derived from publicly available approved COLA records. Pending, private, rejected, or in-process applications are not used. Sample record directories retain source identifiers, raw public detail HTML when available, parsed metadata, expected field JSON, manifest rows, and downloaded public label or printable assets so the dataset can be audited against the public source material.
 
 The collector is intentionally small and curated rather than a bulk scraper. It uses known public TTB identifiers, cached discovery helpers, conservative request delays, and a manual promotion step before records are added to the bundled `fixtures/public-cola-registry/records/` dataset.
 
-The repository stores **75 public COLA record directories**. Of those, **66 demo-ready application examples** are seeded into every evaluator session: **65** start as submitted reviewer work, and **1** starts in a correction-needed applicant workflow for resubmission testing. The remaining **9** records are retained for provenance and collector validation when their label or metadata evidence is not strong enough for the main demo. Each browser session receives the same seeded fixture set as an isolated copy, not a different mix of applications, so multiple evaluators can test at the same time without sharing review decisions, notes, uploads, or progress. **Reset Demo** clears applications, matches, notes, and review progress for that session only.
+The repository stores **75 public COLA sample record directories**. Of those, **66 demo-ready sample applications** are seeded into every evaluator session: **65** start as submitted reviewer work, and **1** starts in a correction-needed applicant workflow for resubmission testing. The remaining **9** records are retained for provenance and collector validation when their label or metadata evidence is not strong enough for the main demo. Each browser session receives the same seeded sample set as an isolated copy, not a different mix of applications, so multiple evaluators can test at the same time without sharing review decisions, notes, uploads, or progress. **Reset Demo** clears applications, matches, notes, and review progress for that session only.
 
 Custom examples can be added from the **Applicant** role with **Create application packet**. The applicant form supports manual entry, label-image upload, and optional drag-and-drop import of COLA registry JSON, XML, HTML, or text exports.
 
@@ -61,7 +61,7 @@ If the backend is not reachable, the console falls back to the packaged browser 
 
 ## Benchmark Snapshot
 
-Hosted reviewer demo, seeded public COLA fixture set. Measured on June 15, 2026 against `https://demo.sherpa-map.com` with isolated benchmark sessions.
+Hosted reviewer demo, seeded public COLA sample set. Measured on June 15, 2026 against `https://demo.sherpa-map.com` with isolated benchmark sessions.
 
 | Run mode | Applications | Median review time | p95 review time | Max review time | Backend OCR path | Browser fallback |
 |---|---:|---:|---:|---:|---|---:|
