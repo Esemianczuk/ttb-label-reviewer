@@ -58,7 +58,9 @@ Hosted reviewer demo, seeded public COLA fixture set. Measured on June 15, 2026 
 | Single reviewer automation | 5 | 4.15 sec | 4.43 sec | 4.43 sec | PaddleOCR CUDA worker | 0 |
 | Batch review workflow | 5 | 3.57 sec/app | 4.73 sec/app | 4.73 sec/app | PaddleOCR CUDA worker | 0 |
 
-This hosted run exercised 10 backend review POSTs, 50 evaluated fields, and 26 evidence crops. The active worker reported `paddleocr_cuda_pretrained` on an NVIDIA GeForce RTX 4090. The benchmark measures the reviewer automation path from backend review request to stored review result; browser-only fallback remained available but was not used. These numbers apply to the tested seeded examples, not every possible COLA label.
+This hosted run exercised 10 backend review POSTs, 50 evaluated fields, and 26 evidence crops. The active worker reported `paddleocr_cuda_pretrained` on an NVIDIA GeForce RTX 4090. The benchmark measures the full backend automation run from reviewer request to stored review result, including queue/scheduler overhead, worker claim, asset loading, PaddleOCR, field alignment, deterministic validation, evidence box generation, database write, and polling until the completed result is returned. It does not include PDF export time or manual reviewer decision time. Browser-only fallback remained available but was not used. These numbers apply to the tested seeded examples, not every possible COLA label.
+
+The benchmark above is the short evaluator-facing snapshot. The full ML approach, including OCR engine comparisons, corpus coverage, LayoutLMv3 trial results, false-pass gating, and reproduction commands, is documented in [`docs/ML_APPROACH_EVALUATION.md`](docs/ML_APPROACH_EVALUATION.md).
 
 Reproduce the hosted snapshot with:
 
