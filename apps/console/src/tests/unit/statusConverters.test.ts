@@ -44,7 +44,6 @@ describe("canonical status converters", () => {
 
   it("keeps display and backend mode conversions separate from stored statuses", () => {
     expect(displayStatus("NEEDS_CORRECTION")).toBe("Needs Correction");
-    expect(backendModeFromProcessingMode("cluster")).toBe("distributed");
     expect(backendModeFromProcessingMode("backend")).toBe("backend");
   });
 

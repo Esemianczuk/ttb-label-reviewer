@@ -1,0 +1,9 @@
+retrieved_at: 2026-06-14T02:33:38Z
+system: TTB Public COLA Registry
+ttb_id: 24362001000403
+source_kind: public_registry
+detail_url: https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=24362001000403
+final_url: https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=24362001000403
+asset_urls:
+  - https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=24362001000403
+  - https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=GINORMOUS 192 TALL Can Cola.jpg&filetype=l

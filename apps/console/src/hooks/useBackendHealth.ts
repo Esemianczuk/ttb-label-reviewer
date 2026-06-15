@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getBackendUrl, setBackendUrl } from "../providers/data/backendDataProvider";
 
 export type BackendHealth = {
@@ -17,7 +17,7 @@ export function useBackendHealth({ enabled = true }: { enabled?: boolean } = {})
   const [backendUrlState, setBackendUrlState] = useState(() => getBackendUrl());
   const [health, setHealth] = useState<BackendHealth>({
     status: enabled ? "checking" : "idle",
-    message: enabled ? "Checking backend coordinator" : "Backend not required in Browser Only mode",
+    message: enabled ? "Checking backend coordinator" : "Backend health check disabled",
     backendUrl: backendUrlState
   });
 
@@ -25,7 +25,7 @@ export function useBackendHealth({ enabled = true }: { enabled?: boolean } = {})
     if (!enabled) {
       setHealth({
         status: "idle",
-        message: "Backend not required in Browser Only mode",
+        message: "Backend health check disabled",
         backendUrl: backendUrlState
       });
       return;
@@ -58,7 +58,7 @@ export function useBackendHealth({ enabled = true }: { enabled?: boolean } = {})
         if (!cancelled) {
           setHealth({
             status: "offline",
-            message: error?.name === "AbortError" ? "Coordinator health check timed out" : "Coordinator unavailable; browser mode remains available",
+            message: error?.name === "AbortError" ? "Coordinator health check timed out; browser fallback is available" : "Coordinator unavailable; browser fallback is available",
             backendUrl: backendUrlState
           });
         }
@@ -72,11 +72,11 @@ export function useBackendHealth({ enabled = true }: { enabled?: boolean } = {})
     };
   }, [backendUrlState, enabled]);
 
-  const updateBackendUrl = (url: string) => {
+  const updateBackendUrl = useCallback((url: string) => {
     const normalized = url.replace(/\/+$/, "");
     setBackendUrl(normalized);
     setBackendUrlState(normalized);
-  };
+  }, []);
 
   return { health, backendUrl: backendUrlState, setBackendUrl: updateBackendUrl };
 }

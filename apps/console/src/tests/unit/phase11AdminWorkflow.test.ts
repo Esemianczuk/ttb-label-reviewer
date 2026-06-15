@@ -1,38 +1,27 @@
 import { describe, expect, it } from "vitest";
 import {
-  autoReviewApplication,
-  deleteApplicationPacket,
   getSnapshot,
-  purgeOldJobs,
-  purgeRawImages,
   resetSnapshot,
-  runAdminBenchmark,
-  updateAdminSettings,
-  updateJobOperation,
-  updateWorkerOperation
+  runAdminBenchmark
 } from "../../providers/data/browserStore";
+import { canAccess } from "../../providers/access/permissionMatrix";
+import { browserDataProvider } from "../../providers/data/browserDataProvider";
 import { adminMetrics } from "../../pages/admin/adminUtils";
 import { normalizeBackendWorker } from "../../pages/admin/useAdminOperations";
 
 describe("phase 11 admin workflow", () => {
-  it("persists operations settings in the browser snapshot", () => {
-    resetSnapshot();
-    updateAdminSettings({ preferredOcrEngine: "tesseract", maxConcurrency: 8, warningStrictness: "strict" });
-    expect(getSnapshot().adminSettings.preferredOcrEngine).toBe("tesseract");
-    expect(getSnapshot().adminSettings.maxConcurrency).toBe(8);
-    expect(getSnapshot().auditEvents[0].action).toBe("settings.update");
-  });
+  it("keeps admin permissions observational except for benchmark runs", () => {
+    expect(canAccess("admin", "workers", "list")).toBe(true);
+    expect(canAccess("admin", "jobs", "show")).toBe(true);
+    expect(canAccess("admin", "settings", "show")).toBe(true);
+    expect(canAccess("admin", "benchmarks", "run")).toBe(true);
 
-  it("updates worker state for recalibrate, drain, disable, and enable", () => {
-    resetSnapshot();
-    updateWorkerOperation({ workerId: "worker-fastapi-01", action: "recalibrate" });
-    expect(getSnapshot().workers.find((worker) => worker.id === "worker-fastapi-01")?.status).toBe("calibrating");
-    updateWorkerOperation({ workerId: "worker-fastapi-01", action: "drain" });
-    expect(getSnapshot().workers.find((worker) => worker.id === "worker-fastapi-01")?.drainMode).toBe(true);
-    updateWorkerOperation({ workerId: "worker-fastapi-01", action: "disable" });
-    expect(getSnapshot().workers.find((worker) => worker.id === "worker-fastapi-01")?.disabled).toBe(true);
-    updateWorkerOperation({ workerId: "worker-fastapi-01", action: "enable" });
-    expect(getSnapshot().workers.find((worker) => worker.id === "worker-fastapi-01")?.disabled).toBe(false);
+    expect(canAccess("admin", "workers", "disable")).toBe(false);
+    expect(canAccess("admin", "workers", "drain")).toBe(false);
+    expect(canAccess("admin", "jobs", "cancel")).toBe(false);
+    expect(canAccess("admin", "jobs", "retry")).toBe(false);
+    expect(canAccess("admin", "settings", "update")).toBe(false);
+    expect(canAccess("admin", "settings", "purge")).toBe(false);
   });
 
   it("normalizes rich backend worker capability maps into dashboard-safe arrays", () => {
@@ -53,31 +42,30 @@ describe("phase 11 admin workflow", () => {
         evidence_crop: true,
         validation: true,
         engines: {
-          tesseract: { available: false, status: "unavailable" },
-          null: { available: true, status: "ok" }
+          paddleocr: { available: true, status: "ok" }
         },
         supportedJobTypes: ["ocr", "evidence_crop", "validation"],
-        warmEngines: ["null"]
+        warmEngines: ["paddleocr"]
       },
       calibration: {
         engines: {
-          null: {
+          paddleocr: {
             available: true,
             status: "ok",
-            steadyStateMs: 0
+            steadyStateMs: 900
           }
         }
       }
     });
 
-    expect(worker.engines).toEqual(["fixture fallback only"]);
-    expect(worker.capabilities).toEqual(expect.arrayContaining(["fixture fallback only", "ocr", "evidence_crop", "validation"]));
+    expect(worker.engines).toEqual(["PaddleOCR COLA"]);
+    expect(worker.capabilities).toEqual(expect.arrayContaining(["ocr", "evidence_crop", "validation"]));
     expect(worker.cpu).toBe("64 CPU cores");
     expect(worker.ramGb).toBeGreaterThan(120);
     expect(worker.latencyMs).toBe(16);
   });
 
-  it("hides fixture fallback when PaddleOCR is available", () => {
+  it("hides non-production engines when PaddleOCR is available", () => {
     resetSnapshot();
     const worker = normalizeBackendWorker({
       id: "worker-paddleocr",
@@ -95,35 +83,38 @@ describe("phase 11 admin workflow", () => {
         engineProfile: { preferredEngine: "paddleocr", tier: "custom_paddleocr_cuda" },
         engines: {
           paddleocr: { available: true, status: "ok" },
-          easyocr: { available: true, status: "ok" },
           null: { available: true, status: "ok" }
         },
         supportedJobTypes: ["ocr", "evidence_crop", "validation"],
-        warmEngines: ["paddleocr", "easyocr", "null"]
+        warmEngines: ["paddleocr", "null"]
       },
       calibration: {
         engines: {
           paddleocr: { available: true, status: "ok", steadyStateMs: 650 },
-          easyocr: { available: true, status: "ok", steadyStateMs: 800 },
           null: { available: true, status: "ok", steadyStateMs: 0 }
         }
       }
     });
 
-    expect(worker.engines).toEqual(["PaddleOCR COLA (CUDA preferred)", "EasyOCR (CUDA preferred)"]);
+    expect(worker.engines).toEqual(["PaddleOCR COLA (CUDA preferred)"]);
     expect(worker.capabilities).not.toContain("null");
     expect(worker.gpu).toBe("CUDA");
   });
 
-  it("supports job retry, cancellation, and priority changes", () => {
+  it("rejects hidden destructive admin actions in browser fallback mode", async () => {
     resetSnapshot();
-    const jobId = getSnapshot().jobs[0].id;
-    updateJobOperation({ jobId, action: "raise_priority" });
-    expect(getSnapshot().jobs[0].priority).toBeGreaterThan(90);
-    updateJobOperation({ jobId, action: "retry" });
-    expect(getSnapshot().jobs[0].status).toBe("retrying");
-    updateJobOperation({ jobId, action: "cancel" });
-    expect(getSnapshot().jobs[0].status).toBe("cancelled");
+    const before = getSnapshot();
+    const custom = browserDataProvider.custom!;
+
+    await expect(custom({ url: "admin/settings", method: "post", payload: { maxConcurrency: 1 } })).rejects.toThrow("read-only");
+    await expect(custom({ url: "admin/worker", method: "post", payload: { workerId: "worker-1", action: "disable" } })).rejects.toThrow("read-only");
+    await expect(custom({ url: "admin/job", method: "post", payload: { jobId: "job-1", action: "cancel" } })).rejects.toThrow("read-only");
+    await expect(custom({ url: "admin/purge-all", method: "post", payload: {} })).rejects.toThrow("read-only");
+
+    const after = getSnapshot();
+    expect(after.applications).toHaveLength(before.applications.length);
+    expect(after.jobs).toHaveLength(before.jobs.length);
+    expect(after.adminSettings).toEqual(before.adminSettings);
   });
 
   it("records benchmark runs and dashboard metrics", () => {
@@ -136,15 +127,4 @@ describe("phase 11 admin workflow", () => {
     expect(snapshot.auditEvents[0].action).toBe("benchmark.run");
   });
 
-  it("purges retention data and deletes application packets", () => {
-    resetSnapshot();
-    autoReviewApplication(getSnapshot().applications[0].id, "browser");
-    purgeRawImages();
-    expect(getSnapshot().applications.some((application) => application.review && application.images.length === 0)).toBe(true);
-    purgeOldJobs();
-    expect(getSnapshot().jobs.every((job) => !["completed", "failed", "cancelled"].includes(job.status))).toBe(true);
-    const applicationId = getSnapshot().applications[0].id;
-    deleteApplicationPacket(applicationId);
-    expect(getSnapshot().applications.some((application) => application.id === applicationId)).toBe(false);
-  });
 });

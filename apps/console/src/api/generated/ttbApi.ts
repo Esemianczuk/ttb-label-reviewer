@@ -211,7 +211,6 @@ export type BenchmarkRunRequestMode = typeof BenchmarkRunRequestMode[keyof typeo
 export const BenchmarkRunRequestMode = {
   browser: 'browser',
   backend: 'backend',
-  cluster: 'cluster',
 } as const;
 
 export interface BenchmarkRunRequest {
@@ -227,16 +226,6 @@ export interface BenchmarkRunRequest {
 export interface BodyUploadImageApiApplicationsApplicationIdImagesPost {
   file: string;
   role?: string;
-}
-
-export type ClusterStatusReadWarning = string | null;
-
-export interface ClusterStatusRead {
-  coordinatorUrl: string;
-  lanMode: boolean;
-  mdnsEnabled: boolean;
-  mdnsService: string;
-  warning?: ClusterStatusReadWarning;
 }
 
 export type DemoLoginRequestRole = typeof DemoLoginRequestRole[keyof typeof DemoLoginRequestRole];
@@ -403,33 +392,18 @@ export interface OperationResult {
   ok?: boolean;
 }
 
-export type ReviewCreateMode = typeof ReviewCreateMode[keyof typeof ReviewCreateMode];
-
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const ReviewCreateMode = {
-  backend: 'backend',
-  distributed: 'distributed',
-} as const;
-
 export type ReviewCreateOcrStrategy = typeof ReviewCreateOcrStrategy[keyof typeof ReviewCreateOcrStrategy];
 
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const ReviewCreateOcrStrategy = {
   paddleocr_authoritative: 'paddleocr_authoritative',
-  tesseract_first_easyocr_escalation: 'tesseract_first_easyocr_escalation',
   primary_only: 'primary_only',
 } as const;
 
 export interface ReviewCreate {
-  fallbackEngine?: string;
-  /**
-   * @minimum 0.5
-   * @maximum 0.99
-   */
-  fallbackMinConfidence?: number;
-  mode?: ReviewCreateMode;
+  forceFreshOcr?: boolean;
+  mode?: 'backend';
   ocrStrategy?: ReviewCreateOcrStrategy;
   primaryEngine?: string;
   priority?: number;
@@ -454,6 +428,7 @@ export interface ReviewRead {
   id: string;
   mode: string;
   result?: ReviewReadResult;
+  runStatus?: string;
   status: string;
 }
 
@@ -814,6 +789,42 @@ export const getListFixturesApiAdminFixturesGetUrl = () => {
 export const listFixturesApiAdminFixturesGet = async ( options?: RequestInit): Promise<listFixturesApiAdminFixturesGetResponse> => {
 
   return apiFetch<listFixturesApiAdminFixturesGetResponse>(getListFixturesApiAdminFixturesGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+/**
+ * @summary Ocr Model Status
+ */
+export type ocrModelStatusApiAdminOcrModelStatusGetResponse200 = {
+  data: unknown
+  status: 200
+}
+
+export type ocrModelStatusApiAdminOcrModelStatusGetResponseSuccess = (ocrModelStatusApiAdminOcrModelStatusGetResponse200) & {
+  headers: Headers;
+};
+;
+
+export type ocrModelStatusApiAdminOcrModelStatusGetResponse = (ocrModelStatusApiAdminOcrModelStatusGetResponseSuccess)
+
+export const getOcrModelStatusApiAdminOcrModelStatusGetUrl = () => {
+
+
+
+
+  return `/api/admin/ocr-model-status`
+}
+
+export const ocrModelStatusApiAdminOcrModelStatusGet = async ( options?: RequestInit): Promise<ocrModelStatusApiAdminOcrModelStatusGetResponse> => {
+
+  return apiFetch<ocrModelStatusApiAdminOcrModelStatusGetResponse>(getOcrModelStatusApiAdminOcrModelStatusGetUrl(),
   {
     ...options,
     method: 'GET'
@@ -1650,86 +1661,6 @@ export const canApiAuthzCanPost = async (authzCanRequest: AuthzCanRequest, optio
 
 
 /**
- * @summary Issue Join Token
- */
-export type issueJoinTokenApiClusterJoinTokenPostResponse201 = {
-  data: JoinTokenRead
-  status: 201
-}
-
-export type issueJoinTokenApiClusterJoinTokenPostResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
-export type issueJoinTokenApiClusterJoinTokenPostResponseSuccess = (issueJoinTokenApiClusterJoinTokenPostResponse201) & {
-  headers: Headers;
-};
-export type issueJoinTokenApiClusterJoinTokenPostResponseError = (issueJoinTokenApiClusterJoinTokenPostResponse422) & {
-  headers: Headers;
-};
-
-export type issueJoinTokenApiClusterJoinTokenPostResponse = (issueJoinTokenApiClusterJoinTokenPostResponseSuccess | issueJoinTokenApiClusterJoinTokenPostResponseError)
-
-export const getIssueJoinTokenApiClusterJoinTokenPostUrl = () => {
-
-
-
-
-  return `/api/cluster/join-token`
-}
-
-export const issueJoinTokenApiClusterJoinTokenPost = async (joinTokenCreate: JoinTokenCreate, options?: RequestInit): Promise<issueJoinTokenApiClusterJoinTokenPostResponse> => {
-
-  return apiFetch<issueJoinTokenApiClusterJoinTokenPostResponse>(getIssueJoinTokenApiClusterJoinTokenPostUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      joinTokenCreate,)
-  }
-);}
-
-
-
-/**
- * @summary Cluster Status
- */
-export type clusterStatusApiClusterStatusGetResponse200 = {
-  data: ClusterStatusRead
-  status: 200
-}
-
-export type clusterStatusApiClusterStatusGetResponseSuccess = (clusterStatusApiClusterStatusGetResponse200) & {
-  headers: Headers;
-};
-;
-
-export type clusterStatusApiClusterStatusGetResponse = (clusterStatusApiClusterStatusGetResponseSuccess)
-
-export const getClusterStatusApiClusterStatusGetUrl = () => {
-
-
-
-
-  return `/api/cluster/status`
-}
-
-export const clusterStatusApiClusterStatusGet = async ( options?: RequestInit): Promise<clusterStatusApiClusterStatusGetResponse> => {
-
-  return apiFetch<clusterStatusApiClusterStatusGetResponse>(getClusterStatusApiClusterStatusGetUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-/**
  * @summary Health
  */
 export type healthApiHealthGetResponse200 = {
@@ -2321,6 +2252,50 @@ export const listWorkerEventsApiWorkersEventsGet = async (params?: ListWorkerEve
     method: 'GET'
 
 
+  }
+);}
+
+
+
+/**
+ * @summary Issue Worker Join Token
+ */
+export type issueWorkerJoinTokenApiWorkersJoinTokenPostResponse201 = {
+  data: JoinTokenRead
+  status: 201
+}
+
+export type issueWorkerJoinTokenApiWorkersJoinTokenPostResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type issueWorkerJoinTokenApiWorkersJoinTokenPostResponseSuccess = (issueWorkerJoinTokenApiWorkersJoinTokenPostResponse201) & {
+  headers: Headers;
+};
+export type issueWorkerJoinTokenApiWorkersJoinTokenPostResponseError = (issueWorkerJoinTokenApiWorkersJoinTokenPostResponse422) & {
+  headers: Headers;
+};
+
+export type issueWorkerJoinTokenApiWorkersJoinTokenPostResponse = (issueWorkerJoinTokenApiWorkersJoinTokenPostResponseSuccess | issueWorkerJoinTokenApiWorkersJoinTokenPostResponseError)
+
+export const getIssueWorkerJoinTokenApiWorkersJoinTokenPostUrl = () => {
+
+
+
+
+  return `/api/workers/join-token`
+}
+
+export const issueWorkerJoinTokenApiWorkersJoinTokenPost = async (joinTokenCreate: JoinTokenCreate, options?: RequestInit): Promise<issueWorkerJoinTokenApiWorkersJoinTokenPostResponse> => {
+
+  return apiFetch<issueWorkerJoinTokenApiWorkersJoinTokenPostResponse>(getIssueWorkerJoinTokenApiWorkersJoinTokenPostUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      joinTokenCreate,)
   }
 );}
 

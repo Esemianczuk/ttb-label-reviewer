@@ -4,7 +4,7 @@ import { healthApiHealthGet } from "../../api/generated/ttbApi";
 import { apiDataProvider, setBackendUrl } from "../../providers/data/backendDataProvider";
 import { browserDataProvider } from "../../providers/data/browserDataProvider";
 import { providerForMode } from "../../providers/data/providerRegistry";
-import { resetSnapshot } from "../../providers/data/browserStore";
+import { applyBackendReviewResult, getSnapshot, resetSnapshot } from "../../providers/data/browserStore";
 
 describe("phase 8 provider consolidation", () => {
   it("registers every phase-8 resource in the browser provider", async () => {
@@ -21,8 +21,6 @@ describe("phase 8 provider consolidation", () => {
     expect(providerForMode("browser").requiresBackend).toBe(false);
     expect(providerForMode("backend").key).toBe("api");
     expect(providerForMode("backend").requiresBackend).toBe(true);
-    expect(providerForMode("cluster").key).toBe("api");
-    expect(providerForMode("cluster").requiresBackend).toBe(true);
   });
 
   it("calls FastAPI endpoints through the API data provider", async () => {
@@ -46,24 +44,111 @@ describe("phase 8 provider consolidation", () => {
     );
   });
 
-  it("maps admin operations to backend endpoints", async () => {
+  it("keeps backend admin provider destructive actions read-only", async () => {
+    setBackendUrl("http://127.0.0.1:8123");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiDataProvider.custom?.({
+      url: "admin/settings",
+      method: "post",
+      payload: { maxConcurrency: 8 }
+    })).rejects.toThrow("read-only");
+
+    await expect(apiDataProvider.custom?.({
+      url: "admin/purge-all",
+      method: "post",
+      payload: {}
+    })).rejects.toThrow("read-only");
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    setBackendUrl("http://127.0.0.1:8000");
+  });
+
+  it("maps admin benchmark runs to the backend benchmark endpoint", async () => {
     setBackendUrl("http://127.0.0.1:8123");
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse({ token: "token-admin-provider", expiresAt: new Date(Date.now() + 3600_000).toISOString() }))
-      .mockResolvedValueOnce(jsonResponse({ id: "admin.operations", key: "admin.operations", value: { maxConcurrency: 8 }, updatedAt: new Date().toISOString() }));
+      .mockResolvedValueOnce(jsonResponse({ id: "bench-1", imageCount: 1, status: "completed" }));
     vi.stubGlobal("fetch", fetchMock);
 
     const response = await apiDataProvider.custom?.({
-      url: "admin/settings",
+      url: "admin/benchmark",
       method: "post",
-      payload: { maxConcurrency: 8 }
+      payload: { imageCount: 1 }
     });
 
-    expect(response?.data).toEqual(expect.objectContaining({ key: "admin.operations" }));
-    expect(fetchMock.mock.calls[1][0]).toBe("http://127.0.0.1:8123/api/settings/admin.operations");
-    expect(JSON.parse(fetchMock.mock.calls[1][1].body as string)).toEqual({ value: { maxConcurrency: 8 } });
+    expect(response?.data).toEqual(expect.objectContaining({ id: "bench-1" }));
+    expect(fetchMock.mock.calls[1][0]).toBe("http://127.0.0.1:8123/api/admin/benchmarks/run");
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body as string)).toEqual({ imageCount: 1 });
     setBackendUrl("http://127.0.0.1:8000");
+  });
+
+  it("maps backend review automation to the application review endpoint", async () => {
+    window.localStorage.setItem("ttb-console-role", "reviewer");
+    setBackendUrl("http://127.0.0.1:8127");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ token: "token-review-provider", expiresAt: new Date(Date.now() + 3600_000).toISOString() }))
+      .mockResolvedValueOnce(jsonResponse({ id: "review-app-backend-1", applicationId: "app-backend-1", mode: "backend", status: "queued", runStatus: "QUEUED", canonicalStatus: "NEEDS_REVIEW", result: null }))
+      .mockResolvedValueOnce(jsonResponse({
+        id: "review-app-backend-1",
+        applicationId: "app-backend-1",
+        mode: "backend",
+        status: "queued",
+        runStatus: "QUEUED",
+        canonicalStatus: "NEEDS_REVIEW",
+        result: null
+      }))
+      .mockResolvedValueOnce(jsonResponse({
+        id: "review-app-backend-1",
+        applicationId: "app-backend-1",
+        mode: "backend",
+        status: "pass",
+        runStatus: "COMPLETED",
+        canonicalStatus: "PASS",
+        result: { overallStatus: "PASS", fields: [] }
+      }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await apiDataProvider.custom?.({
+      url: "reviews/auto",
+      method: "post",
+      payload: { applicationId: "app-backend-1", mode: "backend" }
+    });
+
+    expect(response?.data).toEqual(expect.objectContaining({ applicationId: "app-backend-1", mode: "backend" }));
+    expect(fetchMock.mock.calls[1][0]).toBe("http://127.0.0.1:8127/api/applications/app-backend-1/review");
+    expect(fetchMock.mock.calls[2][0]).toBe("http://127.0.0.1:8127/api/reviews/review-app-backend-1");
+    expect(fetchMock.mock.calls[3][0]).toBe("http://127.0.0.1:8127/api/reviews/review-app-backend-1");
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body as string)).toEqual({
+      mode: "backend",
+      priority: 100,
+      ocrStrategy: "paddleocr_authoritative",
+      primaryEngine: "paddleocr",
+      targetLatencyMs: 5000,
+      forceFreshOcr: true
+    });
+    setBackendUrl("http://127.0.0.1:8000");
+  });
+
+  it("does not import empty backend reviews as local fallback evidence", () => {
+    const snapshot = resetSnapshot();
+    const applicationId = snapshot.applications[0].id;
+
+    expect(() =>
+      applyBackendReviewResult(applicationId, {
+        id: "empty-backend-review",
+        applicationId,
+        mode: "backend",
+        status: "queued",
+        runStatus: "QUEUED",
+        canonicalStatus: "NEEDS_REVIEW",
+        result: null
+      })
+    ).toThrow(/without field evidence/i);
+    expect(getSnapshot().applications.find((application) => application.id === applicationId)?.review).toBeUndefined();
   });
 
   it("reads benchmark JSON through the backend provider", async () => {

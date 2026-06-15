@@ -21,7 +21,7 @@ test.describe("government UI accessibility", () => {
         await page.evaluate((role) => window.localStorage.setItem("ttb-console-role", role), entry.role);
       }
       await page.goto(entry.path);
-      await expect(page.getByText(entry.readyText).first()).toBeVisible();
+      await expect(page.getByRole("main").getByText(entry.readyText).first()).toBeVisible();
 
       const h1Count = await page.locator("h1").count();
       expect(h1Count, `${entry.path} should have exactly one h1`).toBe(1);

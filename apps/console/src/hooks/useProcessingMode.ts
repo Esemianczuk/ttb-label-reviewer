@@ -3,24 +3,16 @@ import { useProcessingModeContext } from "../providers/processing/ProcessingMode
 export function useProcessingMode() {
   const {
     mode,
-    setMode,
     provider,
     health,
     backendUrl,
-    setBackendUrl,
-    backendUnavailable,
-    fallbackToBrowser,
-    clusterDashboardActive
+    backendUnavailable
   } = useProcessingModeContext();
   return {
     mode,
-    setMode,
     provider,
     health,
     backendUrl,
-    setBackendUrl,
-    backendUnavailable,
-    fallbackToBrowser,
-    clusterDashboardActive
+    backendUnavailable
   };
 }

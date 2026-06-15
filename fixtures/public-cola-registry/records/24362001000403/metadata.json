@@ -1,0 +1,111 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=24362001000403",
+    "retrieved_at": "2026-06-14T02:33:37Z"
+  },
+  "ttb_id": "24362001000403",
+  "status": "APPROVED",
+  "approval_date": "01/06/2025",
+  "serial_number": "24GN24",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "GINORMOUS IMPERIAL IPA",
+    "fanciful_name": null,
+    "class_type": "BEER",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=24362001000403",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17157,
+      "sha256": "ae86ef23321d3e37303e97f2e4f2cb1803706ba46124ba523f1ed425a8094c80",
+      "downloaded_at": "2026-06-14T02:33:37Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=GINORMOUS 192 TALL Can Cola.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 1279153,
+      "sha256": "edcdf42cb204ebd401a7f1c273796b982578bee9dab5b818ad1e589ff1ab7475",
+      "downloaded_at": "2026-06-14T02:33:38Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "24362001000403"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "33972"
+    },
+    {
+      "label": "Serial #",
+      "value": "24GN24"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "BEER"
+    },
+    {
+      "label": "Origin Code",
+      "value": "OREGON"
+    },
+    {
+      "label": "Brand Name",
+      "value": "GINORMOUS IMPERIAL IPA"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "01/06/2025"
+    },
+    {
+      "label": "TTB ID: 24362001000403",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=24362001000403",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=GINORMOUS 192 TALL Can Cola.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

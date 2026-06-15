@@ -6,7 +6,7 @@ one place so a future registry move does not require hunting through scripts.
 
 from pathlib import Path
 
-PUBLIC_DETAIL_BASE_URL = "https://www.ttbonline.gov/colasonline/publicSearchColasBasic.do"
+PUBLIC_DETAIL_BASE_URL = "https://www.ttbonline.gov/colasonline/viewColaDetails.do"
 PUBLIC_SEARCH_BASE_URL = "https://www.ttbonline.gov/colasonline/publicSearchColasBasic.do"
 
 DATA_GOV_DETAIL_QUERY_PATTERN = "?action=publicDisplaySearchBasic&ttbid=<TTB_ID>"

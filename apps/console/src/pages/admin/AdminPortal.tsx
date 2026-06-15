@@ -3,7 +3,7 @@ import {
   BarChartOutlined,
   ClusterOutlined,
   DatabaseOutlined,
-  DeleteOutlined,
+  ExclamationCircleOutlined,
   FileSearchOutlined,
   FolderOpenOutlined,
   SafetyCertificateOutlined,
@@ -11,7 +11,7 @@ import {
   TeamOutlined,
   ToolOutlined
 } from "@ant-design/icons";
-import { Button, Card, Col, Descriptions, Row, Space, Table, Tag, Typography } from "antd";
+import { Button, Card, Col, Descriptions, Empty, Row, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router";
@@ -19,7 +19,7 @@ import { GovMetricCard } from "../../components/common/GovMetricCard";
 import { GovAlert } from "../../components/common/GovAlert";
 import { StatusTag } from "../../components/common/StatusTag";
 import type { AdminJob, WorkerSnapshot } from "../../domain/application/types";
-import { useBackendHealth } from "../../hooks/useBackendHealth";
+import { useProcessingMode } from "../../hooks/useProcessingMode";
 import { GovPageShell } from "../../layouts/GovPageShell";
 import { adminMetrics } from "./adminUtils";
 import { useAdminOperations } from "./useAdminOperations";
@@ -32,28 +32,32 @@ const adminRoutes = [
   { to: "/admin/engines", label: "Engines", icon: <ToolOutlined /> },
   { to: "/admin/benchmarks", label: "Benchmarks", icon: <BarChartOutlined /> },
   { to: "/admin/audit", label: "Audit", icon: <AuditOutlined /> },
-  { to: "/admin/retention", label: "Retention", icon: <DeleteOutlined /> },
+  { to: "/admin/retention", label: "Retention", icon: <DatabaseOutlined /> },
   { to: "/admin/fixtures", label: "Fixtures", icon: <FolderOpenOutlined /> },
   { to: "/admin/settings", label: "Settings", icon: <SettingOutlined /> }
 ];
 
 export function AdminPortal() {
   const { snapshot, activeApplication } = useAdminOperations();
-  const { health } = useBackendHealth();
+  const { health } = useProcessingMode();
   const navigate = useNavigate();
   const metrics = adminMetrics(snapshot);
   const latestBenchmark = snapshot.benchmarkRuns[0];
+  const fieldExtractor = snapshot.ocrModelStatus[0];
 
   return (
     <GovPageShell
       title="Admin Operations"
       eyebrow="Operations"
-      description="Monitor local coordinator health, worker heartbeats, job scheduling, benchmarks, audit events, fixtures, and retention controls."
+      description="Monitor local coordinator health, worker heartbeats, job scheduling, benchmarks, audit events, fixtures, and read-only retention policy."
     >
       <Space orientation="vertical" className="full-width" size={16}>
+      <GovAlert type="info" title="Operations pages are read-only">
+        Admin screens expose health, audit, fixtures, benchmark runs, and policy posture. Destructive controls such as worker disable, job cancel, data purge, and packet deletion are intentionally unavailable in the assessment console.
+      </GovAlert>
       {snapshot.processingMode === "browser" ? (
-        <GovAlert type="info" title="Browser demo snapshot">
-          Worker, job, and benchmark metrics are local demo snapshots in Browser Only mode. Backend is not required.
+        <GovAlert type="warning" title="Browser fallback active">
+          The FastAPI/PaddleOCR backend is not reachable. Review tools remain available locally, and the console will return to the backend path automatically when the coordinator comes online.
         </GovAlert>
       ) : null}
       <Row gutter={[16, 16]}>
@@ -62,7 +66,7 @@ export function AdminPortal() {
         <MetricCard title="Active workers" value={metrics.activeWorkers} icon={<ClusterOutlined />} />
         <MetricCard title="Queue depth" value={metrics.queueDepth} icon={<FileSearchOutlined />} />
         <MetricCard title="Images per minute" value={metrics.imagesPerMinute} icon={<BarChartOutlined />} />
-        <MetricCard title="Failed jobs" value={metrics.failedJobs} icon={<DeleteOutlined />} danger={metrics.failedJobs > 0} />
+        <MetricCard title="Failed jobs" value={metrics.failedJobs} icon={<ExclamationCircleOutlined />} danger={metrics.failedJobs > 0} />
         <MetricCard title="Storage used" value={metrics.storageUsedMb} suffix="MB" icon={<DatabaseOutlined />} />
         <MetricCard title="p95 OCR time" value={metrics.p95OcrMs} suffix="ms" icon={<BarChartOutlined />} />
       </Row>
@@ -82,14 +86,26 @@ export function AdminPortal() {
       </Card>
 
       <Card size="small" title="Coordinator Health">
-        <Descriptions column={{ xs: 1, md: 2 }} bordered size="small">
+        <Descriptions column={1} bordered size="small">
           <Descriptions.Item label="Backend">{health.status}</Descriptions.Item>
           <Descriptions.Item label="Message">{health.message}</Descriptions.Item>
-          <Descriptions.Item label="Processing Mode">{snapshot.processingMode}</Descriptions.Item>
+          <Descriptions.Item label="Runtime Path">
+            <Tag color={snapshot.processingMode === "browser" ? "gold" : "blue"}>
+              {snapshot.processingMode === "browser" ? "Browser Fallback" : "Backend Primary"}
+            </Tag>
+          </Descriptions.Item>
           <Descriptions.Item label="Latest Benchmark">
             {latestBenchmark
-              ? `${latestBenchmark.imageCount} ${latestBenchmark.mode} images at ${Math.round(latestBenchmark.imagesPerMinute)} images/min`
+              ? `${latestBenchmark.imageCount} image${latestBenchmark.imageCount === 1 ? "" : "s"} at ${Math.round(latestBenchmark.imagesPerMinute)} images/min`
               : "No benchmark results"}
+          </Descriptions.Item>
+          <Descriptions.Item label="Field Extractor">
+            <Space>
+              <Tag color={fieldExtractor?.trainedModelLoaded ? "green" : "gold"}>
+                {fieldExtractor?.trainedModelLoaded ? "Enhanced OCR active" : "Guarded baseline"}
+              </Tag>
+              <Typography.Text>{fieldExtractor?.mode || "paddleocr-baseline-weak-alignment"}</Typography.Text>
+            </Space>
           </Descriptions.Item>
           <Descriptions.Item label="Active Packet">
             {activeApplication ? (
@@ -109,6 +125,7 @@ export function AdminPortal() {
 }
 
 function SchedulerIntelligencePanel({ workers, jobs }: { workers: WorkerSnapshot[]; jobs: AdminJob[] }) {
+  const activeWorkers = workers.filter((worker) => ["online", "busy", "calibrating"].includes(worker.status) && !worker.disabled);
   const queued = jobs.filter((job) => ["queued", "retrying"].includes(job.status)).length;
   const running = jobs.filter((job) => ["leased", "running"].includes(job.status)).length;
   const completed = jobs.filter((job) => job.status === "completed").length;
@@ -156,7 +173,11 @@ function SchedulerIntelligencePanel({ workers, jobs }: { workers: WorkerSnapshot
     <Row gutter={[16, 16]} className="admin-intelligence-grid">
       <Col xs={24} xl={14}>
         <Card size="small" title="Worker Scheduler Intelligence">
-          <Table rowKey="id" dataSource={workers} columns={workerColumns} pagination={false} size="small" />
+          {activeWorkers.length ? (
+            <Table rowKey="id" dataSource={activeWorkers} columns={workerColumns} pagination={false} size="small" />
+          ) : (
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No backend workers are registered yet." />
+          )}
         </Card>
       </Col>
       <Col xs={24} xl={10}>
@@ -187,8 +208,7 @@ function SchedulerIntelligencePanel({ workers, jobs }: { workers: WorkerSnapshot
 }
 
 function workerSourceLabel(worker: WorkerSnapshot): string {
-  if (worker.id === "worker-local-browser" || worker.platform.toLowerCase().includes("chromium")) return "local browser session";
-  if (worker.id.startsWith("worker-fastapi") || worker.id.startsWith("worker-mac")) return "demo fixture worker";
+  if (worker.platform.toLowerCase().includes("chromium")) return "local browser session";
   return "registered backend worker";
 }
 

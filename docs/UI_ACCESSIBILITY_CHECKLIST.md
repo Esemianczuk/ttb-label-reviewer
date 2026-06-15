@@ -2,7 +2,7 @@
 
 Use this checklist after visual or workflow changes to the console.
 
-- Keyboard tab order reaches the prototype banner, header controls, role navigation, page actions, forms, tables, and dialogs in a predictable order.
+- Keyboard tab order reaches header controls, role navigation, page guidance, page actions, forms, tables, and dialogs in a predictable order.
 - Focus rings are visible on links, buttons, segmented controls, inputs, table actions, and modal controls.
 - Icon-only controls have an `aria-label`; icon plus text controls keep visible text.
 - Status tags include text, not color alone.

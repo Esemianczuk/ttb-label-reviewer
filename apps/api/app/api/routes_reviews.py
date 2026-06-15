@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from .. import models
 from ..api.deps import get_current_user, get_session_id, require_permission
 from ..api.serializers import review_to_read
+from ..core.demo_fixtures import ensure_demo_session
 from ..db import get_session
 from ..schemas import ReviewRead
 
@@ -16,6 +17,8 @@ router = APIRouter(prefix="/api/reviews", tags=["reviews"])
 def require_review(session: Session, review_id: str, session_id: str, current_user: models.User | None = None) -> models.Review:
     review = session.get(models.Review, review_id)
     if not review or not review.application:
+        raise HTTPException(status_code=404, detail="Review not found.")
+    if review.application.session_id != session_id:
         raise HTTPException(status_code=404, detail="Review not found.")
     if current_user:
         require_permission(
@@ -27,8 +30,6 @@ def require_review(session: Session, review_id: str, session_id: str, current_us
             entity_id=review_id,
             not_found_for_applicant=True,
         )
-    elif review.application.session_id != session_id:
-        raise HTTPException(status_code=404, detail="Review not found.")
     return review
 
 
@@ -50,11 +51,16 @@ def list_reviews(
     current_user: models.User = Depends(get_current_user),
 ):
     require_permission(session, current_user, resource="reviews", action="read")
+    ensure_demo_session(session, session_id)
     safe_limit = max(1, min(limit, 250))
-    query = select(models.Review).join(models.Application).order_by(models.Review.created_at.desc()).limit(safe_limit)
+    query = (
+        select(models.Review)
+        .join(models.Application)
+        .where(models.Application.session_id == session_id)
+        .order_by(models.Review.created_at.desc())
+        .limit(safe_limit)
+    )
     if current_user.role == "applicant":
         query = query.where(models.Application.owner_user_id == current_user.id)
-    elif current_user.role != "admin":
-        query = query.where(models.Application.session_id == session_id)
     reviews = session.scalars(query).all()
     return [review_to_read(review) for review in reviews]

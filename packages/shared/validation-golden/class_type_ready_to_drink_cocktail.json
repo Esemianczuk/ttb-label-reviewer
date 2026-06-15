@@ -1,0 +1,23 @@
+{
+  "id": "class_type_ready_to_drink_cocktail",
+  "description": "COCKTAILS 48 PROOF UP can be corroborated by ready-to-drink cocktail terms on the label.",
+  "expectedFields": {
+    "productType": "distilled_spirits",
+    "brandName": "Devils Backbone",
+    "fancifulName": "Gin And Tonic",
+    "classType": "COCKTAILS 48 PROOF UP",
+    "alcoholContent": "7.5% ALC/VOL",
+    "netContents": "12 FL OZ (355ML)",
+    "governmentWarningRequired": true
+  },
+  "ocrText": "DEVILS BACKBONE GIN & TONIC READY TO DRINK REAL SPIRITS 7.59 ALCIVOL 12 FL OZ (355ML) GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+  "expectedOverallStatus": "PASS",
+  "expectedStatuses": {
+    "brandName": "PASS",
+    "fancifulName": "PASS",
+    "classType": "PASS",
+    "alcoholContent": "PASS",
+    "netContents": "PASS",
+    "governmentWarningRequired": "PASS"
+  }
+}

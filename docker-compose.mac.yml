@@ -1,0 +1,8 @@
+services:
+  worker:
+    profiles:
+      - container-worker
+    environment:
+      TTB_WORKER_NAME: compose-paddleocr-mac-container
+      TTB_WORKER_DATA_DIR: /worker-cache/mac-container
+      TTB_WORKER_SECRET_FILE: /worker-cache/mac-container/worker-secret.txt

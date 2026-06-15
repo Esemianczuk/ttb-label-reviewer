@@ -1,0 +1,21 @@
+{
+  "id": "noisy_warning_needs_review",
+  "description": "Very noisy OCR of a visible warning should be routed to reviewer attention rather than hard-failing or auto-passing.",
+  "expectedFields": {
+    "productType": "distilled_spirits",
+    "brandName": "MONACO",
+    "classType": "TEQUILA SPECIALTIES",
+    "alcoholContent": "9.0% ALC/VOL",
+    "netContents": "355ML",
+    "governmentWarningRequired": true
+  },
+  "ocrText": "MONACO TEQUILA SPECIALTIES 9.0% ALC/VOL 355ML GovernmeniWarning: (I) AccoRd I0 The Surgeon GrRAl Movem Shoulo Koi Orink Alcoholic 8 Verages 0urig Preca Cy Bechuy 0 Ihe RKXOf brihoefecis (2)Conslupiiovo Alcohoic 8everageS impnrs Your Abiui I0 0rme A Cr OR OpcraiE Vachinery And Nay cause He LihFROBLEuLS",
+  "expectedOverallStatus": "NEEDS_REVIEW",
+  "expectedStatuses": {
+    "brandName": "PASS",
+    "classType": "PASS",
+    "alcoholContent": "PASS",
+    "netContents": "PASS",
+    "governmentWarningRequired": "NEEDS_REVIEW"
+  }
+}

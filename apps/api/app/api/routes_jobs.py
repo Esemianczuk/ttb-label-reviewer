@@ -27,11 +27,17 @@ def require_job(session: Session, job_id: str, session_id: str, current_user: mo
 def list_jobs(
     limit: int = 100,
     session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
     current_user: models.User = Depends(get_current_user),
 ):
     require_permission(session, current_user, resource="jobs", action="manage")
     safe_limit = max(1, min(limit, 250))
-    jobs = session.scalars(select(models.Job).order_by(models.Job.created_at.desc()).limit(safe_limit)).all()
+    jobs = session.scalars(
+        select(models.Job)
+        .where(models.Job.session_id == session_id)
+        .order_by(models.Job.created_at.desc())
+        .limit(safe_limit)
+    ).all()
     return [job_to_read(job) for job in jobs]
 
 

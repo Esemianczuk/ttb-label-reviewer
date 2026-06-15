@@ -1,0 +1,99 @@
+{
+  "fixture_id": "ttb_25142001000123_bourbon-30",
+  "source_type": "official_public_registry",
+  "ttb_id": "25142001000123",
+  "expected_fields": {
+    "brandName": "BOURBON 30",
+    "fancifulName": "IT'S THAT TIME!",
+    "classType": "WHISKY SPECIALTIES",
+    "productType": "distilled_spirits",
+    "alcoholContent": null,
+    "netContents": null,
+    "governmentWarningRequired": true,
+    "isImported": null,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": null,
+      "address": null
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_02.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_03.png",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
+    "Collector note: High-signal expansion; term=bourbon%; score=86; brand=BOURBON 30; label_images=3.",
+    "High-signal expansion score 86 from search term bourbon%."
+  ],
+  "demo_ready": true,
+  "signal": {
+    "score": 86,
+    "searchTerm": "bourbon%",
+    "scoreReasons": [
+      "brand",
+      "class/type",
+      "missing alcohol metadata",
+      "alcohol image hint",
+      "missing net contents metadata",
+      "net contents image hint",
+      "missing responsible party name metadata",
+      "missing responsible party address",
+      "domestic/no country-of-origin requirement",
+      "3 label image(s)",
+      "approved"
+    ],
+    "ocrHints": {
+      "available": true,
+      "engines": [
+        "easyocr"
+      ],
+      "textLength": 141,
+      "alcoholHints": [
+        "06 PROOF",
+        "45 % ALC"
+      ],
+      "netContentsHints": [
+        "750 ML"
+      ],
+      "warningDetected": false,
+      "warningTermHits": 0,
+      "responsiblePartyHint": false,
+      "sample": "LLA TTV BOURBON 30 ITS THAT TIMEI BOURBON WHISKEY FINISHED WITH OAK STAVES 06 PROOF 750 ML 45 % ALCNOL FRANKFORT; KENTUCKY BOURBON 30 SPIRITS",
+      "errors": [
+        "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Untitled-13.jpg&filetype=l: tesseract: tesseract is not installed or it's not in your PATH. See README file for more information."
+      ]
+    }
+  },
+  "demo_audit": {
+    "status": "ready",
+    "source": "high_signal_ocr_preflight",
+    "reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+    "reviewed_common_fields": [
+      "alcoholContent",
+      "brandName",
+      "classType",
+      "countryOfOrigin",
+      "netContents",
+      "producerName"
+    ]
+  }
+}

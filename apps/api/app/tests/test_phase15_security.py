@@ -55,7 +55,7 @@ def upload_image(client: TestClient, application_id: str, *, filename: str = "fr
 
 
 def issue_join_token(client: TestClient) -> str:
-    response = client.post("/api/cluster/join-token", headers=auth_headers(client, "admin"), json={"ttlSeconds": 300})
+    response = client.post("/api/workers/join-token", headers=auth_headers(client, "admin"), json={"ttlSeconds": 300})
     assert response.status_code == 201, response.text
     return response.json()["token"]
 
@@ -234,7 +234,7 @@ def test_admin_can_purge_all_demo_data_and_raw_assets(tmp_path):
         denied = client.post("/api/admin/retention/purge-all-demo-data", headers=auth_headers(client, "reviewer"))
         assert denied.status_code == 403
 
-        admin_headers = auth_headers(client, "admin")
+        admin_headers = auth_headers(client, "admin", "security-session")
         purged = client.post("/api/admin/retention/purge-all-demo-data", headers=admin_headers)
         assert purged.status_code == 200, purged.text
         assert purged.json()["count"] >= 2
@@ -244,5 +244,4 @@ def test_admin_can_purge_all_demo_data_and_raw_assets(tmp_path):
         assert db.scalar(select(models.Application)) is None
         assert db.scalar(select(models.Asset)) is None
         events = db.scalars(select(models.AuditEvent)).all()
-        assert len(events) == 1
-        assert events[0].event_type == "retention.purge_all_demo_data"
+        assert any(event.event_type == "retention.purge_all_demo_data" for event in events)

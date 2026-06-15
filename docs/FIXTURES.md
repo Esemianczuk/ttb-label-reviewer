@@ -51,9 +51,52 @@ tools/ttb_collector/
 
 Bulk downloads, caches, and generated datasets are ignored by git. The collector is designed for small, polite, curated pulls rather than broad crawling.
 
+High-signal expansion for OCR/model evaluation uses:
+
+```bash
+python tools/ttb_collector/expand_high_signal_pool.py \
+  --target 200 \
+  --detail-limit 260 \
+  --ocr-preflight \
+  --out-summary fixtures/public-cola-registry/bulk/high-signal-selection.json \
+  --out-seed fixtures/public-cola-registry/bulk/high-signal-seed.yaml
+```
+
+The selector favors public approved records whose detail metadata or label-image OCR preflight exposes the common required review targets: brand name, class/type, alcohol content, net contents, responsible party, imported country of origin when applicable, and government warning text.
+
+Collect selected records into the ignored bulk area:
+
+```bash
+python tools/ttb_collector/collect_by_ttb_ids.py \
+  --input fixtures/public-cola-registry/bulk/high-signal-seed.yaml \
+  --out fixtures/public-cola-registry/bulk/high-signal-records \
+  --limit 200 \
+  --delay-seconds 2.0 \
+  --respect-cache
+```
+
+Promote only a reviewed subset into the bundled demo queue:
+
+```bash
+python tools/ttb_collector/promote_high_signal_records.py \
+  --source-root fixtures/public-cola-registry/bulk/high-signal-records \
+  --selection fixtures/public-cola-registry/bulk/high-signal-selection.json \
+  --limit 25 \
+  --min-score 90 \
+  --apply
+```
+
+OCR training/evaluation staging lives under:
+
+```text
+tools/ocr_lab/
+```
+
+Use `stage_training_data.py` for record-grouped train/validation/test splits and `oriented_text_pipeline.py` for rotated/perspective-corrected text crops.
+
 ## Browser Upload Fixtures
 
-For manual testing, use any PNG/JPG/WebP label image. Browser Only mode keeps uploaded images in the browser session. Backend mode stores decoded and validated images under the local `data/assets` object store.
+For manual testing, use any PNG/JPG/WebP label image. Browser fallback keeps uploaded images in the browser session. Backend mode stores decoded and validated images under the local `data/assets` object store.
 
 ## Fixture Limits
 

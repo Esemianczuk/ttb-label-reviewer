@@ -1,8 +1,14 @@
 from __future__ import annotations
 
+from copy import deepcopy
+
 from .. import models
 from ..core.application_numbers import metadata_with_existing_application_number
-from ..core.statuses import canonical_application_status, canonical_review_status
+from ..core.statuses import canonical_application_status, canonical_review_run_status, canonical_review_status
+
+PRODUCTION_ENGINE_KEYS = {"paddleocr"}
+FIELD_EXTRACTOR_KEYS = {"fieldExtractor"}
+STALE_ENGINE_KEYS = {"tesseract", "tesseract-js", "browser-tesseract", "easyocr", "onnx"}
 
 
 def application_to_read(application: models.Application):
@@ -47,6 +53,7 @@ def review_to_read(review: models.Review):
         "applicationId": review.application_id,
         "mode": review.mode,
         "status": review.status,
+        "runStatus": canonical_review_run_status(review.status),
         "canonicalStatus": canonical_review_status(review.status),
         "result": review.result_json,
         "createdAt": review.created_at,
@@ -85,13 +92,84 @@ def worker_to_read(worker: models.Worker):
         "arch": worker.arch,
         "version": worker.version,
         "status": worker.status,
-        "capabilities": worker.capabilities,
-        "calibration": worker.calibration,
+        "capabilities": sanitize_worker_capabilities(worker.capabilities),
+        "calibration": sanitize_worker_calibration(worker.calibration),
         "activeJobs": worker.active_jobs,
         "maxConcurrency": worker.max_concurrency,
         "lastSeenAt": worker.last_seen_at,
         "createdAt": worker.created_at,
     }
+
+
+def sanitize_worker_capabilities(capabilities: dict | None) -> dict:
+    """Hide retired OCR engines from stale worker records without mutating DB rows."""
+    if not isinstance(capabilities, dict):
+        return {}
+    cleaned = deepcopy(capabilities)
+    for key in ("onnxRuntime", "easyocrRuntime", "tesseractRuntime"):
+        cleaned.pop(key, None)
+
+    engines = cleaned.get("engines")
+    if isinstance(engines, dict):
+        cleaned["engines"] = {
+            key: value
+            for key, value in engines.items()
+            if key in PRODUCTION_ENGINE_KEYS or key in FIELD_EXTRACTOR_KEYS
+        }
+
+    ocr = cleaned.get("ocr")
+    if isinstance(ocr, dict):
+        cleaned["ocr"] = {
+            key: value
+            for key, value in ocr.items()
+            if key in PRODUCTION_ENGINE_KEYS or key in FIELD_EXTRACTOR_KEYS
+        }
+
+    profile = cleaned.get("engineProfile")
+    if isinstance(profile, dict):
+        for key in STALE_ENGINE_KEYS:
+            profile.pop(key, None)
+        if profile.get("preferredEngine") in STALE_ENGINE_KEYS:
+            profile["preferredEngine"] = "paddleocr"
+        if profile.get("tier") in STALE_ENGINE_KEYS:
+            profile["tier"] = "paddleocr_unavailable"
+
+    for list_key in ("warmEngines", "supportedEngines"):
+        values = cleaned.get(list_key)
+        if isinstance(values, list):
+            cleaned[list_key] = [value for value in values if value in PRODUCTION_ENGINE_KEYS]
+
+    return cleaned
+
+
+def sanitize_worker_calibration(calibration: dict | None) -> dict | None:
+    """Normalize stale calibration metadata from earlier demo engine mixes."""
+    if not isinstance(calibration, dict):
+        return calibration
+    cleaned = deepcopy(calibration)
+
+    configured = cleaned.get("configuredEngines")
+    if isinstance(configured, list):
+        cleaned["configuredEngines"] = [engine for engine in configured if engine in PRODUCTION_ENGINE_KEYS]
+
+    engines = cleaned.get("engines")
+    if isinstance(engines, dict):
+        cleaned["engines"] = {
+            key: value
+            for key, value in engines.items()
+            if key in PRODUCTION_ENGINE_KEYS or key in FIELD_EXTRACTOR_KEYS
+        }
+
+    profile = cleaned.get("engineProfile")
+    if isinstance(profile, dict):
+        for key in STALE_ENGINE_KEYS:
+            profile.pop(key, None)
+        if profile.get("preferredEngine") in STALE_ENGINE_KEYS:
+            profile["preferredEngine"] = "paddleocr"
+        if profile.get("tier") in STALE_ENGINE_KEYS:
+            profile["tier"] = "paddleocr_unavailable"
+
+    return cleaned
 
 
 def worker_event_to_read(event: models.WorkerEvent):

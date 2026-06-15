@@ -87,6 +87,8 @@ export function snapshotResourceData(resource: string, snapshot: ConsoleSnapshot
         }));
     case "benchmarks":
       return snapshot.benchmarkRuns;
+    case "ocrModelStatus":
+      return snapshot.ocrModelStatus || [];
     default:
       return [];
   }

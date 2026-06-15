@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from httpx import TransportError
+
 from .calibration import calibrate_engines, load_calibration
 from .capabilities import platform_for_registration, probe_capabilities
 from .engines import build_engines, inspect_engines
@@ -62,6 +64,7 @@ class WorkerAgent:
         self.registered = False
         self.heartbeat = HeartbeatCadence(config.heartbeat_interval_seconds)
         self.calibration = self._load_or_calibrate()
+        self.last_connectivity_warning_at = 0.0
 
     def register(self) -> dict[str, Any]:
         hostname, platform_name, arch = platform_for_registration(self.capabilities)
@@ -101,36 +104,38 @@ class WorkerAgent:
         return response
 
     def run_once(self) -> bool:
-        if not self.registered:
-            self.register()
-        self.send_heartbeat(force=True)
-        claim = self.client.claim_job(
-            self.worker_id,
-            {
-                "sessionId": self.config.session_id,
-                "supportedJobTypes": self.supported_job_types(),
-            },
-        )
-        job = claim.get("job")
-        if not job:
-            return False
-        self.active_jobs += 1
-        self.send_heartbeat(force=True)
         try:
-            result = self.process_job(job)
-            self.client.complete_job(self.worker_id, job["id"], result)
-            return True
-        except Exception as error:
-            self.client.fail_job(self.worker_id, job["id"], structured_error(error), retryable=True)
-            return False
-        finally:
-            self.active_jobs = max(0, self.active_jobs - 1)
+            if not self.registered:
+                self.register()
             self.send_heartbeat(force=True)
+            claim = self.client.claim_job(
+                self.worker_id,
+                {
+                    "sessionId": self.config.session_id,
+                    "supportedJobTypes": self.supported_job_types(),
+                },
+            )
+            job = claim.get("job")
+            if not job:
+                return False
+            self.active_jobs += 1
+            self.send_heartbeat(force=True)
+            try:
+                result = self.process_job(job)
+                self.client.complete_job(self.worker_id, job["id"], result)
+                return True
+            except Exception as error:
+                self.client.fail_job(self.worker_id, job["id"], structured_error(error), retryable=job_error_is_retryable(job, error))
+                return False
+            finally:
+                self.active_jobs = max(0, self.active_jobs - 1)
+                self.send_heartbeat(force=True)
+        except TransportError as error:
+            self._coordinator_unavailable(error)
+            return False
 
     def run_forever(self, max_jobs: int | None = None) -> None:
         completed = 0
-        if not self.registered:
-            self.register()
         while True:
             processed = self.run_once()
             if processed:
@@ -138,7 +143,10 @@ class WorkerAgent:
                 if max_jobs is not None and completed >= max_jobs:
                     return
             else:
-                self.send_heartbeat()
+                try:
+                    self.send_heartbeat()
+                except TransportError as error:
+                    self._coordinator_unavailable(error)
                 time.sleep(self.config.poll_interval_seconds)
 
     def process_job(self, job: dict[str, Any]) -> dict[str, Any]:
@@ -160,7 +168,7 @@ class WorkerAgent:
     def _load_or_calibrate(self) -> dict[str, Any]:
         if not self.config.recalibrate:
             cached = load_calibration(self.config.data_dir)
-            if cached:
+            if cached and calibration_matches_engines(cached, self.engines):
                 return cached
         return calibrate_engines(self.engines, self.config.data_dir, self.capabilities)
 
@@ -168,6 +176,7 @@ class WorkerAgent:
         capabilities = dict(self.capabilities)
         capabilities["supportedJobTypes"] = self.supported_job_types()
         capabilities["ocr"] = True
+        capabilities["fieldOcr"] = True
         capabilities["evidence_crop"] = True
         capabilities["validation"] = True
         capabilities["warmEngines"] = [engine.id for engine in self.engines if engine.healthcheck().available]
@@ -175,6 +184,14 @@ class WorkerAgent:
         capabilities["cachedAssetIds"] = capabilities["assetCache"]["assetIds"]
         capabilities["workerPid"] = os.getpid()
         return capabilities
+
+    def _coordinator_unavailable(self, error: TransportError) -> None:
+        self.registered = False
+        self.active_jobs = 0
+        now = time.monotonic()
+        if now - self.last_connectivity_warning_at >= 30:
+            print(f"[worker] Coordinator unavailable ({error}); retrying.", flush=True)
+            self.last_connectivity_warning_at = now
 
 
 def resolve_concurrency(value: str | int) -> int:
@@ -194,6 +211,41 @@ def worker_id(name: str) -> str:
 
 def structured_error(error: Exception) -> str:
     return f"{error.__class__.__name__}: {error}"
+
+
+def job_error_is_retryable(job: dict[str, Any], error: Exception) -> bool:
+    attempts = int(job.get("attempts") or 0)
+    message = structured_error(error).lower()
+    device_unavailable = any(
+        marker in message
+        for marker in (
+            "cuda-capable device",
+            "cudadevicesunavailable",
+            "cudaerrordevicesunavailable",
+            "device(s) is/are busy",
+            "out of memory",
+        )
+    )
+    if device_unavailable:
+        return attempts < 1
+    return attempts < 2
+
+
+def calibration_matches_engines(calibration: dict[str, Any], engines: list[OcrEngine]) -> bool:
+    cached = calibration.get("engines") if isinstance(calibration, dict) else None
+    if not isinstance(cached, dict):
+        return False
+    required = {engine.id for engine in engines if engine.healthcheck().available}
+    if not required:
+        return False
+    cached_available = {
+        engine_id
+        for engine_id, result in cached.items()
+        if isinstance(result, dict) and (result.get("available") is True or result.get("status") == "ok")
+    }
+    if "null" in cached_available and any(engine_id != "null" for engine_id in required):
+        cached_available.remove("null")
+    return required.issubset(cached_available)
 
 
 def cached_asset_ids(cache_dir: Path) -> list[str]:

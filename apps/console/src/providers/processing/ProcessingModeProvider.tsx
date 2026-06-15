@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from "react";
+import { createContext, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import type { DataProvider, LiveProvider } from "@refinedev/core";
 import type { BackendHealth } from "../../hooks/useBackendHealth";
@@ -10,17 +10,13 @@ import { providerForMode } from "../data/providerRegistry";
 
 type ProcessingModeContextValue = {
   mode: ProcessingMode;
-  setMode: (mode: ProcessingMode) => void;
-  fallbackToBrowser: () => void;
   provider: ConsoleProviderDefinition;
   dataProvider: DataProvider;
   liveProvider: LiveProvider;
   health: BackendHealth;
   backendUrl: string;
-  setBackendUrl: (url: string) => void;
   backendRequired: boolean;
   backendUnavailable: boolean;
-  clusterDashboardActive: boolean;
 };
 
 const ProcessingModeContext = createContext<ProcessingModeContextValue | null>(null);
@@ -29,36 +25,34 @@ export function ProcessingModeProvider({ children }: { children: ReactNode }) {
   const snapshot = useSyncExternalStore(subscribeToSnapshot, getSnapshot, getSnapshot);
   const mode = snapshot.processingMode;
   const provider = providerForMode(mode);
-  const healthState = useBackendHealth({ enabled: provider.requiresBackend });
+  const healthState = useBackendHealth({ enabled: true });
 
-  const setMode = useCallback((nextMode: ProcessingMode) => {
-    setProcessingMode(nextMode);
-  }, []);
-
-  const fallbackToBrowser = useCallback(() => {
-    setProcessingMode("browser");
-  }, []);
+  useEffect(() => {
+    if (healthState.health.status === "online" && mode !== "backend") {
+      setProcessingMode("backend");
+    }
+    if (healthState.health.status === "offline" && mode === "backend") {
+      setProcessingMode("browser");
+    }
+  }, [healthState.health.status, mode]);
 
   const value = useMemo<ProcessingModeContextValue>(
     () => ({
       mode,
-      setMode,
-      fallbackToBrowser,
       provider,
       dataProvider: provider.dataProvider,
       liveProvider: provider.liveProvider,
       health: healthState.health,
       backendUrl: healthState.backendUrl,
-      setBackendUrl: healthState.setBackendUrl,
       backendRequired: provider.requiresBackend,
-      backendUnavailable: provider.requiresBackend && healthState.health.status === "offline",
-      clusterDashboardActive: mode === "cluster"
+      backendUnavailable: mode === "backend" && healthState.health.status === "offline"
     }),
-    [fallbackToBrowser, healthState, mode, provider, setMode]
+    [healthState, mode, provider]
   );
 
   return <ProcessingModeContext.Provider value={value}>{children}</ProcessingModeContext.Provider>;
 }
+
 
 export function useProcessingModeContext(): ProcessingModeContextValue {
   const value = useContext(ProcessingModeContext);

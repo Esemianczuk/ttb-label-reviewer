@@ -1,0 +1,130 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25100001000686",
+    "retrieved_at": "2026-06-14T02:33:42Z"
+  },
+  "ttb_id": "25100001000686",
+  "status": "APPROVED",
+  "approval_date": "04/17/2025",
+  "serial_number": "25BS01",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "GIN BES",
+    "fanciful_name": null,
+    "class_type": "OTHER GIN FB",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": "1647825",
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25100001000686",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17881,
+      "sha256": "85c3f3e6f1323f8d60854eda75c82f599c3ce319ab6f21073b2c6de2f4b316c6",
+      "downloaded_at": "2026-06-14T02:33:42Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Bes Gin BF.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 224167,
+      "sha256": "a20aa6ef809fb5797465e7374fa32f8af79a30e61435bfff9fd05f15e98b8a77",
+      "downloaded_at": "2026-06-14T02:33:43Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Bes Gin Back.png&filetype=l",
+      "local_path": "assets/label_02.png",
+      "content_type": "image/png",
+      "bytes": 83944,
+      "sha256": "b42d43fd8b7a01bfb49d4bd7d5adf6959d014d44ecd916c40d24fc387358b4e4",
+      "downloaded_at": "2026-06-14T02:33:43Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "25100001000686"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "31199"
+    },
+    {
+      "label": "Serial #",
+      "value": "25BS01"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "OTHER GIN FB"
+    },
+    {
+      "label": "Origin Code",
+      "value": "ITALY"
+    },
+    {
+      "label": "Brand Name",
+      "value": "GIN BES"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Formula",
+      "value": "1647825"
+    },
+    {
+      "label": "Approval Date",
+      "value": "04/17/2025"
+    },
+    {
+      "label": "TTB ID: 25100001000686",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25100001000686",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Bes Gin BF.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Bes Gin Back.png&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25009001000736",
+    "retrieved_at": "2026-06-14T02:34:04Z"
+  },
+  "ttb_id": "25009001000736",
+  "status": "APPROVED",
+  "approval_date": "01/17/2025",
+  "serial_number": "251026",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "RUM BAR",
+    "fanciful_name": "RUM CREAM",
+    "class_type": "RUM SPECIALTIES",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": "1644795",
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25009001000736",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17279,
+      "sha256": "15f2c371df03109f7df5923d94f466415c6631e9c43bba57a0506eaac21cec9b",
+      "downloaded_at": "2026-06-14T02:34:05Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Rum-Bar Rum Cream-01.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 806484,
+      "sha256": "caf8bdd6fc5b8ed6c888eda86f1d84572f67c0c057b60cb9fcdeae43763ef007",
+      "downloaded_at": "2026-06-14T02:34:05Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Rum-Bar Rum Cream-02.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 707872,
+      "sha256": "5dbdf33188a76f23a9e44bd30647b08d23b7e4bdc9917a7f0b2e6c7445f83b12",
+      "downloaded_at": "2026-06-14T02:34:05Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "25009001000736"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "52472"
+    },
+    {
+      "label": "Serial #",
+      "value": "251026"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "RUM SPECIALTIES"
+    },
+    {
+      "label": "Origin Code",
+      "value": "JAMAICA"
+    },
+    {
+      "label": "Brand Name",
+      "value": "RUM BAR"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "RUM CREAM"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Formula",
+      "value": "1644795"
+    },
+    {
+      "label": "Approval Date",
+      "value": "01/17/2025"
+    },
+    {
+      "label": "TTB ID: 25009001000736",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25009001000736",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Rum-Bar Rum Cream-01.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Rum-Bar Rum Cream-02.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

@@ -99,13 +99,12 @@ class AssetRead(BaseModel):
 
 
 class ReviewCreate(BaseModel):
-    mode: Literal["backend", "distributed"] = "backend"
+    mode: Literal["backend"] = "backend"
     priority: int = 100
-    ocrStrategy: Literal["paddleocr_authoritative", "tesseract_first_easyocr_escalation", "primary_only"] = "paddleocr_authoritative"
+    ocrStrategy: Literal["paddleocr_authoritative", "primary_only"] = "paddleocr_authoritative"
     primaryEngine: str = "paddleocr"
-    fallbackEngine: str = "easyocr"
-    fallbackMinConfidence: float = Field(default=0.86, ge=0.5, le=0.99)
     targetLatencyMs: int = Field(default=5000, ge=1000, le=30000)
+    forceFreshOcr: bool = False
 
 
 class ReviewRead(BaseModel):
@@ -113,6 +112,7 @@ class ReviewRead(BaseModel):
     applicationId: str
     mode: str
     status: str
+    runStatus: str = "QUEUED"
     canonicalStatus: str
     result: dict[str, Any] | None = None
     createdAt: datetime
@@ -218,7 +218,7 @@ class OperationResult(BaseModel):
 
 class BenchmarkRunRequest(BaseModel):
     imageCount: int = Field(default=10, ge=1, le=500)
-    mode: Literal["browser", "backend", "cluster"] = "backend"
+    mode: Literal["browser", "backend"] = "backend"
     label: str | None = None
 
 
@@ -262,14 +262,6 @@ class JoinTokenRead(BaseModel):
     coordinatorUrl: str
     command: str
     mdnsService: str | None = None
-    warning: str | None = None
-
-
-class ClusterStatusRead(BaseModel):
-    coordinatorUrl: str
-    mdnsEnabled: bool
-    mdnsService: str
-    lanMode: bool
     warning: str | None = None
 
 

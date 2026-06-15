@@ -4,9 +4,8 @@ import { GovStatusTag } from "./GovStatusTag";
 import { statusMeta } from "../../theme/statusTokens";
 
 const modeMeta: Record<ProcessingMode, { color: string; text: string }> = {
-  browser: { color: "green", text: "Browser Only" },
-  backend: { color: "blue", text: "FastAPI Backend" },
-  cluster: { color: "purple", text: "Distributed Cluster" }
+  browser: { color: "gold", text: "Browser Fallback" },
+  backend: { color: "blue", text: "FastAPI Backend" }
 };
 
 export function StatusTag({ status }: { status: ApplicationStatus | FieldStatus }) {

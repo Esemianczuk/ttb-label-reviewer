@@ -3,6 +3,8 @@ import levenshtein from 'fast-levenshtein';
 const CURLY_QUOTES = /[\u2018\u2019\u201A\u201B\u2032]/g;
 const CURLY_DOUBLE_QUOTES = /[\u201C\u201D\u201E\u201F\u2033]/g;
 const DECORATIVE_PUNCTUATION = /[^\p{Letter}\p{Number}%./&+ -]/gu;
+const EMBEDDED_AMBIGUOUS_GLYPH = /([\p{Letter}\p{Number}])\?([\p{Letter}\p{Number}])/gu;
+const HAS_EMBEDDED_AMBIGUOUS_GLYPH = /[\p{Letter}\p{Number}]\?[\p{Letter}\p{Number}]/u;
 
 export function normalizeWhitespace(text = '') {
   return String(text).replace(/\s+/g, ' ').trim();
@@ -18,6 +20,7 @@ export function normalizeCase(text = '') {
 
 export function removeDecorativePunctuation(text = '') {
   return normalizeQuotes(text)
+    .replace(EMBEDDED_AMBIGUOUS_GLYPH, '$1$2')
     .replace(DECORATIVE_PUNCTUATION, ' ')
     .replace(/[._:;,()[\]{}"']/g, ' ')
     .replace(/[-/]/g, ' ');
@@ -40,6 +43,10 @@ export function normalizeForStrictWarning(text = '') {
 
 export function tokenizeForMatch(text = '') {
   return normalizeForFuzzyMatch(text).split(' ').filter(Boolean);
+}
+
+export function hasEmbeddedAmbiguousGlyph(text = '') {
+  return HAS_EMBEDDED_AMBIGUOUS_GLYPH.test(normalizeCase(text));
 }
 
 export function similarityScore(a = '', b = '') {

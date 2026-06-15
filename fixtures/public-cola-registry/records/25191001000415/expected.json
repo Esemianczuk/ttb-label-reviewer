@@ -1,0 +1,90 @@
+{
+  "fixture_id": "ttb_25191001000415_vodka-southeastern",
+  "source_type": "official_public_registry",
+  "ttb_id": "25191001000415",
+  "expected_fields": {
+    "brandName": "VODKA SOUTHEASTERN",
+    "fancifulName": null,
+    "classType": "VODKA 80-89 PROOF",
+    "productType": "distilled_spirits",
+    "alcoholContent": null,
+    "netContents": null,
+    "governmentWarningRequired": true,
+    "isImported": null,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": null,
+      "address": null
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.png",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
+    "Collector note: High-signal expansion; term=vodka%; score=88; brand=VODKA SOUTHEASTERN; label_images=1.",
+    "High-signal expansion score 88 from search term vodka%."
+  ],
+  "demo_ready": true,
+  "signal": {
+    "score": 88,
+    "searchTerm": "vodka%",
+    "scoreReasons": [
+      "brand",
+      "class/type",
+      "missing alcohol metadata",
+      "alcohol image hint",
+      "missing net contents metadata",
+      "net contents image hint",
+      "missing responsible party name metadata",
+      "responsible party image hint",
+      "missing responsible party address",
+      "domestic/no country-of-origin requirement",
+      "1 label image(s)",
+      "approved"
+    ],
+    "ocrHints": {
+      "available": true,
+      "engines": [
+        "easyocr"
+      ],
+      "textLength": 303,
+      "alcoholHints": [
+        "40% ALC",
+        "80 PROOF"
+      ],
+      "netContentsHints": [
+        "1 LITER"
+      ],
+      "warningDetected": false,
+      "warningTermHits": 1,
+      "responsiblePartyHint": true,
+      "sample": "1 U GOVERMMENED ABILITY TO DRIVE A CAR OR OPERATE MACHINERY AND MAY CAUSE NOT DRMARNLCOHOUCA DEFECTS; FOR 6628 U U 8 Ddobona W MAGNOLIA THE AUBURN W p AVE; = ALAB I WOMEN 8 1 EST: 2019 40% ALCIVOL (80 PROOF) 1 LITER VODKA DISTILLED FROM GRAIN 8 BOTTLED AND PRODUCED BY REDMONT DISTILLING BIRMINGHAM, AL.",
+      "errors": [
+        "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=SE-VODKA-LABEL-UPDATED.png&filetype=l: tesseract: tesseract is not installed or it's not in your PATH. See README file for more information."
+      ]
+    }
+  },
+  "demo_audit": {
+    "status": "ready",
+    "source": "high_signal_ocr_preflight",
+    "reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+    "reviewed_common_fields": [
+      "alcoholContent",
+      "brandName",
+      "classType",
+      "countryOfOrigin",
+      "netContents",
+      "producerName"
+    ]
+  }
+}

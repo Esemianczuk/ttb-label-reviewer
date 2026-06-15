@@ -1,0 +1,70 @@
+# Spirits and RTD patterns
+vodka%
+vodka soda%
+vodka seltzer%
+gin%
+gin and tonic%
+rum%
+rum cola%
+whiskey%
+whisky%
+bourbon%
+rye whiskey%
+tequila%
+mezcal%
+margarita%
+paloma%
+old fashioned%
+negroni%
+martini%
+liqueur%
+cordial%
+schnapps%
+moonshine%
+brandy%
+ready to drink%
+cocktail%
+
+# Wine patterns
+cabernet%
+cabernet sauvignon%
+chardonnay%
+pinot noir%
+pinot grigio%
+pinot gris%
+merlot%
+sauvignon blanc%
+riesling%
+zinfandel%
+malbec%
+syrah%
+shiraz%
+moscato%
+prosecco%
+sparkling wine%
+rose%
+rosé%
+red blend%
+white blend%
+table wine%
+sangria%
+mead%
+fruit wine%
+
+# Malt/cider/seltzer patterns
+beer%
+ale%
+lager%
+stout%
+porter%
+ipa%
+pilsner%
+gose%
+sour ale%
+wheat beer%
+cider%
+hard cider%
+seltzer%
+hard seltzer%
+hard tea%
+lager beer%

@@ -1,0 +1,9 @@
+retrieved_at: 2026-06-14T02:34:09Z
+system: TTB Public COLA Registry
+ttb_id: 25202001000088
+source_kind: public_registry
+detail_url: https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25202001000088
+final_url: https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25202001000088
+asset_urls:
+  - https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25202001000088
+  - https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=bourbon-base-cask-strength-single-barrel-107-8-GOV-5x3.jpg&filetype=l

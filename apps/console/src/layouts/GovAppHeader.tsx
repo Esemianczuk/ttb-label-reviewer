@@ -1,8 +1,7 @@
-import { CloudServerOutlined, ReloadOutlined, SafetyCertificateOutlined, UserSwitchOutlined } from "@ant-design/icons";
-import { Button, Segmented, Select, Space, Tag, Tooltip } from "antd";
+import { CloudServerOutlined, QuestionCircleOutlined, ReloadOutlined, SafetyCertificateOutlined, UserSwitchOutlined } from "@ant-design/icons";
+import { Button, Select, Space, Tag, Tooltip } from "antd";
 import type { ProcessingMode, UserRole } from "../domain/application/types";
 import { getConsoleIdentities, roleLabel, type ConsoleIdentity } from "../providers/auth/authProvider";
-import { ModeTag } from "../components/common/StatusTag";
 
 type Health = {
   status: string;
@@ -13,19 +12,19 @@ type Health = {
 
 export function GovAppHeader({
   mode,
-  onModeChange,
   health,
   role,
   identity,
   onRoleChange,
+  onGuidanceOpen,
   onReset
 }: {
   mode: ProcessingMode;
-  onModeChange: (mode: ProcessingMode) => void;
   health: Health;
   role: UserRole;
   identity: ConsoleIdentity;
   onRoleChange: (role: UserRole) => void;
+  onGuidanceOpen: () => void;
   onReset: () => void;
 }) {
   const showOperationsControls = role === "admin";
@@ -48,26 +47,16 @@ export function GovAppHeader({
             suffixIcon={<UserSwitchOutlined />}
             options={accountOptions}
           />
+          <Button className="mobile-header-guidance-button" icon={<QuestionCircleOutlined />} onClick={onGuidanceOpen}>
+            Guidance
+          </Button>
         </div>
       </div>
       <Space wrap className="header-actions">
         {showOperationsControls ? (
-          <>
-            <Segmented
-              aria-label="Processing mode"
-              value={mode}
-              onChange={(value) => onModeChange(value as ProcessingMode)}
-              options={[
-                { label: "Browser Only", value: "browser" },
-                { label: "Backend", value: "backend" },
-                { label: "Cluster", value: "cluster" }
-              ]}
-            />
-            <ModeTag mode={mode} />
-            <BackendHealthPill health={health} />
-          </>
+          <BackendHealthPill health={health} mode={mode} />
         ) : null}
-        <Tooltip title="Reset applications, decisions, notes, and active queue position">
+        <Tooltip title="Reset applications, decisions, notes, and return to the first demo packet">
           <Button icon={<ReloadOutlined />} onClick={onReset}>
             Reset Demo
           </Button>
@@ -77,17 +66,19 @@ export function GovAppHeader({
   );
 }
 
-function BackendHealthPill({ health }: { health: Health }) {
+function BackendHealthPill({ health, mode }: { health: Health; mode: ProcessingMode }) {
   const label =
     health.status === "online"
       ? health.warning
-        ? "Backend connected - LAN"
-        : "Backend connected"
+        ? "Backend primary - LAN"
+        : "Backend primary"
       : health.status === "checking"
         ? "Backend checking"
         : health.status === "offline"
-          ? "Backend offline"
-          : "Backend optional";
+          ? "Browser fallback"
+          : mode === "browser"
+            ? "Browser fallback"
+            : "Backend primary";
   const color = health.status === "online" ? "green" : health.status === "checking" ? "blue" : health.status === "offline" ? "red" : "default";
   return (
     <Tooltip title={health.message}>

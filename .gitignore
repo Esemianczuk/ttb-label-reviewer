@@ -9,6 +9,7 @@ tools/ttb_collector/cache/
 **/playwright-report/
 **/test-results/
 docs/chatgpt_pro_review/
+artifacts/ocr-lab/layoutlmv3/
 *.log
 *.tsbuildinfo
 apps/console/openapi.generated.json
@@ -24,6 +25,7 @@ __pycache__/
 *.tar.gz
 *.7z
 *.traineddata
+models/field-extractor/layoutlmv3-cola/current/
 /*.png
 /data/
 .worker-cache/

@@ -36,7 +36,7 @@ def demo_login(payload: DemoLoginRequest, request: Request, session: Session = D
         entity_type="users",
         entity_id=user.id,
         summary=f"{user.display_name} started a demo session.",
-        metadata={"role": user.role},
+        metadata={"role": user.role, "sessionId": request.headers.get("X-Session-Id") or "local-dev-session"},
     )
     session.commit()
     return {"user": user_to_read(user), "token": token, "expiresAt": expires_at}

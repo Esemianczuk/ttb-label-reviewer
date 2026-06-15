@@ -1,0 +1,134 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25093001000084",
+    "retrieved_at": "2026-06-14T02:33:38Z"
+  },
+  "ttb_id": "25093001000084",
+  "status": "APPROVED",
+  "approval_date": "04/09/2025",
+  "serial_number": "254178",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "GINGLINGER-FIX",
+    "fanciful_name": "ROSE",
+    "class_type": "SPARKLING WINE/CHAMPAGNE",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25093001000084",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16800,
+      "sha256": "5fd4b62f6279ceb730fae1e71699dddd58dfdfd44c69037e08ca0445fcd1136b",
+      "downloaded_at": "2026-06-14T02:33:38Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=front.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 195661,
+      "sha256": "3fc4dc7ca0030c09884871d6e32cafcdf87bfb9fff42a8895f61120930e4ae9d",
+      "downloaded_at": "2026-06-14T02:33:39Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=back.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 177301,
+      "sha256": "9fae32b155657f7e8d44b06a188636f23f012dc7301bbb4d98ad824bd16ae834",
+      "downloaded_at": "2026-06-14T02:33:39Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "25093001000084"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "51562"
+    },
+    {
+      "label": "Serial #",
+      "value": "254178"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "SPARKLING WINE/CHAMPAGNE"
+    },
+    {
+      "label": "Origin Code",
+      "value": "FRANCE"
+    },
+    {
+      "label": "Brand Name",
+      "value": "GINGLINGER-FIX"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "ROSE"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Grape Varietal(s)",
+      "value": "N/A"
+    },
+    {
+      "label": "Approval Date",
+      "value": "04/09/2025"
+    },
+    {
+      "label": "TTB ID: 25093001000084",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25093001000084",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=front.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=back.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

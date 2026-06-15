@@ -1,0 +1,10 @@
+retrieved_at: 2026-06-14T02:34:04Z
+system: TTB Public COLA Registry
+ttb_id: 23310001000252
+source_kind: public_registry
+detail_url: https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=23310001000252
+final_url: https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=23310001000252
+asset_urls:
+  - https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=23310001000252
+  - https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=christmas 2.png&filetype=l
+  - https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Christmas 12.png&filetype=l

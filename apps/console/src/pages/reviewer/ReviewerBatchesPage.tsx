@@ -2,25 +2,28 @@ import {
   AppstoreOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
-  DownloadOutlined,
   FilterOutlined,
   LoadingOutlined,
-  ReloadOutlined
+  PauseCircleOutlined,
+  PlayCircleOutlined,
+  ReloadOutlined,
+  StopOutlined
 } from "@ant-design/icons";
 import { Button, Card, Checkbox, DatePicker, Empty, Input, Progress, Select, Space, Table, Tag, Typography, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { CheckboxChangeEvent } from "antd/es/checkbox";
 import dayjs, { type Dayjs } from "dayjs";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { downloadApplicationPdf } from "../../components/common/PdfExportButton";
 import { StatusTag } from "../../components/common/StatusTag";
 import { applicationNumberFor } from "../../domain/application/applicationNumber";
 import { GovAlert } from "../../components/common/GovAlert";
-import type { ReviewApplication } from "../../domain/application/types";
+import type { ProcessingMode, ReviewApplication } from "../../domain/application/types";
 import { useConsoleStore } from "../../hooks/useConsoleStore";
-import { autoReviewApplicationWithBrowserOcr, getSnapshot, resetSnapshot } from "../../providers/data/browserStore";
+import { getSnapshot, resetSnapshot } from "../../providers/data/browserStore";
+import { runAutomatedReviewForMode } from "../../providers/data/reviewAutomation";
+import { useProcessingModeContext } from "../../providers/processing/ProcessingModeProvider";
 import { automatedFindingSummary, queuePriority, reviewerQueueApplications } from "./reviewerUtils";
 
 const { RangePicker } = DatePicker;
@@ -33,11 +36,14 @@ type BatchProgress = {
   applicationTitle: string;
   message: string;
   percent: number;
-  completedIds: string[];
+  processedIds: string[];
+  mode: ProcessingMode;
+  status: "running" | "paused" | "stopping" | "completed" | "stopped";
 };
 
 export function ReviewerBatchesPage() {
   const { snapshot } = useConsoleStore();
+  const { dataProvider, backendUnavailable } = useProcessingModeContext();
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -48,6 +54,9 @@ export function ReviewerBatchesPage() {
   const [processingFilter, setProcessingFilter] = useState<ProcessingFilter>("unprocessed");
   const [batchProgress, setBatchProgress] = useState<BatchProgress | null>(null);
   const [batchRunning, setBatchRunning] = useState(false);
+  const [batchPaused, setBatchPaused] = useState(false);
+  const [batchStopping, setBatchStopping] = useState(false);
+  const batchControlRef = useRef({ paused: false, stop: false });
 
   const applications = useMemo(() => reviewerQueueApplications(snapshot.applications), [snapshot.applications]);
   const unprocessedCount = applications.filter((application) => !application.review).length;
@@ -73,6 +82,7 @@ export function ReviewerBatchesPage() {
   const selectedProcessableIds = selectedIds.filter((id) => selectableIds.includes(id));
   const allVisibleSelected = selectableIds.length > 0 && selectedProcessableIds.length === selectableIds.length;
   const partiallySelected = selectedProcessableIds.length > 0 && selectedProcessableIds.length < selectableIds.length;
+  const filtersActive = Boolean(search || companyFilter || typeFilter || dateRange || processingFilter !== "unprocessed");
 
   const selectAllVisible = (event: CheckboxChangeEvent) => {
     setSelectedIds(event.target.checked ? selectableIds : []);
@@ -81,6 +91,11 @@ export function ReviewerBatchesPage() {
   const resetForBatchTesting = () => {
     resetSnapshot();
     setSelectedIds([]);
+    batchControlRef.current = { paused: false, stop: false };
+    setBatchRunning(false);
+    setBatchPaused(false);
+    setBatchStopping(false);
+    setBatchProgress(null);
     setProcessingFilter("unprocessed");
     setSearch("");
     setCompanyFilter("");
@@ -89,14 +104,34 @@ export function ReviewerBatchesPage() {
     messageApi.success("Demo applications reset for batch testing.");
   };
 
+  const clearBatchFilters = () => {
+    setSelectedIds([]);
+    setSearch("");
+    setCompanyFilter("");
+    setTypeFilter("");
+    setDateRange(null);
+    setProcessingFilter("unprocessed");
+  };
+
   const runSelectedBatch = async () => {
     if (!selectedProcessableIds.length || batchRunning) return;
+    const processingMode = snapshot.processingMode;
+    if (processingMode !== "browser" && backendUnavailable) {
+      messageApi.error("Backend processing is selected, but the FastAPI coordinator is offline. Start the backend or let the console use browser fallback.");
+      return;
+    }
+    batchControlRef.current = { paused: false, stop: false };
     setBatchRunning(true);
+    setBatchPaused(false);
+    setBatchStopping(false);
     const idsToProcess = [...selectedProcessableIds];
-    const completedIds: string[] = [];
+    const processedIds: string[] = [];
 
     try {
       for (let index = 0; index < idsToProcess.length; index += 1) {
+        if (batchControlRef.current.stop) break;
+        await waitWhileBatchPaused(index + 1, idsToProcess.length, processedIds, processingMode);
+        if (batchControlRef.current.stop) break;
         const application = getSnapshot().applications.find((candidate) => candidate.id === idsToProcess[index]);
         if (!application) continue;
         const basePercent = Math.round((index / idsToProcess.length) * 100);
@@ -104,12 +139,20 @@ export function ReviewerBatchesPage() {
           index: index + 1,
           total: idsToProcess.length,
           applicationTitle: application.title,
-          message: "Reading label text and matching expected fields.",
+          message: `${modeLabel(processingMode)} review queued. Reading label evidence and matching expected fields.`,
           percent: Math.max(basePercent, 5),
-          completedIds: [...completedIds]
+          processedIds: [...processedIds],
+          mode: processingMode,
+          status: "running"
         });
+        await new Promise((resolve) => window.setTimeout(resolve, 300));
+        if (batchControlRef.current.stop) break;
+        await waitWhileBatchPaused(index + 1, idsToProcess.length, processedIds, processingMode);
+        if (batchControlRef.current.stop) break;
 
-        await autoReviewApplicationWithBrowserOcr(application.id, "browser", {
+        await runAutomatedReviewForMode(application.id, processingMode, {
+          dataProvider,
+          backendUnavailable,
           onProgress: (progressMessage) => {
             setBatchProgress({
               index: index + 1,
@@ -117,40 +160,128 @@ export function ReviewerBatchesPage() {
               applicationTitle: application.title,
               message: progressMessage,
               percent: Math.min(95, Math.round(((index + 0.65) / idsToProcess.length) * 100)),
-              completedIds: [...completedIds]
+              processedIds: [...processedIds],
+              mode: processingMode,
+              status: batchControlRef.current.stop ? "stopping" : batchControlRef.current.paused ? "paused" : "running"
             });
           }
         });
 
         const processedApplication = getSnapshot().applications.find((candidate) => candidate.id === application.id) || application;
+        processedIds.push(processedApplication.id);
         setBatchProgress({
           index: index + 1,
           total: idsToProcess.length,
           applicationTitle: processedApplication.title,
-          message: "Generating PDF packet.",
-          percent: Math.min(98, Math.round(((index + 0.9) / idsToProcess.length) * 100)),
-          completedIds: [...completedIds]
-        });
-        await downloadApplicationPdf(processedApplication, "Batch Review");
-        completedIds.push(processedApplication.id);
-        setBatchProgress({
-          index: index + 1,
-          total: idsToProcess.length,
-          applicationTitle: processedApplication.title,
-          message: "PDF downloaded. Moving to the next application.",
+          message: "Automated review stored. Open the reviewed application to download its PDF report.",
           percent: Math.round(((index + 1) / idsToProcess.length) * 100),
-          completedIds: [...completedIds]
+          processedIds: [...processedIds],
+          mode: processingMode,
+          status: batchControlRef.current.stop ? "stopping" : "running"
         });
-        await new Promise((resolve) => window.setTimeout(resolve, 250));
+        await new Promise((resolve) => window.setTimeout(resolve, 180));
       }
-      setSelectedIds([]);
-      messageApi.success(`Processed ${completedIds.length} application${completedIds.length === 1 ? "" : "s"} and downloaded PDFs.`);
+      setSelectedIds((current) => current.filter((id) => !processedIds.includes(id)));
+      if (batchControlRef.current.stop) {
+        setBatchProgress((current) =>
+          current
+            ? {
+                ...current,
+                message: `Batch stopped cleanly after ${processedIds.length} application${processedIds.length === 1 ? "" : "s"}.`,
+                percent: Math.round((processedIds.length / idsToProcess.length) * 100),
+                processedIds: [...processedIds],
+                status: "stopped"
+              }
+            : current
+        );
+        messageApi.warning(`Batch stopped after ${processedIds.length} application${processedIds.length === 1 ? "" : "s"}.`);
+      } else {
+        setBatchProgress((current) =>
+          current
+            ? {
+                ...current,
+                message: "Batch complete. Open any reviewed application to download its PDF report.",
+                percent: 100,
+                processedIds: [...processedIds],
+                status: "completed"
+              }
+            : current
+        );
+        messageApi.success(`Processed ${processedIds.length} application${processedIds.length === 1 ? "" : "s"}. Open a reviewed application to download its PDF report.`);
+      }
     } catch (error) {
       messageApi.error(error instanceof Error ? error.message : "Batch processing failed.");
     } finally {
+      batchControlRef.current = { paused: false, stop: false };
       setBatchRunning(false);
-      window.setTimeout(() => setBatchProgress(null), 1500);
+      setBatchPaused(false);
+      setBatchStopping(false);
+      window.setTimeout(() => setBatchProgress(null), 2400);
     }
+  };
+
+  const waitWhileBatchPaused = async (index: number, total: number, processedIds: string[], mode: ProcessingMode) => {
+    if (!batchControlRef.current.paused || batchControlRef.current.stop) return;
+    setBatchProgress((current) => ({
+      index,
+      total,
+      applicationTitle: current?.applicationTitle || "Batch paused",
+      message: "Batch paused. Resume when ready, or stop to end after the last completed application.",
+      percent: current?.percent || Math.round((processedIds.length / total) * 100),
+      processedIds: [...processedIds],
+      mode,
+      status: "paused"
+    }));
+    while (batchControlRef.current.paused && !batchControlRef.current.stop) {
+      await new Promise((resolve) => window.setTimeout(resolve, 180));
+    }
+  };
+
+  const pauseBatch = () => {
+    if (!batchRunning || batchPaused || batchStopping) return;
+    batchControlRef.current.paused = true;
+    setBatchPaused(true);
+    setBatchProgress((current) =>
+      current
+        ? {
+            ...current,
+            message: `${current.message} Pause requested; the current application will finish safely.`,
+            status: "paused"
+          }
+        : current
+    );
+  };
+
+  const resumeBatch = () => {
+    if (!batchRunning || !batchPaused || batchStopping) return;
+    batchControlRef.current.paused = false;
+    setBatchPaused(false);
+    setBatchProgress((current) =>
+      current
+        ? {
+            ...current,
+            message: "Batch resumed. Continuing with the next selected application.",
+            status: "running"
+          }
+        : current
+    );
+  };
+
+  const stopBatch = () => {
+    if (!batchRunning || batchStopping) return;
+    batchControlRef.current.stop = true;
+    batchControlRef.current.paused = false;
+    setBatchPaused(false);
+    setBatchStopping(true);
+    setBatchProgress((current) =>
+      current
+        ? {
+            ...current,
+            message: "Stop requested. The current application will finish safely, then the batch will end.",
+            status: "stopping"
+          }
+        : current
+    );
   };
 
   const columns: ColumnsType<ReviewApplication> = [
@@ -234,15 +365,33 @@ export function ReviewerBatchesPage() {
         title="Batch Review"
         size="small"
         extra={
-          <Button
-            type="primary"
-            icon={batchRunning ? <LoadingOutlined /> : <AppstoreOutlined />}
-            disabled={!selectedProcessableIds.length || batchRunning}
-            loading={batchRunning}
-            onClick={() => void runSelectedBatch()}
-          >
-            Process open batch
-          </Button>
+          <Space wrap>
+            {batchRunning ? (
+              <>
+                {batchPaused ? (
+                  <Button icon={<PlayCircleOutlined />} disabled={batchStopping} onClick={resumeBatch}>
+                    Resume
+                  </Button>
+                ) : (
+                  <Button icon={<PauseCircleOutlined />} disabled={batchStopping} onClick={pauseBatch}>
+                    Pause
+                  </Button>
+                )}
+                <Button danger icon={<StopOutlined />} disabled={batchStopping} onClick={stopBatch}>
+                  Stop
+                </Button>
+              </>
+            ) : null}
+            <Button
+              type="primary"
+              icon={batchRunning ? <LoadingOutlined /> : <AppstoreOutlined />}
+              disabled={!selectedProcessableIds.length || batchRunning}
+              loading={batchRunning && !batchPaused}
+              onClick={() => void runSelectedBatch()}
+            >
+              Process open batch
+            </Button>
+          </Space>
         }
       >
         <Space orientation="vertical" className="full-width" size={16}>
@@ -287,6 +436,11 @@ export function ReviewerBatchesPage() {
             <Typography.Text type="secondary">
               {selectedProcessableIds.length} selected · {filteredApplications.length} shown · {unprocessedCount} not processed
             </Typography.Text>
+            {filtersActive ? (
+              <Button disabled={batchRunning} onClick={clearBatchFilters}>
+                Clear filters
+              </Button>
+            ) : null}
           </div>
 
           <Table
@@ -468,26 +622,38 @@ function BatchFilterBar({
 }
 
 function BatchProgressPanel({ progress }: { progress: BatchProgress }) {
+  const statusTone = progress.status === "paused" ? "orange" : progress.status === "stopping" || progress.status === "stopped" ? "red" : progress.status === "completed" ? "green" : "blue";
   return (
-    <GovAlert type="info" title={`Processing ${progress.index} of ${progress.total}`}>
+    <GovAlert type={progress.status === "stopped" ? "warning" : "info"} title={`${progress.status === "paused" ? "Paused" : progress.status === "stopping" ? "Stopping" : progress.status === "stopped" ? "Stopped" : progress.status === "completed" ? "Batch complete" : "Processing"} ${progress.index} of ${progress.total}`}>
       <Space orientation="vertical" className="full-width" size={10}>
-        <Space>
-          <LoadingOutlined />
+        <Space wrap>
+          {progress.status === "paused" ? <PauseCircleOutlined /> : progress.status === "stopping" || progress.status === "stopped" ? <StopOutlined /> : progress.status === "completed" ? <CheckCircleOutlined /> : <LoadingOutlined />}
           <Typography.Text strong>{progress.applicationTitle}</Typography.Text>
+          <Tag color={statusTone}>{progress.status}</Tag>
+          <Tag>{modeLabel(progress.mode)}</Tag>
         </Space>
         <Typography.Text>{progress.message}</Typography.Text>
-        <Progress aria-label="Batch processing progress" percent={progress.percent} status={progress.percent >= 100 ? "success" : "active"} />
-        {progress.completedIds.length ? (
-          <Space>
-            <DownloadOutlined />
+        <Progress
+          aria-label="Batch processing progress"
+          percent={progress.percent}
+          status={progress.status === "stopped" ? "exception" : progress.percent >= 100 ? "success" : progress.status === "paused" ? "normal" : "active"}
+        />
+        {progress.processedIds.length ? (
+          <Space wrap>
+            <CheckCircleOutlined />
             <Typography.Text type="secondary">
-              PDFs downloaded for {progress.completedIds.length} application{progress.completedIds.length === 1 ? "" : "s"}.
+              {progress.processedIds.length} application{progress.processedIds.length === 1 ? "" : "s"} reviewed. PDF reports are available from each reviewed application.
             </Typography.Text>
           </Space>
         ) : null}
       </Space>
     </GovAlert>
   );
+}
+
+function modeLabel(mode: ProcessingMode): string {
+  if (mode === "backend") return "Backend";
+  return "Browser";
 }
 
 function applicationSearchText(application: ReviewApplication): string {

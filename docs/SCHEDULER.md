@@ -70,7 +70,7 @@ The assignment response follows `packages/shared/schemas/assignment-decision.sch
 - Disk penalty uses worker cache write throughput for uncached assets.
 - Warm engines avoid model warmup cost.
 - OCR estimate uses worker calibration metrics, then image pixels, then asset-size fallback.
-- Validation jobs with fallback enabled get a small negative `escalation_bonus_ms` on workers that can run the fallback engine locally.
+- Validation jobs stay on the PaddleOCR backend path; LayoutLMv3, when promoted, enriches field evidence inside validation rather than adding a second OCR engine.
 - Reliability penalty increases after `job_failed` or `lease_expired` worker events.
 - Session fairness penalizes sessions already consuming more active/queued work.
 
@@ -85,4 +85,4 @@ The Phase 4 worker reports `warmEngines`, `assetCache.assetIds`, network metrics
 - session fairness penalty
 - stale and incapable worker rejection
 - OCR/evidence/validation dependency ordering
-- PaddleOCR-capable worker preference for critical OCR and fallback-engine preference for hard-field validation escalation
+- PaddleOCR-capable worker preference for critical OCR and validation

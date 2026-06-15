@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ttb-label-reviewer-worker"
 version = "0.1.0"
-description = "Local/distributed worker agent for the TTB Label Reviewer coordinator."
+description = "Local backend worker agent for the TTB Label Reviewer coordinator."
 requires-python = ">=3.10"
 dependencies = [
   "httpx>=0.27,<1",
@@ -16,20 +16,32 @@ discovery = [
   "zeroconf>=0.132,<1",
 ]
 ocr = [
-  "Pillow>=10,<13",
-  "pytesseract>=0.3.13,<1",
-]
-easyocr = [
-  "easyocr>=1.7,<2",
+  "Pillow>=10,<12",
 ]
 paddleocr = [
-  "paddleocr>=2.7,<4",
+  "paddleocr==3.2.0",
+  "paddlex==3.2.0",
+]
+layoutlmv3 = [
+  "transformers>=4.40,<6",
+  "torch>=2,<3",
+]
+layoutlmv3-training = [
+  "datasets>=2.18",
+  "accelerate>=0.28",
+  "evaluate>=0.4",
+  "seqeval>=1.2",
 ]
 all-ocr = [
-  "pytesseract>=0.3.13,<1",
-  "Pillow>=10,<13",
-  "easyocr>=1.7,<2",
-  "paddleocr>=2.7,<4",
+  "Pillow>=10,<12",
+  "paddleocr==3.2.0",
+  "paddlex==3.2.0",
+  "transformers>=4.40,<6",
+  "torch>=2,<3",
+  "datasets>=2.18",
+  "accelerate>=0.28",
+  "evaluate>=0.4",
+  "seqeval>=1.2",
 ]
 test = [
   "pytest>=8",

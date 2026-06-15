@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -8,7 +9,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from .. import models
-from ..api.deps import get_current_user, require_permission
+from ..api.deps import get_current_user, get_session_id, require_permission
 from ..api.serializers import (
     application_version_to_read,
     asset_to_read,
@@ -22,6 +23,7 @@ from ..api.serializers import (
 )
 from ..core.benchmarking import list_benchmark_runs, run_benchmark_suite, worker_available_for_benchmark
 from ..core.application_numbers import application_number_for
+from ..core.demo_fixtures import ensure_demo_session, resolve_application_for_session
 from ..core.security import safe_unlink_asset_path
 from ..db import get_session
 from ..schemas import AuditEventRead, BenchmarkRunRead, BenchmarkRunRequest, OperationResult, SettingRead, SettingUpdate
@@ -34,7 +36,6 @@ DEFAULT_ADMIN_SETTINGS = {
     "browserOcrAllowed": True,
     "backendCpuOcrAllowed": True,
     "gpuOcrAllowed": False,
-    "distributedWorkersAllowed": True,
     "maxConcurrency": 4,
     "validatorThreshold": 0.88,
     "warningStrictness": "standard",
@@ -52,37 +53,86 @@ def list_admin_users(session: Session = Depends(get_session), current_user: mode
 
 
 @router.get("/admin/application-versions")
-def list_application_versions(session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
+def list_application_versions(
+    session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
+    current_user: models.User = Depends(get_current_user),
+):
     require_permission(session, current_user, resource="applications", action="list")
-    versions = session.scalars(select(models.ApplicationVersion).order_by(models.ApplicationVersion.created_at.desc())).all()
+    ensure_demo_session(session, session_id)
+    versions = session.scalars(
+        select(models.ApplicationVersion)
+        .join(models.Application)
+        .where(models.Application.session_id == session_id)
+        .order_by(models.ApplicationVersion.created_at.desc())
+    ).all()
     return [application_version_to_read(version) for version in versions]
 
 
 @router.get("/admin/assets")
-def list_assets(session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
+def list_assets(
+    session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
+    current_user: models.User = Depends(get_current_user),
+):
     require_permission(session, current_user, resource="assets", action="read")
-    assets = session.scalars(select(models.Asset).order_by(models.Asset.created_at.desc())).all()
+    ensure_demo_session(session, session_id)
+    assets = session.scalars(
+        select(models.Asset)
+        .join(models.Application)
+        .where(models.Application.session_id == session_id)
+        .order_by(models.Asset.created_at.desc())
+    ).all()
     return [asset_to_read(asset) for asset in assets]
 
 
 @router.get("/admin/review-decisions")
-def list_review_decisions(session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
+def list_review_decisions(
+    session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
+    current_user: models.User = Depends(get_current_user),
+):
     require_permission(session, current_user, resource="reviews", action="read")
-    decisions = session.scalars(select(models.ReviewDecision).order_by(models.ReviewDecision.created_at.desc())).all()
+    decisions = session.scalars(
+        select(models.ReviewDecision)
+        .join(models.Review)
+        .join(models.Application)
+        .where(models.Application.session_id == session_id)
+        .order_by(models.ReviewDecision.created_at.desc())
+    ).all()
     return [review_decision_to_read(decision) for decision in decisions]
 
 
 @router.get("/admin/correction-requests")
-def list_correction_requests(session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
+def list_correction_requests(
+    session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
+    current_user: models.User = Depends(get_current_user),
+):
     require_permission(session, current_user, resource="reviews", action="request_correction")
-    corrections = session.scalars(select(models.CorrectionRequest).order_by(models.CorrectionRequest.created_at.desc())).all()
+    corrections = session.scalars(
+        select(models.CorrectionRequest)
+        .join(models.Application)
+        .where(models.Application.session_id == session_id)
+        .order_by(models.CorrectionRequest.created_at.desc())
+    ).all()
     return [correction_request_to_read(correction) for correction in corrections]
 
 
 @router.get("/admin/reports")
-def list_reports(session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
+def list_reports(
+    session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
+    current_user: models.User = Depends(get_current_user),
+):
     require_permission(session, current_user, resource="reports", action="read")
-    reviews = session.scalars(select(models.Review).order_by(models.Review.created_at.desc()).limit(250)).all()
+    reviews = session.scalars(
+        select(models.Review)
+        .join(models.Application)
+        .where(models.Application.session_id == session_id)
+        .order_by(models.Review.created_at.desc())
+        .limit(250)
+    ).all()
     return [
         {
             "id": f"{review.id}.json",
@@ -123,6 +173,34 @@ def list_fixtures(current_user: models.User = Depends(get_current_user)):
     return rows
 
 
+@router.get("/admin/ocr-model-status")
+def ocr_model_status(session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
+    require_permission(session, current_user, resource="settings", action="read")
+    repo_root = Path(__file__).resolve().parents[4]
+    worker_path = repo_root / "apps" / "worker"
+    if str(worker_path) not in sys.path:
+        sys.path.append(str(worker_path))
+    try:
+        from ttb_worker.extraction.model_status import layoutlmv3_model_status
+
+        return [layoutlmv3_model_status()]
+    except Exception as error:
+        default_dir = repo_root / "models" / "field-extractor" / "layoutlmv3-cola" / "current"
+        return [
+            {
+                "id": "layoutlmv3-cola",
+                "status": "unavailable",
+                "trainedModelLoaded": False,
+                "mode": "paddleocr-baseline-weak-alignment",
+                "modelDir": str(default_dir),
+                "message": f"Unable to inspect field extractor model status: {error}",
+                "modelCard": None,
+                "metrics": None,
+                "failureReport": None,
+            }
+        ]
+
+
 @router.get("/audit-events", response_model=list[AuditEventRead])
 def list_audit_events(
     limit: int = 100,
@@ -131,11 +209,13 @@ def list_audit_events(
     entity_type: str | None = None,
     entity_id: str | None = None,
     session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
     current_user: models.User = Depends(get_current_user),
 ):
     require_permission(session, current_user, resource="auditEvents", action="manage")
     safe_limit = max(1, min(limit, 250))
-    query = select(models.AuditEvent).order_by(models.AuditEvent.created_at.desc()).limit(safe_limit)
+    ensure_demo_session(session, session_id)
+    query = select(models.AuditEvent).order_by(models.AuditEvent.created_at.desc()).limit(max(safe_limit * 4, 250))
     if actor_role:
         query = query.where(models.AuditEvent.actor_role == actor_role)
     if event_type:
@@ -144,7 +224,11 @@ def list_audit_events(
         query = query.where(models.AuditEvent.entity_type == entity_type)
     if entity_id:
         query = query.where(models.AuditEvent.entity_id == entity_id)
-    events = session.scalars(query).all()
+    events = [
+        event
+        for event in session.scalars(query).all()
+        if audit_event_visible_in_session(session, event, session_id)
+    ][:safe_limit]
     return [audit_event_to_read(event) for event in events]
 
 
@@ -237,9 +321,18 @@ def run_benchmark(
 
 
 @router.post("/admin/retention/purge-old-jobs", response_model=OperationResult)
-def purge_old_jobs(session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
+def purge_old_jobs(
+    session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
+    current_user: models.User = Depends(get_current_user),
+):
     require_permission(session, current_user, resource="settings", action="purge")
-    jobs = session.scalars(select(models.Job).where(models.Job.status.in_(["completed", "failed", "cancelled"]))).all()
+    jobs = session.scalars(
+        select(models.Job).where(
+            models.Job.session_id == session_id,
+            models.Job.status.in_(["completed", "failed", "cancelled"]),
+        )
+    ).all()
     for job in jobs:
         session.delete(job)
     session.add(
@@ -249,8 +342,8 @@ def purge_old_jobs(session: Session = Depends(get_session), current_user: models
             event_type="retention.purge_old_jobs",
             entity_type="jobs",
             entity_id="bulk",
-            summary=f"Purged {len(jobs)} completed, failed, and cancelled jobs.",
-            metadata_json={"count": len(jobs)},
+            summary=f"Purged {len(jobs)} completed, failed, and cancelled jobs for the active demo session.",
+            metadata_json={"count": len(jobs), "sessionId": session_id},
         )
     )
     session.commit()
@@ -258,13 +351,22 @@ def purge_old_jobs(session: Session = Depends(get_session), current_user: models
 
 
 @router.post("/admin/retention/purge-raw-images", response_model=OperationResult)
-def purge_raw_images(request: Request, session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
+def purge_raw_images(
+    request: Request,
+    session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
+    current_user: models.User = Depends(get_current_user),
+):
     require_permission(session, current_user, resource="settings", action="purge")
-    assets = session.scalars(select(models.Asset)).all()
+    assets = session.scalars(
+        select(models.Asset)
+        .join(models.Application)
+        .where(models.Application.session_id == session_id)
+    ).all()
     purged = 0
     for asset in assets:
         if asset.storage_path and not asset.storage_path.startswith("purged:"):
-            safe_unlink_asset_path(asset.storage_path, request.app.state.settings.asset_root)
+            unlink_asset_if_not_referenced(session, asset, request.app.state.settings.asset_root)
             asset.storage_path = f"purged:{asset.id}"
             asset.size_bytes = 0
             purged += 1
@@ -275,8 +377,8 @@ def purge_raw_images(request: Request, session: Session = Depends(get_session), 
             event_type="retention.purge_raw_images",
             entity_type="assets",
             entity_id="bulk",
-            summary=f"Purged raw storage for {purged} assets.",
-            metadata_json={"count": purged},
+            summary=f"Purged raw storage for {purged} assets in the active demo session.",
+            metadata_json={"count": purged, "sessionId": session_id},
         )
     )
     session.commit()
@@ -288,15 +390,17 @@ def delete_application_packet(
     application_id: str,
     request: Request,
     session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
     current_user: models.User = Depends(get_current_user),
 ):
     require_permission(session, current_user, resource="settings", action="purge")
-    application = session.get(models.Application, application_id)
+    application = resolve_application_for_session(session, application_id, session_id)
     if not application:
         return {"ok": True, "count": 0}
+    application_id = application.id
     application_number = application_number_for(application)
     for asset in list(application.assets):
-        safe_unlink_asset_path(asset.storage_path, request.app.state.settings.asset_root)
+        unlink_asset_if_not_referenced(session, asset, request.app.state.settings.asset_root)
     review_ids = [review.id for review in application.reviews]
     if review_ids:
         session.execute(delete(models.ReviewDecision).where(models.ReviewDecision.review_id.in_(review_ids)))
@@ -314,7 +418,7 @@ def delete_application_packet(
             entity_type="applications",
             entity_id=application_id,
             summary=f"Deleted application packet {application_number}.",
-            metadata_json={"applicationId": application_id, "applicationNumber": application_number},
+            metadata_json={"applicationId": application_id, "applicationNumber": application_number, "sessionId": session_id},
         )
     )
     session.commit()
@@ -322,32 +426,41 @@ def delete_application_packet(
 
 
 @router.post("/admin/retention/purge-all-demo-data", response_model=OperationResult)
-def purge_all_demo_data(request: Request, session: Session = Depends(get_session), current_user: models.User = Depends(get_current_user)):
+def purge_all_demo_data(
+    request: Request,
+    session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
+    current_user: models.User = Depends(get_current_user),
+):
     require_permission(session, current_user, resource="settings", action="purge")
-    assets = session.scalars(select(models.Asset)).all()
+    application_ids = list(session.scalars(select(models.Application.id).where(models.Application.session_id == session_id)).all())
+    if not application_ids:
+        return {"ok": True, "count": 0}
+    assets = session.scalars(select(models.Asset).where(models.Asset.application_id.in_(application_ids))).all()
     for asset in assets:
-        safe_unlink_asset_path(asset.storage_path, request.app.state.settings.asset_root)
+        unlink_asset_if_not_referenced(session, asset, request.app.state.settings.asset_root)
 
-    review_ids = list(session.scalars(select(models.Review.id)).all())
+    review_ids = list(session.scalars(select(models.Review.id).where(models.Review.application_id.in_(application_ids))).all())
+    asset_ids = [asset.id for asset in assets]
     deleted_counts = {
-        "applications": len(session.scalars(select(models.Application.id)).all()),
+        "applications": len(application_ids),
         "assets": len(assets),
         "reviews": len(review_ids),
-        "jobs": len(session.scalars(select(models.Job.id)).all()),
-        "correctionRequests": len(session.scalars(select(models.CorrectionRequest.id)).all()),
-        "applicationVersions": len(session.scalars(select(models.ApplicationVersion.id)).all()),
-        "reviewDecisions": len(session.scalars(select(models.ReviewDecision.id)).all()),
-        "auditEvents": len(session.scalars(select(models.AuditEvent.id)).all()),
+        "jobs": len(session.scalars(select(models.Job.id).where(models.Job.session_id == session_id)).all()),
+        "correctionRequests": len(session.scalars(select(models.CorrectionRequest.id).where(models.CorrectionRequest.application_id.in_(application_ids))).all()),
+        "applicationVersions": len(session.scalars(select(models.ApplicationVersion.id).where(models.ApplicationVersion.application_id.in_(application_ids))).all()),
+        "reviewDecisions": len(session.scalars(select(models.ReviewDecision.id).where(models.ReviewDecision.review_id.in_(review_ids))).all()) if review_ids else 0,
     }
 
-    session.execute(delete(models.ReviewDecision))
-    session.execute(delete(models.CorrectionRequest))
-    session.execute(delete(models.Job))
-    session.execute(delete(models.Review))
-    session.execute(delete(models.ApplicationVersion))
-    session.execute(delete(models.Asset))
-    session.execute(delete(models.Application))
-    session.execute(delete(models.AuditEvent))
+    if review_ids:
+        session.execute(delete(models.ReviewDecision).where(models.ReviewDecision.review_id.in_(review_ids)))
+    session.execute(delete(models.CorrectionRequest).where(models.CorrectionRequest.application_id.in_(application_ids)))
+    session.execute(delete(models.Job).where(models.Job.session_id == session_id))
+    session.execute(delete(models.Review).where(models.Review.application_id.in_(application_ids)))
+    session.execute(delete(models.ApplicationVersion).where(models.ApplicationVersion.application_id.in_(application_ids)))
+    if asset_ids:
+        session.execute(delete(models.Asset).where(models.Asset.id.in_(asset_ids)))
+    session.execute(delete(models.Application).where(models.Application.id.in_(application_ids)))
     total = sum(deleted_counts.values())
     session.add(
         models.AuditEvent(
@@ -356,12 +469,56 @@ def purge_all_demo_data(request: Request, session: Session = Depends(get_session
             event_type="retention.purge_all_demo_data",
             entity_type="demo",
             entity_id="bulk",
-            summary=f"Purged all demo application data ({total} records).",
-            metadata_json={"counts": deleted_counts, "count": total},
+            summary=f"Purged demo application data for the active session ({total} records).",
+            metadata_json={"counts": deleted_counts, "count": total, "sessionId": session_id},
         )
     )
     session.commit()
     return {"ok": True, "count": total}
+
+
+def audit_event_visible_in_session(session: Session, event: models.AuditEvent, session_id: str) -> bool:
+    metadata = event.metadata_json if isinstance(event.metadata_json, dict) else {}
+    if metadata.get("sessionId") == session_id:
+        return True
+
+    entity_type = str(event.entity_type or "").lower()
+    if entity_type in {"settings", "workers", "benchmarks"}:
+        return True
+    if str(event.event_type or "").startswith("authz."):
+        return True
+    entity_id = str(event.entity_id or "")
+    if entity_type.startswith("application") or entity_type == "applications":
+        return bool(session.get(models.Application, entity_id) and session.get(models.Application, entity_id).session_id == session_id)
+    if entity_type.startswith("review") or entity_type == "reviews":
+        review = session.get(models.Review, entity_id)
+        return bool(review and review.application and review.application.session_id == session_id)
+    if entity_type.startswith("job") or entity_type == "jobs":
+        job = session.get(models.Job, entity_id)
+        return bool(job and job.session_id == session_id)
+
+    application_id = metadata.get("applicationId")
+    if isinstance(application_id, str):
+        application = session.get(models.Application, application_id)
+        return bool(application and application.session_id == session_id)
+    review_id = metadata.get("reviewId")
+    if isinstance(review_id, str):
+        review = session.get(models.Review, review_id)
+        return bool(review and review.application and review.application.session_id == session_id)
+    return False
+
+
+def unlink_asset_if_not_referenced(session: Session, asset: models.Asset, asset_root: Path) -> None:
+    if not asset.storage_path or asset.storage_path.startswith("purged:"):
+        return
+    other_reference = session.scalar(
+        select(models.Asset.id).where(
+            models.Asset.id != asset.id,
+            models.Asset.storage_path == asset.storage_path,
+        )
+    )
+    if not other_reference:
+        safe_unlink_asset_path(asset.storage_path, asset_root)
 
 
 def ensure_admin_settings(session: Session) -> models.Setting:

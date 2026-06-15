@@ -1,7 +1,7 @@
 import { CloseOutlined, ExpandOutlined, ZoomInOutlined, ZoomOutOutlined } from "@ant-design/icons";
 import { Button, Space, Tooltip } from "antd";
 import type { CSSProperties } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { EvidenceCrop, LabelImage, ProcessingMode } from "../../domain/application/types";
 
 type Props = {
@@ -14,11 +14,28 @@ export type ImageProcessingOverlayState = {
   stage: string;
   message: string;
   percent: number;
+  scanIndex?: number;
   mode: ProcessingMode;
   fieldLabel?: string;
   confidence?: number;
   crop?: EvidenceCrop;
   workerLabel?: string;
+};
+
+type RatioRegion = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+type ImageDisplayBounds = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  naturalWidth: number;
+  naturalHeight: number;
 };
 
 const DEFAULT_ZOOM = 0.85;
@@ -29,13 +46,51 @@ const ZOOM_STEP = 0.2;
 export function ImageWorkbench({ image, processing }: Props) {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+  const [imageBounds, setImageBounds] = useState<ImageDisplayBounds | null>(null);
+  const previewRef = useRef<HTMLButtonElement | null>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
   const processingActive = Boolean(processing?.active);
+  const measureImageBounds = useCallback(() => {
+    const preview = previewRef.current;
+    const element = imageRef.current;
+    if (!preview || !element) return;
+    const naturalWidth = element.naturalWidth || image?.width || 1;
+    const naturalHeight = element.naturalHeight || image?.height || 1;
+    const boxWidth = preview.clientWidth || element.clientWidth;
+    const boxHeight = preview.clientHeight || element.clientHeight;
+    if (!boxWidth || !boxHeight || !naturalWidth || !naturalHeight) return;
+    const scale = Math.min(boxWidth / naturalWidth, boxHeight / naturalHeight);
+    const renderedWidth = naturalWidth * scale;
+    const renderedHeight = naturalHeight * scale;
+    setImageBounds({
+      left: (boxWidth - renderedWidth) / 2,
+      top: (boxHeight - renderedHeight) / 2,
+      width: renderedWidth,
+      height: renderedHeight,
+      naturalWidth,
+      naturalHeight
+    });
+  }, [image?.height, image?.width]);
+
   useEffect(() => {
     setImageFailed(false);
+    setImageBounds(null);
   }, [image?.id, image?.url]);
   useEffect(() => {
     if (processingActive) setViewerOpen(false);
   }, [processingActive]);
+  useEffect(() => {
+    const preview = previewRef.current;
+    if (!preview) return;
+    measureImageBounds();
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", measureImageBounds);
+      return () => window.removeEventListener("resize", measureImageBounds);
+    }
+    const observer = new ResizeObserver(() => measureImageBounds());
+    observer.observe(preview);
+    return () => observer.disconnect();
+  }, [measureImageBounds]);
   if (!image) return <div className="empty-panel">No image attached.</div>;
   return (
     <>
@@ -59,6 +114,7 @@ export function ImageWorkbench({ image, processing }: Props) {
         ) : (
           <Tooltip title={processingActive ? "Evidence analysis is running on this image." : "Click the label image to expand. Drag inside the viewer to pan; use the mouse wheel to zoom."}>
             <button
+              ref={previewRef}
               type="button"
               className="image-card-preview"
               aria-label={`Expand ${image.name}`}
@@ -67,11 +123,11 @@ export function ImageWorkbench({ image, processing }: Props) {
                 if (!processingActive) setViewerOpen(true);
               }}
             >
-              <img src={image.url} alt={`${image.name} evidence`} onError={() => setImageFailed(true)} draggable={false} />
+              <img ref={imageRef} src={image.url} alt={`${image.name} evidence`} onLoad={measureImageBounds} onError={() => setImageFailed(true)} draggable={false} />
               {!processingActive ? <span className="image-card-hover-hint">
                 <ExpandOutlined /> Expand image
               </span> : null}
-              {processingActive && processing ? <ImageProcessingOverlay processing={processing} image={image} /> : null}
+              {processingActive && processing ? <ImageProcessingOverlay processing={processing} image={image} imageBounds={imageBounds} /> : null}
             </button>
           </Tooltip>
         )}
@@ -81,21 +137,24 @@ export function ImageWorkbench({ image, processing }: Props) {
   );
 }
 
-function ImageProcessingOverlay({ processing, image }: { processing: ImageProcessingOverlayState; image: LabelImage }) {
-  const cropStyle = cropToOverlayStyle(processing.crop, image);
+function ImageProcessingOverlay({ processing, image, imageBounds }: { processing: ImageProcessingOverlayState; image: LabelImage; imageBounds: ImageDisplayBounds | null }) {
+  const imageWindowStyle = imageBoundsToOverlayWindowStyle(imageBounds);
+  const cropStyle = cropToImageWindowStyle(processing, image, imageBounds);
   return (
     <div className="image-processing-overlay" aria-live="polite">
-      <div className="image-processing-grid" aria-hidden="true" />
-      <div className="image-processing-sweep" aria-hidden="true" />
-      <div className="image-processing-focus" style={cropStyle} aria-hidden="true">
-        <span />
+      <div className="image-processing-image-window" style={imageWindowStyle} aria-hidden="true">
+        <div className="image-processing-grid" />
+        <div className="image-processing-focus" style={cropStyle}>
+          <span />
+          <i className="image-processing-crop-sweep" />
+        </div>
       </div>
       <div className="image-processing-readout">
-        <span className="image-processing-kicker">{processingStageLabel(processing.stage)} · {modeLabel(processing.mode)}</span>
+        <span className="image-processing-kicker">{processingStageLabel(processing.stage, processing.mode)} · {modeLabel(processing.mode)}</span>
         <strong>{processing.fieldLabel || "Label evidence"}</strong>
         <span>{processing.message}</span>
         <div className="image-processing-meter" aria-label={`Review analysis ${Math.round(processing.percent)} percent complete`}>
-          <i style={{ width: `${Math.max(4, Math.min(100, processing.percent))}%` }} />
+          <i style={{ width: `${Math.max(0, Math.min(100, processing.percent))}%` }} />
         </div>
         <small>
           {typeof processing.confidence === "number" ? `${Math.round(processing.confidence * 100)}% confidence` : "Calibrating confidence"} · {processing.workerLabel || "Evidence worker"}
@@ -105,35 +164,97 @@ function ImageProcessingOverlay({ processing, image }: { processing: ImageProces
   );
 }
 
-function cropToOverlayStyle(crop: EvidenceCrop | undefined, image: LabelImage): CSSProperties {
-  if (!crop) return { left: "12%", top: "16%", width: "42%", height: "30%" };
-  if (crop.unit === "ratio") {
+const scanRegions: RatioRegion[] = [
+  { x: 0.05, y: 0.08, width: 0.42, height: 0.18 },
+  { x: 0.34, y: 0.1, width: 0.48, height: 0.24 },
+  { x: 0.58, y: 0.18, width: 0.35, height: 0.52 },
+  { x: 0.05, y: 0.35, width: 0.48, height: 0.28 },
+  { x: 0.32, y: 0.52, width: 0.54, height: 0.23 },
+  { x: 0.07, y: 0.66, width: 0.58, height: 0.22 },
+  { x: 0.66, y: 0.06, width: 0.27, height: 0.78 },
+  { x: 0.2, y: 0.22, width: 0.6, height: 0.46 }
+];
+
+function cropToImageWindowStyle(processing: ImageProcessingOverlayState, image: LabelImage, imageBounds: ImageDisplayBounds | null): CSSProperties {
+  const crop = trustedProcessingCrop(processing);
+  const region = crop ? cropToRatioRegion(crop, image, imageBounds) : fallbackProcessingRegion(processing);
+  return ratioRegionToOverlayStyle(region);
+}
+
+function imageBoundsToOverlayWindowStyle(imageBounds: ImageDisplayBounds | null): CSSProperties {
+  if (!imageBounds) {
     return {
-      left: `${Math.max(0, Math.min(96, crop.x * 100))}%`,
-      top: `${Math.max(0, Math.min(96, crop.y * 100))}%`,
-      width: `${Math.max(7, Math.min(88, crop.width * 100))}%`,
-      height: `${Math.max(7, Math.min(70, crop.height * 100))}%`
+      display: "none"
     };
   }
-  const width = image.width || 1;
-  const height = image.height || 1;
   return {
-    left: `${Math.max(0, Math.min(96, (crop.x / width) * 100))}%`,
-    top: `${Math.max(0, Math.min(96, (crop.y / height) * 100))}%`,
-    width: `${Math.max(7, Math.min(88, (crop.width / width) * 100))}%`,
-    height: `${Math.max(7, Math.min(70, (crop.height / height) * 100))}%`
+    left: `${imageBounds.left}px`,
+    top: `${imageBounds.top}px`,
+    width: `${imageBounds.width}px`,
+    height: `${imageBounds.height}px`
+  };
+}
+
+export function trustedProcessingCrop(processing: ImageProcessingOverlayState): EvidenceCrop | undefined {
+  if (!processing.crop) return undefined;
+  return processing.crop;
+}
+
+function cropToRatioRegion(crop: EvidenceCrop, image: LabelImage, imageBounds: ImageDisplayBounds | null): RatioRegion {
+  if (crop.unit === "ratio") {
+    return crop;
+  }
+  const width = imageBounds?.naturalWidth || image.width || 1;
+  const height = imageBounds?.naturalHeight || image.height || 1;
+  return {
+    x: crop.x / width,
+    y: crop.y / height,
+    width: crop.width / width,
+    height: crop.height / height
+  };
+}
+
+function syntheticProcessingRegion(processing: ImageProcessingOverlayState): RatioRegion {
+  if (processing.stage === "queued") return scanRegions[0];
+  if (processing.stage === "segmenting") return scanRegions[processing.scanIndex ?? 1] || scanRegions[1];
+  if (processing.stage === "validating") return scanRegions[7];
+  const index = processing.scanIndex ?? Math.max(0, Math.floor(processing.percent / 9));
+  return scanRegions[index % scanRegions.length];
+}
+
+function fallbackProcessingRegion(processing: ImageProcessingOverlayState): RatioRegion {
+  if (processing.mode === "backend") return { x: 0, y: 0, width: 1, height: 1 };
+  return syntheticProcessingRegion(processing);
+}
+
+function ratioRegionToOverlayStyle(region: RatioRegion): CSSProperties {
+  const left = Math.max(0, Math.min(96, region.x * 100));
+  const top = Math.max(0, Math.min(96, region.y * 100));
+  const width = Math.max(4, Math.min(100 - left, region.width * 100));
+  const height = Math.max(4, Math.min(100 - top, region.height * 100));
+  return {
+    left: `${left}%`,
+    top: `${top}%`,
+    width: `${width}%`,
+    height: `${height}%`
   };
 }
 
 function modeLabel(mode: ProcessingMode): string {
-  if (mode === "cluster") return "parallel workers";
-  if (mode === "backend") return "backend OCR";
-  return "browser OCR";
+  if (mode === "backend") return "enhanced backend";
+  return "browser fallback";
 }
 
-function processingStageLabel(stage: string): string {
-  if (stage === "segmenting") return "segmenting";
-  if (stage === "ocr") return "reading";
+function processingStageLabel(stage: string, mode: ProcessingMode): string {
+  if (mode !== "browser") {
+    if (stage === "segmenting" || stage === "ocr") return "full-label OCR pass";
+    if (stage === "validating") return "crop queue";
+    if (stage === "field") return "evidence crop";
+    if (stage === "complete") return "complete";
+    return "queued";
+  }
+  if (stage === "segmenting") return "browser OCR views";
+  if (stage === "ocr") return "local OCR";
   if (stage === "validating" || stage === "field") return "classifying";
   if (stage === "complete") return "complete";
   return "queued";

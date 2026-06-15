@@ -1,0 +1,111 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25191001000415",
+    "retrieved_at": "2026-06-14T02:33:56Z"
+  },
+  "ttb_id": "25191001000415",
+  "status": "APPROVED",
+  "approval_date": "07/22/2025",
+  "serial_number": "250710",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "VODKA SOUTHEASTERN",
+    "fanciful_name": null,
+    "class_type": "VODKA 80-89 PROOF",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25191001000415",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16687,
+      "sha256": "7a9a405c7f1c68889ab880fa34048d633870823b281ea2e2e1a96eee521db4f4",
+      "downloaded_at": "2026-06-14T02:33:57Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=SE-VODKA-LABEL-UPDATED.png&filetype=l",
+      "local_path": "assets/label_01.png",
+      "content_type": "image/png",
+      "bytes": 443771,
+      "sha256": "c80f83a9c1b05f198a02b6a343902a9a857fffa3ab9fad3f8a2d871753b4bd9e",
+      "downloaded_at": "2026-06-14T02:33:57Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "25191001000415"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "42766"
+    },
+    {
+      "label": "Serial #",
+      "value": "250710"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "VODKA 80-89 PROOF"
+    },
+    {
+      "label": "Origin Code",
+      "value": "ALABAMA"
+    },
+    {
+      "label": "Brand Name",
+      "value": "VODKA SOUTHEASTERN"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "07/22/2025"
+    },
+    {
+      "label": "TTB ID: 25191001000415",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25191001000415",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=SE-VODKA-LABEL-UPDATED.png&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

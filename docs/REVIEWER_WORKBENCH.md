@@ -14,12 +14,12 @@ What to click:
 1. Open `http://127.0.0.1:5174/`.
 2. Click `Continue as Reviewer`.
 3. Open `TRANSCONTINENTAL OTHER FOREIGN RUM record`.
-4. Click `Run automated review`.
+4. Click `Run automation`.
 5. Click `Next Application`.
 6. Confirm the next reviewable packet opens.
 7. Inspect expected values, extracted evidence, image crops, and any full-image review prompts for missing evidence.
 8. Change reviewer status with the `Pass` and `Fail` control.
-9. Add reasoning in the field text area or `Agent Notes`.
+9. Add reasoning in the field text area or `Reviewer decision note`.
 10. Click `Previous`; the TRANSCONTINENTAL reasoning remains preserved.
 11. Click `PDF` to download the review packet.
 
@@ -27,11 +27,11 @@ What to click:
 
 | Area | Purpose |
 | --- | --- |
-| Header | Status, processing mode, previous/next, auto review, PDF export. |
+| Header | Application number, status, previous/next, auto-run review, manual `Run automation`, raw OCR, and PDF export. |
 | Label Images | Thumbnail strip shown when a real public record has multiple label images. One-image records show the selected image directly. |
 | Expanded viewer | Detached floating modal with drag-to-move, zoom buttons, and image panning. |
 | Evidence column | Field-level source image thumbnail, OCR/evidence snippet, and confidence. |
-| Extracted field text | Extracted text by field after processing, with raw OCR available in a collapsible panel when present. |
+| Extracted field text | Extracted text by field after processing, with raw OCR available from the top workbench controls when present. |
 | Application Match Review | Expected value, detected evidence, automated status, reviewer status, reason, and evidence. |
 | Final reviewer decision | Simple Pass application / Fail application controls with reviewer notes and PDF export. |
 
@@ -52,22 +52,18 @@ Pass is blocked while unresolved critical failures or reviewer decisions remain.
 
 ## Queue
 
-Open `Reviewer Portal` or `Queue` to use queue filters:
+Open `Reviewer Portal` or `Queue` to use the quick triage chips:
 
-- All
-- New submissions
-- Critical fail
 - Missing warning
-- ABV mismatch
+- Alcohol mismatch
 - Net contents mismatch
 - Low confidence
 - Needs correction
-- Resubmitted
 - Assigned to me
-- Unassigned
-- High-confidence pass
 
-In Backend and Cluster modes, the reviewer queue subscribes to application and review live events and refetches when matching changes arrive.
+The queue also includes sortable columns plus fuzzy search, company, product/class, submitted date range, processed/not processed controls, and a clear-all filters action when filters are active. The queue is informational: open a packet to run automation from the workbench, or use Batch Review when you want to process selected applications in bulk.
+
+In Backend mode, the reviewer queue subscribes to application and review live events and refetches when matching changes arrive.
 
 ## PDF Export
 
@@ -82,4 +78,4 @@ Each workbench and decision panel has a `PDF` button. The generated PDF includes
 
 ## Known Reviewer Boundary
 
-Browser Only is the richest end-to-end reviewer demo. Backend and Cluster modes provide API-backed queue/admin/live integration, but not every browser-snapshot reviewer convenience has an equivalent persisted backend route yet. See [Known_LIMITATIONS.md](Known_LIMITATIONS.md).
+Browser fallback remains private and local. Backend mode is the primary review path with API-backed queue/admin/live integration, but not every browser-snapshot reviewer convenience has an equivalent persisted backend route yet. See [Known_LIMITATIONS.md](Known_LIMITATIONS.md).

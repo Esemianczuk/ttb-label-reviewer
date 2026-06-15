@@ -1,0 +1,25 @@
+{
+  "id": "honey_mead_table_wine",
+  "description": "Honey-based table wine can be corroborated by honey and mead/meadery label evidence.",
+  "expectedFields": {
+    "productType": "wine",
+    "brandName": "MR. B'S MEADERY",
+    "fancifulName": "GINGER CARDAMOM",
+    "classType": "HONEY BASED TABLE WINE",
+    "alcoholContent": "12.5% Alc. by Vol.",
+    "netContents": "750 mL",
+    "governmentWarningRequired": true,
+    "producerName": "MR. B'S MEAD LLC"
+  },
+  "ocrText": "MR. B'S MEADERY Made with local honey Ginger Cardamom Lemon Lime Ginger Mead with Cardamom Produced and Bottled by Mr. Bs Mead LLC 750 ml in Seattle, Washington 98134 12.5% Alc. by Vol GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+  "expectedOverallStatus": "PASS",
+  "expectedStatuses": {
+    "brandName": "PASS",
+    "fancifulName": "PASS",
+    "classType": "PASS",
+    "alcoholContent": "PASS",
+    "netContents": "PASS",
+    "governmentWarningRequired": "PASS",
+    "producerName": "PASS"
+  }
+}

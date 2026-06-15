@@ -3,6 +3,7 @@ import type { ConsoleResourceName } from "../../resources";
 import { getStoredRole } from "../auth/authProvider";
 
 const SESSION_KEY = "ttb-console-session-id";
+const SHARED_DEMO_SESSION_ID = "console-demo-session";
 const authCache = new Map<string, { token: string; expiresAt: string }>();
 
 export function getBackendUrl(): string {
@@ -15,10 +16,15 @@ export function setBackendUrl(url: string): void {
 
 export function getSessionId(): string {
   const existing = window.localStorage.getItem(SESSION_KEY);
-  if (existing) return existing;
-  const next = `console-${crypto.randomUUID()}`;
-  window.localStorage.setItem(SESSION_KEY, next);
-  return next;
+  if (existing && existing !== "local-dev-session" && existing !== SHARED_DEMO_SESSION_ID) return existing;
+  const sessionId = createConsoleSessionId();
+  window.localStorage.setItem(SESSION_KEY, sessionId);
+  return sessionId;
+}
+
+function createConsoleSessionId(): string {
+  if (typeof window.crypto?.randomUUID === "function") return `console-${window.crypto.randomUUID()}`;
+  return `console-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 export const apiDataProvider: DataProvider = {
@@ -45,10 +51,13 @@ export const apiDataProvider: DataProvider = {
     }
     throw new Error(`Update for ${resource}/${id} is handled by reviewer audit endpoints in this prototype.`);
   },
-  deleteOne: async ({ id }) => ({ data: { id } as any }),
+  deleteOne: async ({ resource }) => {
+    throw new Error(`Delete is not supported for backend resource ${resource}.`);
+  },
   getApiUrl: () => getBackendUrl(),
   custom: async ({ url, method, payload }) => {
-    const path = String(url || "");
+    const path = String(url || "").replace(/^\/+/, "");
+    if (path === "reviews/auto") return { data: await createBackendReview(payload) };
     const adminAction = await runAdminAction(path, payload);
     if (adminAction) return { data: adminAction };
     return { data: await request(path, { method: method?.toUpperCase() || "GET", body: payload ? JSON.stringify(payload) : undefined }) };
@@ -87,43 +96,63 @@ async function listResource(resource: string): Promise<any[]> {
       return request("/api/admin/reports");
     case "fixtures":
       return request("/api/admin/fixtures");
+    case "ocrModelStatus":
+      return request("/api/admin/ocr-model-status");
     default:
       throw new Error(`Backend provider does not expose resource ${resource}.`);
   }
 }
 
 async function runAdminAction(action: string, payload: any): Promise<any | null> {
-  if (action === "admin/settings") {
-    const settings = payload || {};
-    return request("/api/settings/admin.operations", { method: "PATCH", body: JSON.stringify({ value: settings }) });
-  }
-  if (action === "admin/worker") {
-    const workerId = encodeURIComponent(payload?.workerId || "");
-    const workerAction = payload?.action;
-    if (workerAction === "recalibrate") return request(`/api/workers/${workerId}/recalibrate`, { method: "POST" });
-    if (["drain", "disable", "enable"].includes(workerAction)) return request(`/api/workers/${workerId}/${workerAction}`, { method: "POST" });
-    throw new Error(`Unsupported worker action ${workerAction}.`);
-  }
-  if (action === "admin/job") {
-    const jobId = encodeURIComponent(payload?.jobId || "");
-    const jobAction = payload?.action;
-    if (jobAction === "cancel") return request(`/api/jobs/${jobId}/cancel`, { method: "POST" });
-    if (jobAction === "retry") return request(`/api/jobs/${jobId}/retry`, { method: "POST" });
-    if (jobAction === "raise_priority") return request(`/api/jobs/${jobId}/raise-priority`, { method: "POST" });
-    throw new Error(`Unsupported job action ${jobAction}.`);
-  }
   if (action === "admin/benchmark") {
     return request("/api/admin/benchmarks/run", { method: "POST", body: JSON.stringify(payload || {}) });
   }
-  if (action === "admin/purge-raw-images") return request("/api/admin/retention/purge-raw-images", { method: "POST" });
-  if (action === "admin/purge-old-jobs") return request("/api/admin/retention/purge-old-jobs", { method: "POST" });
-  if (action === "admin/delete-packet") {
-    return request(`/api/admin/retention/delete-application/${encodeURIComponent(payload?.applicationId || "")}`, { method: "POST" });
-  }
-  if (action === "admin/purge-all") {
-    return request("/api/admin/retention/purge-all-demo-data", { method: "POST" });
+  if (action.startsWith("admin/")) {
+    throw new Error("This admin console is read-only except for benchmark runs.");
   }
   return null;
+}
+
+async function createBackendReview(payload: any): Promise<any> {
+  const applicationId = encodeURIComponent(String(payload?.applicationId || ""));
+  if (!applicationId) throw new Error("Application ID is required to start backend review.");
+  const review = await request(`/api/applications/${applicationId}/review`, {
+    method: "POST",
+    body: JSON.stringify({
+      mode: "backend",
+      priority: payload?.priority ?? 100,
+      ocrStrategy: payload?.ocrStrategy || "paddleocr_authoritative",
+      primaryEngine: payload?.primaryEngine || "paddleocr",
+      targetLatencyMs: payload?.targetLatencyMs ?? 5000,
+      forceFreshOcr: payload?.forceFreshOcr ?? true
+    })
+  });
+  return waitForBackendReview(review);
+}
+
+async function waitForBackendReview(initialReview: any, timeoutMs = 45_000): Promise<any> {
+  const reviewId = initialReview?.id;
+  if (!reviewId) return initialReview;
+  const terminal = new Set(["completed", "complete", "pass", "fail", "warning", "needs_review", "not_found", "not_applicable", "pass_with_warnings"]);
+  const failed = new Set(["failed", "cancelled", "canceled"]);
+  const nonTerminalRunStatuses = new Set(["queued", "pending", "processing", "started", "running", "leased", "retrying"]);
+  const started = Date.now();
+  let lastReview = initialReview;
+  while (Date.now() - started < timeoutMs) {
+    lastReview = await request(`/api/reviews/${encodeURIComponent(reviewId)}`);
+    const runStatus = String(lastReview?.runStatus || lastReview?.status || "").toLowerCase();
+    if (failed.has(runStatus)) {
+      throw new Error(`Backend review ${reviewId} ${runStatus}. Check the worker log for OCR errors.`);
+    }
+    if (lastReview?.result) return lastReview;
+    if (terminal.has(runStatus) && !nonTerminalRunStatuses.has(runStatus)) return lastReview;
+    await sleep(runStatus === "queued" || runStatus === "pending" ? 650 : 900);
+  }
+  throw new Error("Backend review did not finish within 45 seconds. Confirm the local PaddleOCR worker is running and healthy.");
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
 export async function request<T = any>(path: string, init: RequestInit = {}): Promise<T> {
@@ -153,7 +182,8 @@ export async function demoAuthHeader(): Promise<Record<string, string>> {
     method: "POST",
     headers: {
       Accept: "application/json",
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      "X-Session-Id": getSessionId()
     },
     body: JSON.stringify({ role })
   });

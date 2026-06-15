@@ -14,7 +14,8 @@ export const consoleResourceNames = [
   "settings",
   "reports",
   "fixtures",
-  "benchmarks"
+  "benchmarks",
+  "ocrModelStatus"
 ] as const;
 
 export type ConsoleResourceName = (typeof consoleResourceNames)[number];
@@ -33,7 +34,8 @@ export const resourceLabels: Record<ConsoleResourceName, string> = {
   settings: "Settings",
   reports: "Reports",
   fixtures: "Fixtures",
-  benchmarks: "Benchmarks"
+  benchmarks: "Benchmarks",
+  ocrModelStatus: "OCR Model Status"
 };
 
 export const consoleResources: IResourceItem[] = consoleResourceNames.map((name) => ({

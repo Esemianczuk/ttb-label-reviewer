@@ -500,7 +500,7 @@ function processingModePanel(state) {
           Processing Mode
           <select id="processing-mode-select" ${state.isProcessing ? 'disabled' : ''}>
             <option value="browser" ${state.processingMode === 'browser' ? 'selected' : ''}>Browser Only</option>
-            <option value="backend" ${state.processingMode === 'backend' ? 'selected' : ''}>Local Backend</option>
+            <option value="backend" ${state.processingMode === 'backend' ? 'selected' : ''}>Backend</option>
             <option value="cluster" ${state.processingMode === 'cluster' ? 'selected' : ''}>Cluster</option>
           </select>
         </label>

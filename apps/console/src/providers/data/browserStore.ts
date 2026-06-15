@@ -3,6 +3,7 @@ import {
   createApplicantApplication,
   createAudit,
   createDefaultAdminSettings,
+  createDemoOcrModelStatus,
   createDemoBenchmarkRuns,
   createDemoSnapshot,
   fieldLabels,
@@ -24,6 +25,7 @@ import type {
   ReviewField,
   ReviewResult,
   ReviewStatus,
+  Severity,
   UserRole
 } from "../../domain/application/types";
 import {
@@ -35,6 +37,8 @@ import {
 const STORAGE_KEY = "ttb-console-snapshot-v1";
 const RETIRED_SAMPLE_URL_PARTS = ["/label-packets/"];
 const METADATA_ONLY_REVIEW_FIELDS = new Set(["applicationId", "labelId"]);
+const LEGACY_DEMO_WORKER_IDS = new Set(["worker-local-browser", "worker-fastapi-01", "worker-mac-01"]);
+const REVIEW_ENGINE_TRACE_MARKER = "OCR geometry contract: paddle-full-image-v2 / browser-rotated-edge-v2";
 const listeners = new Set<() => void>();
 let cachedSnapshot: ConsoleSnapshot | null = null;
 
@@ -167,7 +171,7 @@ export function updateJobOperation(params: {
 export function runAdminBenchmark(params: { imageCount: number; label?: string; mode?: ProcessingMode; actor?: string }): ConsoleSnapshot {
   return updateSnapshot((snapshot) => {
     const worker = snapshot.workers.find((candidate) => !candidate.disabled) || snapshot.workers[0];
-    const average = Math.max(120, Math.round((worker?.avgMsPerImage || 650) * (params.mode === "cluster" ? 0.72 : params.mode === "backend" ? 0.88 : 1)));
+    const average = Math.max(120, Math.round((worker?.avgMsPerImage || 650) * (params.mode === "backend" ? 0.88 : 1)));
     const totalMs = average * params.imageCount;
     const run: BenchmarkRun = {
       id: `benchmark-${Date.now()}`,
@@ -177,7 +181,7 @@ export function runAdminBenchmark(params: { imageCount: number; label?: string; 
       status: "completed",
       workerId: worker?.id || "worker-local-browser",
       workerChosen: worker?.id || "worker-local-browser",
-      engineUsed: worker?.engines?.[0] || "browser-fixture",
+      engineUsed: worker?.engines?.[0] || "browser-local-ocr",
       concurrency: worker?.maxConcurrency || 1,
       totalMs,
       wallClockMs: totalMs,
@@ -310,7 +314,7 @@ export function autoReviewApplication(applicationId: string, mode?: ProcessingMo
       const review = createReviewForApplication(application, processingMode);
       return {
         ...application,
-        review,
+        review: stampCurrentReviewEngine(review),
         status: reviewerWorkflowStatusFromCompliance(review.status),
         updatedAt: new Date().toISOString()
       };
@@ -334,6 +338,51 @@ export function autoReviewApplication(applicationId: string, mode?: ProcessingMo
   });
 }
 
+export function applyBackendReviewResult(applicationId: string, backendReview: any): ConsoleSnapshot {
+  const snapshot = getSnapshot();
+  const application = snapshot.applications.find((candidate) => candidate.id === applicationId);
+  const result = backendReview?.result || backendReview?.review_result || backendReview;
+  const resultFields = Array.isArray(result?.fields) ? result.fields : [];
+  if (!application) throw new Error(`Application ${applicationId} is not loaded in the reviewer workbench.`);
+  if (!resultFields.length) {
+    throw new Error("Backend review finished without field evidence. The reviewer workbench did not import a fallback review.");
+  }
+
+  const now = new Date().toISOString();
+  const status = normalizeReviewStatus(result?.overallStatus || backendReview?.canonicalStatus || backendReview?.status);
+  const review: ReviewResult = {
+    id: String(backendReview?.id || result?.id || `review-${applicationId}-${Date.now()}`),
+    applicationId,
+    mode: "backend",
+    status,
+    startedAt: String(backendReview?.createdAt || result?.createdAt || now),
+    completedAt: String(backendReview?.completedAt || now),
+    fields: resultFields.map((field: any, index: number) => backendFieldToReviewField(application, field, index)),
+    summary:
+      status === "PASS"
+        ? "Backend PaddleOCR evidence matched the required application fields."
+        : status === "FAIL"
+          ? "Backend PaddleOCR found one or more critical label evidence failures."
+          : "Backend PaddleOCR found evidence that needs reviewer confirmation.",
+    rawOcrText: String(result?.combinedText || result?.combinedOcr?.rawText || ""),
+    engineTrace: [
+      result?.fieldExtractor?.trainedModelActive ? "Enhanced OCR field extraction" : "PaddleOCR full-image OCR with conservative field alignment",
+      "Deterministic TTB field validators",
+      "Backend worker completion imported into reviewer workbench"
+    ]
+  };
+
+  return applyCompletedReview({
+    applicationId,
+    review,
+    actor: "PaddleOCR Backend Worker",
+    role: "reviewer",
+    action: "review.backend_complete",
+    summary: `Backend OCR review completed for ${applicationNumberForId(snapshot, applicationId)}.`,
+    engine: "paddleocr-backend"
+  });
+}
+
 export async function autoReviewApplicationWithBrowserOcr(
   applicationId: string,
   mode?: ProcessingMode,
@@ -343,7 +392,9 @@ export async function autoReviewApplicationWithBrowserOcr(
   const processingMode = mode || snapshot.processingMode;
   const application = snapshot.applications.find((candidate) => candidate.id === applicationId);
   if (!application) throw new Error(`Application ${applicationId} was not found.`);
-  if (processingMode !== "browser") return autoReviewApplication(applicationId, processingMode);
+  if (processingMode !== "browser") {
+    throw new Error("Browser OCR review only supports browser fallback mode. Use the backend review provider for PaddleOCR reviews.");
+  }
 
   updateApplication(applicationId, (candidate) => ({
     ...candidate,
@@ -609,7 +660,7 @@ export function processReviewerBatch(params: { applicationIds?: string[]; mode?:
       processed += 1;
       return {
         ...application,
-        review,
+        review: stampCurrentReviewEngine(review),
         status: reviewerWorkflowStatusFromCompliance(review.status),
         updatedAt: new Date().toISOString()
       };
@@ -1026,7 +1077,9 @@ function applyCompletedReview(params: {
   role: UserRole;
   action: string;
   summary: string;
+  engine?: string;
 }): ConsoleSnapshot {
+  const review = stampCurrentReviewEngine(params.review);
   return updateSnapshot((snapshot) => {
     const applicationNumber = applicationNumberForId(snapshot, params.applicationId);
     return {
@@ -1035,8 +1088,8 @@ function applyCompletedReview(params: {
         application.id === params.applicationId
           ? {
               ...application,
-              review: params.review,
-              status: reviewerWorkflowStatusFromCompliance(params.review.status),
+              review,
+              status: reviewerWorkflowStatusFromCompliance(review.status),
               updatedAt: new Date().toISOString()
             }
           : application
@@ -1045,13 +1098,25 @@ function applyCompletedReview(params: {
         createAudit(`audit-${Date.now()}`, params.actor, params.role, params.action, "reviews", params.summary, {
           applicationId: params.applicationId,
           applicationNumber,
-          processingMode: params.review.mode,
-          engine: "tesseract-js-browser"
+          processingMode: review.mode,
+          engine: params.engine || "browser-local-ocr"
         }),
         ...snapshot.auditEvents
       ]
     };
   });
+}
+
+function stampCurrentReviewEngine(review: ReviewResult): ReviewResult {
+  const trace = review.engineTrace || [];
+  return {
+    ...review,
+    engineTrace: trace.includes(REVIEW_ENGINE_TRACE_MARKER) ? trace : [...trace, REVIEW_ENGINE_TRACE_MARKER]
+  };
+}
+
+function hasCurrentReviewEngine(review?: ReviewResult): boolean {
+  return Boolean(review?.engineTrace?.includes(REVIEW_ENGINE_TRACE_MARKER));
 }
 
 function applyReviewerFieldDecision(field: ReviewField, status?: FieldStatus, reason?: string): ReviewField {
@@ -1104,16 +1169,13 @@ function persist(snapshot: ConsoleSnapshot): void {
 
 function migrateSnapshot(snapshot: ConsoleSnapshot): ConsoleSnapshot {
   if (hasRetiredSampleReferences(snapshot)) return createDemoSnapshot();
-  const applications = snapshot.applications.map((application) => ({
-    ...application,
-    status: normalizeApplicationStatus(application.status),
-    review: application.review
+  const applications = snapshot.applications.map((application) => {
+    const normalizedStatus = normalizeApplicationStatus(application.status);
+    const review = application.review
       ? {
           ...application.review,
           status: normalizeReviewStatus(application.review.status),
-          reviewerOverallStatus: application.review.reviewerOverallStatus
-            ? normalizeReviewStatus(application.review.reviewerOverallStatus)
-            : undefined,
+          reviewerOverallStatus: application.review.reviewerOverallStatus ? normalizeReviewStatus(application.review.reviewerOverallStatus) : undefined,
           fields: application.review.fields
             .filter((field) => !METADATA_ONLY_REVIEW_FIELDS.has(String(field.fieldKey)))
             .map((field) => ({
@@ -1122,15 +1184,99 @@ function migrateSnapshot(snapshot: ConsoleSnapshot): ConsoleSnapshot {
               reviewerStatus: field.reviewerStatus ? normalizeReviewStatus(field.reviewerStatus) : undefined
             }))
         }
-      : undefined
-  }));
+      : undefined;
+    const keepClosedDecision = ["APPROVED", "CONDITIONALLY_APPROVED", "REJECTED"].includes(normalizedStatus);
+    const staleReview = Boolean(review && !hasCurrentReviewEngine(review) && !keepClosedDecision);
+    return {
+      ...application,
+      status: staleReview ? ("IN_REVIEW" as ApplicationStatus) : normalizedStatus,
+      review: staleReview ? undefined : review
+    };
+  });
   return annotateAuditApplicationNumbers({
     ...snapshot,
     applications,
-    jobs: snapshot.jobs || createAdminJobsForApplications(applications),
+    workers: (snapshot.workers || []).filter((worker) => !LEGACY_DEMO_WORKER_IDS.has(worker.id)),
+    jobs: (snapshot.jobs || createAdminJobsForApplications(applications)).filter((job) => !job.workerId || !LEGACY_DEMO_WORKER_IDS.has(job.workerId)),
     adminSettings: { ...createDefaultAdminSettings(), ...(snapshot.adminSettings || {}) },
-    benchmarkRuns: snapshot.benchmarkRuns || createDemoBenchmarkRuns()
+    benchmarkRuns: snapshot.benchmarkRuns || createDemoBenchmarkRuns(),
+    ocrModelStatus: snapshot.ocrModelStatus || createDemoOcrModelStatus()
   });
+}
+
+function backendFieldToReviewField(application: ReviewApplication, field: any, index: number): ReviewField {
+  const fieldKey = normalizeBackendFieldKey(field?.fieldKey);
+  const status = normalizeReviewStatus(field?.status) as FieldStatus;
+  const evidenceItems = Array.isArray(field?.evidence) ? field.evidence : [];
+  return {
+    id: `${application.id}-${fieldKey}-${index}`,
+    fieldKey,
+    label: String(field?.field || field?.label || fieldLabels[fieldKey] || fieldKey),
+    expected: String(field?.expected ?? ""),
+    extracted: String(field?.extracted || evidenceItems[0]?.text || ""),
+    status,
+    severity: normalizeBackendSeverity(field?.severity, status),
+    confidence: clampBackendConfidence(field?.confidence),
+    reason: String(field?.reason || "Backend OCR validator returned this field result."),
+    evidence: evidenceItems.length
+      ? evidenceItems.map((evidence: any) => backendEvidenceToReviewEvidence(application, evidence, field))
+      : [
+          {
+            sourceImageId: application.images[0]?.id || "",
+            excerpt: String(field?.extracted || field?.reason || "Backend OCR evidence"),
+            confidence: clampBackendConfidence(field?.confidence),
+            pageAnchor: "PaddleOCR evidence"
+          }
+        ]
+  };
+}
+
+function normalizeBackendFieldKey(fieldKey: unknown): keyof ExpectedFields | "governmentWarning" {
+  const key = String(fieldKey || "");
+  return (key === "governmentWarningRequired" ? "governmentWarning" : key) as keyof ExpectedFields | "governmentWarning";
+}
+
+function normalizeBackendSeverity(value: unknown, status: FieldStatus): Severity {
+  const normalized = String(value || "").toLowerCase();
+  if (normalized === "critical" || normalized === "warning" || normalized === "info") return normalized;
+  if (status === "FAIL" || status === "NOT_FOUND") return "critical";
+  if (status === "NEEDS_REVIEW" || status === "WARNING") return "warning";
+  return "info";
+}
+
+function backendEvidenceToReviewEvidence(application: ReviewApplication, evidence: any, field: any) {
+  const bbox = evidence?.bbox;
+  return {
+    sourceImageId: backendEvidenceImageId(application, evidence),
+    excerpt: String(evidence?.text || evidence?.evidence || evidence?.value || field?.extracted || field?.reason || "Backend OCR evidence"),
+    confidence: clampBackendConfidence(evidence?.confidence ?? field?.confidence),
+    pageAnchor: String(evidence?.method || "PaddleOCR evidence"),
+    crop:
+      bbox && typeof bbox === "object" && ["x", "y", "width", "height"].every((key) => Number.isFinite(Number(bbox[key])))
+        ? {
+            x: Number(bbox.x),
+            y: Number(bbox.y),
+            width: Number(bbox.width),
+            height: Number(bbox.height),
+            unit: "pixel" as const,
+            source: "ocr" as const
+          }
+        : undefined
+  };
+}
+
+function backendEvidenceImageId(application: ReviewApplication, evidence: any): string {
+  const candidate = String(evidence?.imageId || evidence?.assetId || "");
+  if (candidate && application.images.some((image) => image.id === candidate)) return candidate;
+  const imageIndex = Number(evidence?.imageIndex);
+  if (Number.isInteger(imageIndex) && application.images[imageIndex]) return application.images[imageIndex].id;
+  return application.images[0]?.id || "";
+}
+
+function clampBackendConfidence(value: unknown): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 0.75;
+  return Math.max(0, Math.min(1, parsed));
 }
 
 function hasRetiredSampleReferences(snapshot: ConsoleSnapshot): boolean {

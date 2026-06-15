@@ -16,7 +16,7 @@ import {
   ToolOutlined,
   UserSwitchOutlined
 } from "@ant-design/icons";
-import { Button, Input, Layout, Menu, Modal, Select, Space, Typography } from "antd";
+import { Alert, Button, Input, Layout, Menu, Modal, Select, Space, Typography } from "antd";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { NavLink, useLocation } from "react-router";
@@ -24,6 +24,7 @@ import type { ProcessingMode, UserRole } from "../domain/application/types";
 import { canAccess } from "../providers/access/permissionMatrix";
 import { getConsoleIdentities, roleLabel, type ConsoleIdentity } from "../providers/auth/authProvider";
 import { ModeTag } from "../components/common/StatusTag";
+import { guidanceForPath, type PageGuidance } from "./pageGuidance";
 
 type NavItem = {
   key: string;
@@ -42,9 +43,7 @@ export function GovSidebar({
   mode,
   providerLabel,
   healthMessage,
-  backendUrl,
-  onBackendUrlChange,
-  clusterDashboardActive
+  backendUrl
 }: {
   role: UserRole;
   identity: ConsoleIdentity;
@@ -53,13 +52,12 @@ export function GovSidebar({
   providerLabel: string;
   healthMessage: string;
   backendUrl: string;
-  onBackendUrlChange: (url: string) => void;
-  clusterDashboardActive: boolean;
 }) {
   const { Sider } = Layout;
   const location = useLocation();
   const [helpOpen, setHelpOpen] = useState(false);
   const nav = visibleRoleNav(role, () => setHelpOpen(true));
+  const guidance = guidanceForPath(location.pathname, role);
   const accountOptions = getConsoleIdentities().map((account) => ({
     value: account.role,
     label: `${roleLabel(account.role)} - ${account.email}`
@@ -97,13 +95,13 @@ export function GovSidebar({
         <div className="gov-sidebar-status">
           <Space orientation="vertical" className="full-width" size={10}>
             <div>
-              <Typography.Text type="secondary">Processing mode</Typography.Text>
+              <Typography.Text type="secondary">Runtime path</Typography.Text>
               <div>
-                <ModeTag mode={mode} />
+              <ModeTag mode={mode} />
               </div>
               <Typography.Text type="secondary">{providerLabel}</Typography.Text>
-              {mode === "browser" ? <Typography.Paragraph className="health-copy">Browser Only mode processes images locally in this browser session.</Typography.Paragraph> : null}
-              {clusterDashboardActive ? <Typography.Paragraph className="health-copy">Cluster dashboard enabled.</Typography.Paragraph> : null}
+              {mode === "browser" ? <Typography.Paragraph className="health-copy">Offline fallback is active because the backend coordinator is not reachable.</Typography.Paragraph> : null}
+              {mode === "backend" ? <Typography.Paragraph className="health-copy">Primary backend path uses FastAPI, PaddleOCR full-image OCR, guarded field extraction, and deterministic validators.</Typography.Paragraph> : null}
             </div>
             <div>
               <Typography.Text type="secondary">Coordinator</Typography.Text>
@@ -113,19 +111,46 @@ export function GovSidebar({
               aria-label="Backend coordinator URL"
               value={backendUrl}
               prefix={<CloudServerOutlined />}
-              onChange={(event) => onBackendUrlChange(event.target.value)}
+              readOnly
             />
           </Space>
         </div>
       ) : null}
-      <Modal title="Role guidance" open={helpOpen} onCancel={() => setHelpOpen(false)} footer={<Button onClick={() => setHelpOpen(false)}>Close</Button>}>
-        <Space orientation="vertical">
-          <Typography.Text>Applicant pages collect application fields, image evidence, submissions, and corrected resubmissions.</Typography.Text>
-          <Typography.Text>Reviewer pages compare expected values against OCR evidence and record human decisions.</Typography.Text>
-          <Typography.Text>Admin pages monitor workers, jobs, audit events, benchmarks, and retention controls.</Typography.Text>
-        </Space>
+      <Modal
+        title={(
+          <Space orientation="vertical" size={0} className="page-guidance-title">
+            <Typography.Text type="secondary">{guidance.scope} guidance</Typography.Text>
+            <Typography.Text strong>{guidance.title}</Typography.Text>
+          </Space>
+        )}
+        className="page-guidance-modal"
+        width={760}
+        open={helpOpen}
+        onCancel={() => setHelpOpen(false)}
+        footer={<Button onClick={() => setHelpOpen(false)}>Close</Button>}
+      >
+        <GuidanceModalContent guidance={guidance} />
       </Modal>
     </Sider>
+  );
+}
+
+export function GuidanceModalContent({ guidance }: { guidance: PageGuidance }) {
+  return (
+    <div className="page-guidance">
+      <Typography.Paragraph className="page-guidance-summary">{guidance.summary}</Typography.Paragraph>
+      {guidance.blocks.map((block) => (
+        <section className="page-guidance-block" key={block.heading}>
+          <Typography.Title level={5}>{block.heading}</Typography.Title>
+          <ul className="page-guidance-list">
+            {block.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </section>
+      ))}
+      {guidance.footer ? <Alert type="info" showIcon message={guidance.footer} /> : null}
+    </div>
   );
 }
 
@@ -155,15 +180,16 @@ function visibleRoleNav(role: UserRole, openHelp: () => void): Array<{ label: st
     admin: [{
       label: "Operations",
       items: [
-        { key: "admin-dashboard", label: "Dashboard", to: "/admin", icon: <AuditOutlined />, resource: "workers", action: "manage" },
-        { key: "admin-users", label: "Users", to: "/admin/users", icon: <TeamOutlined />, resource: "users", action: "manage" },
-        { key: "admin-workers", label: "Workers", to: "/admin/workers", icon: <DatabaseOutlined />, resource: "workers", action: "manage" },
-        { key: "admin-jobs", label: "Jobs", to: "/admin/jobs", icon: <FileSearchOutlined />, resource: "jobs", action: "manage" },
-        { key: "admin-engines", label: "OCR Engines", to: "/admin/engines", icon: <ToolOutlined />, resource: "settings", action: "manage" },
-        { key: "admin-benchmarks", label: "Benchmarks", to: "/admin/benchmarks", icon: <BarChartOutlined />, resource: "benchmarks", action: "manage" },
-        { key: "admin-audit", label: "Audit Log", to: "/admin/audit", icon: <SafetyCertificateOutlined />, resource: "auditEvents", action: "manage" },
-        { key: "admin-retention", label: "Data Retention", to: "/admin/retention", icon: <DatabaseOutlined />, resource: "settings", action: "purge" },
-        { key: "admin-settings", label: "Settings", to: "/admin/settings", icon: <SettingOutlined />, resource: "settings", action: "manage" }
+        { key: "admin-dashboard", label: "Dashboard", to: "/admin", icon: <AuditOutlined />, resource: "workers", action: "list" },
+        { key: "admin-users", label: "Users", to: "/admin/users", icon: <TeamOutlined />, resource: "users", action: "list" },
+        { key: "admin-workers", label: "Workers", to: "/admin/workers", icon: <DatabaseOutlined />, resource: "workers", action: "list" },
+        { key: "admin-jobs", label: "Jobs", to: "/admin/jobs", icon: <FileSearchOutlined />, resource: "jobs", action: "list" },
+        { key: "admin-engines", label: "OCR Engines", to: "/admin/engines", icon: <ToolOutlined />, resource: "settings", action: "show" },
+        { key: "admin-benchmarks", label: "Benchmarks", to: "/admin/benchmarks", icon: <BarChartOutlined />, resource: "benchmarks", action: "list" },
+        { key: "admin-audit", label: "Audit Log", to: "/admin/audit", icon: <SafetyCertificateOutlined />, resource: "auditEvents", action: "list" },
+        { key: "admin-retention", label: "Data Retention", to: "/admin/retention", icon: <DatabaseOutlined />, resource: "settings", action: "show" },
+        { key: "admin-settings", label: "Settings", to: "/admin/settings", icon: <SettingOutlined />, resource: "settings", action: "show" },
+        { key: "admin-guidance", label: "Guidance", icon: <QuestionCircleOutlined />, onClick: openHelp, resource: "settings", action: "show" }
       ]
     }]
   };

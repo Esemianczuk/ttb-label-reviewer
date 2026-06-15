@@ -446,7 +446,7 @@ def quality_engine_bonus(job: models.Job, worker: models.Worker, engine_id: str,
         or payload.get("fieldCritical")
         or payload.get("prefer_quality")
         or payload.get("preferQuality")
-        or payload.get("ocr_strategy") in {"paddleocr_authoritative", "tesseract_first_easyocr_escalation"}
+        or payload.get("ocr_strategy") == "paddleocr_authoritative"
     )
     if not prefer_quality:
         return 0.0
@@ -454,12 +454,6 @@ def quality_engine_bonus(job: models.Job, worker: models.Worker, engine_id: str,
     if engine_id == "paddleocr":
         reason_codes.append("quality_paddleocr_preferred")
         bonus -= 1900.0
-    elif engine_id == "easyocr":
-        reason_codes.append("quality_easyocr_fallback_available")
-        bonus -= 700.0
-    elif engine_id == "onnx":
-        reason_codes.append("quality_heavy_engine_available")
-        bonus -= 500.0
     if worker_has_accelerator(worker):
         reason_codes.append("accelerated_worker_preferred")
         bonus -= 450.0
@@ -467,17 +461,10 @@ def quality_engine_bonus(job: models.Job, worker: models.Worker, engine_id: str,
 
 
 def escalation_bonus(job: models.Job, worker: models.Worker, reason_codes: list[str]) -> float:
-    if job.job_type != "validation":
-        return 0.0
-    payload = job.payload_json or {}
-    strategy = str(payload.get("ocr_strategy") or payload.get("ocrStrategy") or "")
-    fallback_engine = str(payload.get("fallback_engine") or payload.get("fallbackEngine") or "")
-    if strategy in {"off", "none", "primary_only"} or not fallback_engine:
-        return 0.0
-    if not worker_has_engine(worker, fallback_engine):
-        return 0.0
-    reason_codes.append(f"{fallback_engine}_escalation_available")
-    return -350.0
+    # The hardened evaluator path uses one backend OCR engine: PaddleOCR.
+    # LayoutLMv3, when promoted, enriches field evidence inside validation rather
+    # than adding a second OCR-engine escalation path.
+    return 0.0
 
 
 def worker_has_engine(worker: models.Worker, engine_id: str) -> bool:

@@ -52,7 +52,7 @@ def test_worker_validation_output_uses_shared_review_schema_shape():
     assert review["fields"][2]["fieldKey"] == "alcoholContent"
     assert field_statuses(review)["alcoholContent"] == "PASS"
     assert review["enginesUsed"] == [{"engineId": "null", "displayName": "Deterministic Null OCR", "timingMs": 0}]
-    assert review["workersUsed"] == [{"workerId": "worker-golden", "mode": "distributed"}]
+    assert review["workersUsed"] == [{"workerId": "worker-golden", "mode": "backend"}]
     assert review["files"][0]["assetId"] == "asset-1"
 
 
@@ -83,7 +83,7 @@ def test_evidence_task_preserves_ocr_line_word_bbox_candidates():
     assert candidates[0]["assetId"] == "asset-1"
 
 
-def test_evidence_task_normalizes_legacy_tesseract_bbox_shape():
+def test_evidence_task_normalizes_legacy_bbox_shape():
     result = process_evidence_job(
         {
             "payload": {

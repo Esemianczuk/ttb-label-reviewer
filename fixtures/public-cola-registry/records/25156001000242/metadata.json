@@ -1,0 +1,126 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25156001000242",
+    "retrieved_at": "2026-06-14T02:34:08Z"
+  },
+  "ttb_id": "25156001000242",
+  "status": "APPROVED",
+  "approval_date": "06/11/2025",
+  "serial_number": "25DL01",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "RUM4U",
+    "fanciful_name": null,
+    "class_type": "OTHER FORIEGN RUM",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25156001000242",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16710,
+      "sha256": "76c5cf2cf6a71feb31bb018fc30c25a1ef0a2c839b56bf2970f089ee2614882e",
+      "downloaded_at": "2026-06-14T02:34:08Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=rum4u front label.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 115473,
+      "sha256": "56ea99b57d71effb26f1b1462da8b4915823d9958cc3cec82735b8e7000255e9",
+      "downloaded_at": "2026-06-14T02:34:08Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=rum4u back label.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 122004,
+      "sha256": "f2246891361823a7b978a50de6cf6e32cf67ece70fc4dc4cf001142150574188",
+      "downloaded_at": "2026-06-14T02:34:08Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "25156001000242"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "20751"
+    },
+    {
+      "label": "Serial #",
+      "value": "25DL01"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "OTHER FORIEGN RUM"
+    },
+    {
+      "label": "Origin Code",
+      "value": "GUYANA"
+    },
+    {
+      "label": "Brand Name",
+      "value": "RUM4U"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "06/11/2025"
+    },
+    {
+      "label": "TTB ID: 25156001000242",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25156001000242",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=rum4u front label.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=rum4u back label.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

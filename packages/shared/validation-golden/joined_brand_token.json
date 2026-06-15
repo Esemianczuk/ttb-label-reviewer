@@ -1,0 +1,25 @@
+{
+  "id": "joined_brand_token",
+  "description": "Two-word brands should pass when OCR joins the brand in a surrounding token such as SENDITSPIRITS.",
+  "expectedFields": {
+    "productType": "distilled_spirits",
+    "brandName": "SEND IT",
+    "fancifulName": "VODKA SODA SPLASH OF CRAN",
+    "classType": "VODKA SPECIALTIES",
+    "alcoholContent": "4.44% ALC/VOL",
+    "netContents": "355 mL",
+    "governmentWarningRequired": true,
+    "producerName": "TRIPLE EIGHT DISTILLERY"
+  },
+  "ocrText": "VODKA SODA SPLASH OF CRAN SenditSpirits.com #SenditSpirits VODKA WITH NATURAL CRANBERRY FLAVOR AND CARBONATION 4.44% ALCIVOL 355 mL PRODUCED AND CANNED BY TRIPLE EIGHT DISTILLERY GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+  "expectedOverallStatus": "PASS",
+  "expectedStatuses": {
+    "brandName": "PASS",
+    "fancifulName": "PASS",
+    "classType": "PASS",
+    "alcoholContent": "PASS",
+    "netContents": "PASS",
+    "governmentWarningRequired": "PASS",
+    "producerName": "PASS"
+  }
+}

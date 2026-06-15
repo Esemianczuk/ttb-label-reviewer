@@ -1,0 +1,91 @@
+{
+  "fixture_id": "ttb_25156001000225_bourbon-barrel-aged-big-pumpkin",
+  "source_type": "official_public_registry",
+  "ttb_id": "25156001000225",
+  "expected_fields": {
+    "brandName": "BOURBON BARREL AGED BIG PUMPKIN",
+    "fancifulName": null,
+    "classType": "APPLE BASED FLAVORED WINE",
+    "productType": "wine",
+    "alcoholContent": null,
+    "netContents": null,
+    "governmentWarningRequired": true,
+    "isImported": null,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": null,
+      "address": null
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.png",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
+    "Collector note: High-signal expansion; term=bourbon%; score=88; brand=BOURBON BARREL AGED BIG PUMPKIN; label_images=1.",
+    "High-signal expansion score 88 from search term bourbon%."
+  ],
+  "demo_ready": true,
+  "signal": {
+    "score": 88,
+    "searchTerm": "bourbon%",
+    "scoreReasons": [
+      "brand",
+      "class/type",
+      "missing alcohol metadata",
+      "alcohol image hint",
+      "missing net contents metadata",
+      "net contents image hint",
+      "missing responsible party name metadata",
+      "responsible party image hint",
+      "missing responsible party address",
+      "domestic/no country-of-origin requirement",
+      "1 label image(s)",
+      "approved"
+    ],
+    "ocrHints": {
+      "available": true,
+      "engines": [
+        "easyocr"
+      ],
+      "textLength": 865,
+      "alcoholHints": [
+        "8.2%",
+        "8.2% ABV",
+        "8.2% ALC"
+      ],
+      "netContentsHints": [
+        "473ML"
+      ],
+      "warningDetected": false,
+      "warningTermHits": 1,
+      "responsiblePartyHint": true,
+      "sample": "ALC BY VOL 8.2% ALC BY VOL 8.2% GLUTEN FREE ALC BY VOL 8.2% GLUTEN FREE 1602(473ML) 1602(473ML) GLUTEN FREE 1602(473ML) HLJON 8.2% ABV { 1 We Are committed T0 { 9 Preserving AND L 8 WATERWAYS 5157 INGREDIENTS: HARD APPLE CIDER AGED IN BOURBON BARRELS, FILTERED 07905 WATER , BiTTERSWEET CONCENTRATE, PUMPKIN; FALL SPICES MALIC AciD SULFITES [TO PRESERVE FRESHNESSI; CARBON DIOXIDE CIDER 8 SERVING FACTS CANNED BY HUDSON NORTH CIDER CO SERVING SIZE L MADE For IN NEWBURGH NY SERVINGS PER CONTAINER DEC",
+      "errors": [
+        "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Barrel Aged Big Pumpkin.png&filetype=l: tesseract: tesseract is not installed or it's not in your PATH. See README file for more information."
+      ]
+    }
+  },
+  "demo_audit": {
+    "status": "ready",
+    "source": "high_signal_ocr_preflight",
+    "reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+    "reviewed_common_fields": [
+      "alcoholContent",
+      "brandName",
+      "classType",
+      "countryOfOrigin",
+      "netContents",
+      "producerName"
+    ]
+  }
+}

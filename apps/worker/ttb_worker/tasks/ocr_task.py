@@ -7,7 +7,7 @@ from typing import Any
 from ..engines.base import OcrEngine, OcrResult
 from ..transport import CoordinatorClient
 
-OCR_CACHE_VERSION = "ocr-v6"
+OCR_CACHE_VERSION = "ocr-v7"
 
 
 def process_ocr_job(
@@ -19,11 +19,13 @@ def process_ocr_job(
     payload = job.get("payload") or {}
     image_bytes = load_job_image(job, client, cache_dir=cache_dir)
     engine = choose_engine(engines, job)
-    cached = load_cached_ocr_result(cache_dir, cache_key_for_job(job, engine.id))
+    cache_key = cache_key_for_job(job, engine.id)
+    force_fresh = bool(payload.get("force_fresh_ocr") or payload.get("forceFreshOcr"))
+    cached = None if force_fresh else load_cached_ocr_result(cache_dir, cache_key)
     if cached:
         return ocr_result_payload(cached, payload, cached=True)
     result = engine.recognize(image_bytes, {"payload": payload, "job": job})
-    save_cached_ocr_result(cache_dir, cache_key_for_job(job, engine.id), result)
+    save_cached_ocr_result(cache_dir, cache_key, result)
     return ocr_result_payload(result, payload, cached=False)
 
 

@@ -1,6 +1,7 @@
 import type { AdminJob, AdminSettings, ConsoleSnapshot } from "../../domain/application/types";
 
 export function adminMetrics(snapshot: ConsoleSnapshot) {
+  const activeWorkers = snapshot.workers.filter((worker) => ["online", "busy", "calibrating"].includes(worker.status) && !worker.disabled);
   const latestRun = snapshot.benchmarkRuns.find((run) => run.status !== "skipped") || snapshot.benchmarkRuns[0];
   const latestApplicationTime = Math.max(...snapshot.applications.map((application) => Date.parse(application.createdAt)), 0);
   const latestApplicationDay = latestApplicationTime ? new Date(latestApplicationTime).toISOString().slice(0, 10) : "";
@@ -11,9 +12,9 @@ export function adminMetrics(snapshot: ConsoleSnapshot) {
     needsReview: snapshot.applications.filter((application) => ["IN_REVIEW", "NEEDS_CORRECTION", "APPLICANT_FIX_REQUIRED"].includes(application.status)).length,
     approved: snapshot.applications.filter((application) => ["APPROVED", "CONDITIONALLY_APPROVED"].includes(application.status)).length,
     rejected: snapshot.applications.filter((application) => application.status === "REJECTED").length,
-    activeWorkers: snapshot.workers.filter((worker) => ["online", "busy", "calibrating"].includes(worker.status) && !worker.disabled).length,
+    activeWorkers: activeWorkers.length,
     queueDepth: snapshot.jobs.filter((job) => ["queued", "retrying"].includes(job.status)).length,
-    imagesPerMinute: latestRun?.imagesPerMinute || parseThroughput(snapshot.workers[0]?.throughput),
+    imagesPerMinute: latestRun?.imagesPerMinute || parseThroughput(activeWorkers[0]?.throughput),
     p50OcrMs: latestRun?.p50OcrMs || Math.round(average(snapshot.jobs.map((job) => job.durationMs).filter(isNumber))),
     p95OcrMs: latestRun?.p95OcrMs || percentile(snapshot.jobs.map((job) => job.durationMs).filter(isNumber), 0.95),
     failedJobs: snapshot.jobs.filter((job) => job.status === "failed").length,

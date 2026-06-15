@@ -2,6 +2,7 @@ const BACKEND_URL_KEY = "ttb-console-backend-url";
 const ROLE_STORAGE_KEY = "ttb-console-role";
 const SESSION_KEY = "ttb-console-session-id";
 const DEFAULT_BACKEND_URL = "http://127.0.0.1:8000";
+const SHARED_DEMO_SESSION_ID = "console-demo-session";
 const authCache = new Map<string, { token: string; expiresAt: string }>();
 
 export async function apiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
@@ -39,10 +40,15 @@ function getClientBackendUrl(): string {
 
 function getClientSessionId(): string {
   const existing = window.localStorage.getItem(SESSION_KEY);
-  if (existing) return existing;
-  const next = `console-${crypto.randomUUID()}`;
-  window.localStorage.setItem(SESSION_KEY, next);
-  return next;
+  if (existing && existing !== "local-dev-session" && existing !== SHARED_DEMO_SESSION_ID) return existing;
+  const sessionId = createClientSessionId();
+  window.localStorage.setItem(SESSION_KEY, sessionId);
+  return sessionId;
+}
+
+function createClientSessionId(): string {
+  if (typeof window.crypto?.randomUUID === "function") return `console-${window.crypto.randomUUID()}`;
+  return `console-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function getClientRole(): string {
@@ -61,7 +67,8 @@ async function clientDemoAuthHeader(): Promise<Record<string, string>> {
     method: "POST",
     headers: {
       Accept: "application/json",
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      "X-Session-Id": getClientSessionId()
     },
     body: JSON.stringify({ role })
   });

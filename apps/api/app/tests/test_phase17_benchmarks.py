@@ -54,10 +54,11 @@ def test_admin_benchmark_api_reads_and_writes_json(tmp_path: Path):
         assert listed.json()[0]["id"] == body[0]["id"]
 
 
-def test_cluster_benchmark_skips_without_workers(tmp_path: Path):
-    suite = run_benchmark_suite(results_dir=tmp_path / "results", modes=["cluster"], counts=[10], workers=[], label="cluster-empty")
+def test_backend_benchmark_runs_without_external_workers(tmp_path: Path):
+    suite = run_benchmark_suite(results_dir=tmp_path / "results", modes=["backend"], counts=[10], workers=[], label="backend-local")
 
     run = suite["runs"][0]
-    assert run["status"] == "skipped"
+    assert run["status"] == "completed"
+    assert run["mode"] == "backend"
     assert run["imageCount"] == 10
     assert run["failures"] == 0

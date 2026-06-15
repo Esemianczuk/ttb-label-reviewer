@@ -37,8 +37,9 @@ export function validateGovernmentWarning(required, ocrResult) {
   });
 
   const strongSegments = segmentResults.filter((segment) => segment.score >= 0.9);
-  const reviewSegments = segmentResults.filter((segment) => segment.score >= 0.76);
+  const reviewSegments = segmentResults.filter((segment) => segment.score >= 0.75);
   const lowest = segmentResults.reduce((min, current) => (current.score < min.score ? current : min), segmentResults[0]);
+  const headingScore = segmentResults[0]?.score ?? 0;
   const evidenceText = governmentWarningEvidenceText(rawText, segmentResults, reviewSegments);
 
   if (strongSegments.length === REQUIRED_WARNING_SEGMENTS.length) {
@@ -49,6 +50,18 @@ export function validateGovernmentWarning(required, ocrResult) {
       status: STATUS.PASS,
       confidence: Math.min(...segmentResults.map((segment) => segment.score)),
       reason: 'Required government warning text appears to be present.',
+      evidence: { text: evidenceText, method: 'required-segment-check', segments: segmentResults },
+    });
+  }
+
+  if (reviewSegments.length === REQUIRED_WARNING_SEGMENTS.length) {
+    return makeReview({
+      field,
+      expected: GOVERNMENT_WARNING_TEXT,
+      extracted: evidenceText || 'Required warning text appears present',
+      status: STATUS.PASS,
+      confidence: Math.min(...segmentResults.map((segment) => segment.score)),
+      reason: 'All required government warning segments appear to be present, with OCR noise.',
       evidence: { text: evidenceText, method: 'required-segment-check', segments: segmentResults },
     });
   }
@@ -66,7 +79,7 @@ export function validateGovernmentWarning(required, ocrResult) {
     });
   }
 
-  if (normalizedText.includes('GOVERNMENT WARNING')) {
+  if (normalizedText.includes('GOVERNMENT WARNING') || headingScore >= 0.86) {
     return makeReview({
       field,
       expected: GOVERNMENT_WARNING_TEXT,

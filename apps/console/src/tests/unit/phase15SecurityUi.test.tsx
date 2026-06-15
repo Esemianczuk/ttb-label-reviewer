@@ -6,8 +6,7 @@ import { AppLayout } from "../../layouts/AppLayout";
 vi.mock("../../hooks/useProcessingMode", () => ({
   useProcessingMode: () => ({
     mode: "backend",
-    setMode: vi.fn(),
-    provider: { label: "Local Backend" },
+    provider: { label: "FastAPI Backend" },
     health: {
       status: "online",
       message: "Coordinator online",
@@ -20,10 +19,7 @@ vi.mock("../../hooks/useProcessingMode", () => ({
       warning: "LAN MODE ENABLED: coordinator APIs are reachable from the local network."
     },
     backendUrl: "http://127.0.0.1:8000",
-    setBackendUrl: vi.fn(),
-    backendUnavailable: false,
-    fallbackToBrowser: vi.fn(),
-    clusterDashboardActive: false
+    backendUnavailable: false
   })
 }));
 
@@ -45,6 +41,6 @@ describe("phase 15 security UI", () => {
 
     expect(screen.getByText("LAN mode enabled")).toBeInTheDocument();
     expect(screen.getByText(/LAN MODE ENABLED/)).toBeInTheDocument();
-    expect(screen.getByText(/Backend connected - LAN/)).toBeInTheDocument();
+    expect(screen.getByText(/Backend primary - LAN/)).toBeInTheDocument();
   });
 });

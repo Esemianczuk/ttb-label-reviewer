@@ -5,7 +5,6 @@ import os
 import platform
 import shutil
 import socket
-import subprocess
 import sys
 from pathlib import Path
 from time import monotonic
@@ -31,7 +30,6 @@ def probe_capabilities(coordinator_url: str, data_dir: Path) -> dict[str, Any]:
         "accelerators": accelerators,
         "ocr": ocr,
         "engineProfile": engine_profile(accelerators, ocr),
-        "onnxRuntime": probe_onnxruntime(),
         "modelCacheBytes": directory_size(data_dir / "models"),
         "supportedImageFormats": supported_image_formats(),
     }
@@ -133,12 +131,31 @@ def probe_accelerators() -> dict[str, Any]:
         }
     except Exception:
         pass
+    try:
+        import paddle
+
+        paddle_cuda_available = bool(
+            getattr(paddle.device, "is_compiled_with_cuda", lambda: False)()
+            and getattr(paddle.device.cuda, "device_count", lambda: 0)()
+        )
+        if paddle_cuda_available and not accelerators["cuda"]["available"]:
+            devices = []
+            for index in range(paddle.device.cuda.device_count()):
+                try:
+                    name = paddle.device.cuda.get_device_name(index)
+                except Exception:
+                    name = f"cuda:{index}"
+                devices.append({"index": index, "name": name, "vramBytes": None, "source": "paddle"})
+            accelerators["cuda"] = {"available": True, "devices": devices}
+    except Exception:
+        pass
     return accelerators
 
 
 def probe_ocr_dependencies() -> dict[str, Any]:
     try:
         from .engines.paddleocr_engine import resolve_model_config
+        from .extraction.model_status import layoutlmv3_model_status
 
         paddle_model = resolve_model_config()
         paddle_model_info = {
@@ -148,13 +165,13 @@ def probe_ocr_dependencies() -> dict[str, Any]:
             "requireCustom": paddle_model.require_custom,
             "modelDirs": paddle_model.kwargs,
         }
+        field_extractor = layoutlmv3_model_status()
     except Exception as error:
         paddle_model_info = {"customModel": False, "customRecognition": False, "error": str(error)}
+        field_extractor = {"status": "unavailable", "trainedModelLoaded": False, "error": str(error)}
     return {
-        "tesseractBinary": tesseract_binary_info(),
-        "pytesseract": {"available": importlib.util.find_spec("pytesseract") is not None},
-        "easyocr": {"available": importlib.util.find_spec("easyocr") is not None},
         "paddleocr": {"available": importlib.util.find_spec("paddleocr") is not None, **paddle_model_info},
+        "fieldExtractor": field_extractor,
     }
 
 
@@ -163,8 +180,7 @@ def engine_profile(accelerators: dict[str, Any], ocr: dict[str, Any]) -> dict[st
     mps = bool((accelerators.get("appleMps") or {}).get("available"))
     paddle = bool((ocr.get("paddleocr") or {}).get("available"))
     paddle_custom = bool((ocr.get("paddleocr") or {}).get("customRecognition") or (ocr.get("paddleocr") or {}).get("customModel"))
-    easyocr = bool((ocr.get("easyocr") or {}).get("available"))
-    tesseract = bool((ocr.get("tesseractBinary") or {}).get("available") and (ocr.get("pytesseract") or {}).get("available"))
+    field_extractor_trained = bool((ocr.get("fieldExtractor") or {}).get("trainedModelLoaded"))
     if paddle and paddle_custom and cuda:
         tier = "custom_paddleocr_cuda"
         preferred = "paddleocr"
@@ -177,21 +193,9 @@ def engine_profile(accelerators: dict[str, Any], ocr: dict[str, Any]) -> dict[st
     elif paddle:
         tier = "paddleocr_cpu_pretrained"
         preferred = "paddleocr"
-    elif easyocr and cuda:
-        tier = "fallback_easyocr_cuda"
-        preferred = "easyocr"
-    elif easyocr and mps:
-        tier = "fallback_easyocr_metal_candidate"
-        preferred = "easyocr"
-    elif easyocr:
-        tier = "fallback_easyocr_cpu"
-        preferred = "easyocr"
-    elif tesseract:
-        tier = "tesseract_cpu"
-        preferred = "tesseract"
     else:
-        tier = "null_fixture_only"
-        preferred = "null"
+        tier = "paddleocr_unavailable"
+        preferred = "paddleocr"
     return {
         "tier": tier,
         "preferredEngine": preferred,
@@ -199,32 +203,9 @@ def engine_profile(accelerators: dict[str, Any], ocr: dict[str, Any]) -> dict[st
         "appleMps": mps,
         "paddleocr": paddle,
         "paddleocrCustom": paddle_custom,
-        "easyocr": easyocr,
-        "tesseract": tesseract,
+        "fieldExtractorTrained": field_extractor_trained,
+        "fieldExtractorMode": (ocr.get("fieldExtractor") or {}).get("mode"),
     }
-
-
-def probe_onnxruntime() -> dict[str, Any]:
-    if importlib.util.find_spec("onnxruntime") is None:
-        return {"available": False, "providers": []}
-    try:
-        import onnxruntime as ort
-
-        return {"available": True, "providers": list(ort.get_available_providers())}
-    except Exception as error:
-        return {"available": False, "providers": [], "error": str(error)}
-
-
-def tesseract_binary_info() -> dict[str, Any]:
-    path = shutil.which("tesseract")
-    if not path:
-        return {"available": False, "path": None, "version": None}
-    try:
-        completed = subprocess.run([path, "--version"], check=False, text=True, capture_output=True, timeout=2)
-        version = completed.stdout.splitlines()[0] if completed.stdout else None
-    except Exception:
-        version = None
-    return {"available": True, "path": path, "version": version}
 
 
 def supported_image_formats() -> list[str]:

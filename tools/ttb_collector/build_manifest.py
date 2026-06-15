@@ -22,6 +22,10 @@ CSV_COLUMNS = [
     "class_type",
     "product_type",
     "asset_count",
+    "demo_ready",
+    "demo_status",
+    "demo_exclusion_reason",
+    "signal_score",
     "record_dir",
     "expected_json",
 ]
@@ -36,18 +40,26 @@ def build_manifest(fixture_root: Path, *, generated_at: str | None = None) -> di
             expected = read_json(expected_path)
             fields = expected.get("expected_fields") or {}
             assets = expected.get("assets") or []
-            records.append(
-                {
-                    "fixture_id": expected.get("fixture_id"),
-                    "ttb_id": expected.get("ttb_id"),
-                    "brand_name": fields.get("brandName"),
-                    "class_type": fields.get("classType"),
-                    "product_type": fields.get("productType"),
-                    "asset_count": len(assets) if isinstance(assets, list) else 0,
-                    "record_dir": record_dir.relative_to(fixture_root).as_posix(),
-                    "expected_json": expected_path.relative_to(fixture_root).as_posix(),
-                }
-            )
+            demo_audit = expected.get("demo_audit") or {}
+            signal = expected.get("signal") or {}
+            record = {
+                "fixture_id": expected.get("fixture_id"),
+                "ttb_id": expected.get("ttb_id"),
+                "brand_name": fields.get("brandName"),
+                "class_type": fields.get("classType"),
+                "product_type": fields.get("productType"),
+                "asset_count": len(assets) if isinstance(assets, list) else 0,
+                "record_dir": record_dir.relative_to(fixture_root).as_posix(),
+                "expected_json": expected_path.relative_to(fixture_root).as_posix(),
+            }
+            optional_fields = {
+                "demo_ready": expected.get("demo_ready"),
+                "demo_status": demo_audit.get("status"),
+                "demo_exclusion_reason": demo_audit.get("reason"),
+                "signal_score": signal.get("score"),
+            }
+            record.update({key: value for key, value in optional_fields.items() if value is not None})
+            records.append(record)
     return {
         "generated_at": generated_at or now_utc_iso(),
         "source": "TTB Public COLA Registry",

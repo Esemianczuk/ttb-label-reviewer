@@ -1,0 +1,141 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25092001000252",
+    "retrieved_at": "2026-06-14T02:33:59Z"
+  },
+  "ttb_id": "25092001000252",
+  "status": "APPROVED",
+  "approval_date": "04/02/2025",
+  "serial_number": "250045",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "BOURBON 30",
+    "fanciful_name": null,
+    "class_type": "BOURBON WHISKY",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25092001000252",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17118,
+      "sha256": "a52c6e5bb305662c9312cd908a592a596632c4c92129bbb8eed9668dc50ff0b3",
+      "downloaded_at": "2026-06-14T02:34:00Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=NGW 90 proof front label.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 644976,
+      "sha256": "73149b57478ebbe34e1afb7e04282e8a4204acc63b05720eaca4b1f8463a6dd4",
+      "downloaded_at": "2026-06-14T02:34:00Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=NGW 90 proof back label.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 762633,
+      "sha256": "58a4109d442d141d08f4420a4119ca9c47555361b97bcfcdea1e22e139ff5598",
+      "downloaded_at": "2026-06-14T02:34:00Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Bourbon 30 90 proof tax stamp.jpg&filetype=l",
+      "local_path": "assets/label_03.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 233246,
+      "sha256": "039ab410d3848e1abf233b47a66e53c17d92a11d37ef0e5330fc95b301a9150b",
+      "downloaded_at": "2026-06-14T02:34:00Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "25092001000252"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "37298"
+    },
+    {
+      "label": "Serial #",
+      "value": "250045"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "BOURBON WHISKY"
+    },
+    {
+      "label": "Origin Code",
+      "value": "KENTUCKY"
+    },
+    {
+      "label": "Brand Name",
+      "value": "BOURBON 30"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "04/02/2025"
+    },
+    {
+      "label": "TTB ID: 25092001000252",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25092001000252",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=NGW 90 proof front label.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=NGW 90 proof back label.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Bourbon 30 90 proof tax stamp.jpg&filetype=l",
+      "local_path": "assets/label_03.bin",
+      "content_type": null
+    }
+  ]
+}

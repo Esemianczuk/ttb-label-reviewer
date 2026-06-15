@@ -1,0 +1,96 @@
+{
+  "fixture_id": "ttb_23223001000234_whiskey-thief",
+  "source_type": "official_public_registry",
+  "ttb_id": "23223001000234",
+  "expected_fields": {
+    "brandName": "WHISKEY THIEF",
+    "fancifulName": null,
+    "classType": "STRAIGHT BOURBON WHISKY",
+    "productType": "distilled_spirits",
+    "alcoholContent": null,
+    "netContents": null,
+    "governmentWarningRequired": true,
+    "isImported": null,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": null,
+      "address": null
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.png",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_02.png",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
+    "Collector note: High-signal expansion; term=whiskey%; score=84; brand=WHISKEY THIEF; label_images=2.",
+    "High-signal expansion score 84 from search term whiskey%."
+  ],
+  "demo_ready": true,
+  "signal": {
+    "score": 84,
+    "searchTerm": "whiskey%",
+    "scoreReasons": [
+      "brand",
+      "class/type",
+      "missing alcohol metadata",
+      "alcohol image hint",
+      "missing net contents metadata",
+      "net contents image hint",
+      "missing responsible party name metadata",
+      "responsible party image hint",
+      "missing responsible party address",
+      "government warning image hint",
+      "domestic/no country-of-origin requirement",
+      "2 label image(s)",
+      "status=SURRENDERED"
+    ],
+    "ocrHints": {
+      "available": true,
+      "engines": [
+        "easyocr"
+      ],
+      "textLength": 632,
+      "alcoholHints": [
+        "8 % ALC"
+      ],
+      "netContentsHints": [
+        "750ML"
+      ],
+      "warningDetected": true,
+      "warningTermHits": 4,
+      "responsiblePartyHint": true,
+      "sample": "KENTUCKY STRAiGHT BOURBON WHISKEY A WATCH HILL PROPER EXPERIENCE Bottled by Whiskey Thief Distilling Co. Frankfort; Kentucky in Franklin County = PROOF 8 % ALC. 122 5 61 Barrel char and sediment may be present in this uncut and unfiltered whiskey: 1 STUDIO SERIES UNFILTERED WHISKEY 2023 THIEF DISTILLING NOT FOR RESALE 750ML 8 20002 DSP-KY [ WHISKEYTHIEFCOM 1 GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink # alcoholic beverages pregnancy because of the risk of",
+      "errors": [
+        "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=WTWHPTTBProofsback275x325.png&filetype=l: tesseract: tesseract is not installed or it's not in your PATH. See README file for more information."
+      ]
+    }
+  },
+  "demo_audit": {
+    "status": "ready",
+    "source": "high_signal_ocr_preflight",
+    "reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+    "reviewed_common_fields": [
+      "alcoholContent",
+      "brandName",
+      "classType",
+      "countryOfOrigin",
+      "governmentWarning",
+      "netContents",
+      "producerName"
+    ]
+  }
+}

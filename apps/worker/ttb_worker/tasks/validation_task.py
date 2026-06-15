@@ -6,13 +6,15 @@ from time import monotonic
 from typing import Any
 
 from ttb_validation import validate_label_packet
+from ttb_validation.layoutlm_fields import attach_layoutlmv3_field_entities
 
 from ..engines.base import OcrEngine, OcrResult
+from ..extraction import layoutlmv3_predictions
 from ..transport import CoordinatorClient
 from .ocr_task import choose_engine, load_job_image
 
-DEFAULT_ESCALATION_STATUSES = {"FAIL", "NEEDS_REVIEW", "NOT_FOUND", "WARNING"}
-DEFAULT_ESCALATION_MIN_CONFIDENCE = 0.86
+REVIEW_HARD_STATUSES = {"FAIL", "NEEDS_REVIEW", "NOT_FOUND", "WARNING"}
+REVIEW_LOW_CONFIDENCE_THRESHOLD = 0.86
 DEFAULT_TARGET_LATENCY_MS = 5000
 
 
@@ -29,35 +31,19 @@ def process_validation_job(
     asset_ids = payload.get("asset_ids") or payload.get("assetIds") or []
     asset_jobs = validation_asset_jobs(job, payload, expected_fields, asset_ids)
     primary_engine = choose_primary_validation_engine(engines, job)
-    distributed_results = completed_ocr_results_from_payload(payload)
-    primary_results = distributed_results
-    if not distributed_results:
+    completed_results = completed_ocr_results_from_payload(payload)
+    primary_results = completed_results
+    if not completed_results:
         primary_results = recognize_asset_jobs(primary_engine, asset_jobs, client, cache_dir=cache_dir)
     primary_candidate = build_validation_candidate(
-        "distributed-field-ocr" if distributed_results else "primary",
+        "backend-field-ocr" if completed_results else "primary",
         expected_fields,
         primary_results,
         asset_jobs=asset_jobs,
         worker_id=worker_id,
-        policy=escalation_policy(payload),
+        policy=hard_field_policy(),
     )
-    candidates = [primary_candidate]
-    escalation = maybe_fallback_escalation(
-        job,
-        payload,
-        engines,
-        primary_engine,
-        primary_candidate,
-        asset_jobs,
-        client,
-        worker_id,
-        started,
-        cache_dir=cache_dir,
-    )
-    if escalation:
-        candidates.extend(escalation)
-
-    selected = sorted(candidates, key=validation_candidate_sort_key)[0]
+    selected = primary_candidate
     validation = selected["validation"]
     ocr_results = selected["results"]
     fields = validation["fields"]
@@ -65,13 +51,13 @@ def process_validation_job(
     combined_text = validation["combinedOcr"]["rawText"]
     total_ms = max(0, int((monotonic() - started) * 1000))
     engine_usage = summarize_engine_usage(ocr_results)
-    escalation_summary = escalation_metadata(primary_candidate, candidates, selected, payload)
+    escalation_summary = escalation_metadata(primary_candidate, selected, payload)
 
     review_result = {
         "id": f"review-result-{job['id']}",
         "packetId": job["applicationId"],
         "applicationId": job["applicationId"],
-        "mode": "distributed",
+        "mode": "backend",
         "overallStatus": overall_status,
         "fields": fields,
         "files": file_reviews(job, payload, asset_ids, ocr_results, worker_id),
@@ -81,7 +67,8 @@ def process_validation_job(
             "validationMs": total_ms,
         },
         "enginesUsed": engine_usage,
-        "workersUsed": [{"workerId": worker_id, "mode": "distributed"}],
+        "workersUsed": [{"workerId": worker_id, "mode": "backend"}],
+        "fieldExtractor": selected.get("fieldExtractor"),
         "escalation": escalation_summary,
         "createdAt": datetime.now(timezone.utc).isoformat(),
         "combinedText": combined_text,
@@ -140,14 +127,14 @@ def completed_ocr_results_from_payload(payload: dict[str, Any]) -> list[OcrResul
             continue
         raw_result = entry.get("result") if isinstance(entry.get("result"), dict) else entry
         text = str(raw_result.get("text") or raw_result.get("rawText") or "")
-        lines = normalize_ocr_items(raw_result.get("lines"), fallback_text=text)
+        lines = normalize_ocr_items(raw_result.get("lines"), default_text=text)
         words = normalize_ocr_items(raw_result.get("words"))
         timings = raw_result.get("timings") if isinstance(raw_result.get("timings"), dict) else {}
         elapsed_ms = int(timings.get("ocrMs") or raw_result.get("elapsedMs") or raw_result.get("processingTimeMs") or 0)
         confidence = float_or_default(raw_result.get("confidence"), 0.0)
         results.append(
             OcrResult(
-                engine_id=str(raw_result.get("engine") or entry.get("engine") or "distributed"),
+                engine_id=str(raw_result.get("engine") or entry.get("engine") or "backend"),
                 text=text,
                 confidence=confidence,
                 lines=lines,
@@ -159,20 +146,20 @@ def completed_ocr_results_from_payload(payload: dict[str, Any]) -> list[OcrResul
                     "fieldKey": entry.get("fieldKey"),
                     "fieldLabel": entry.get("fieldLabel"),
                     "workerId": entry.get("workerId"),
-                    "distributedOcr": True,
-                    "distributedIndex": index,
+                    "backendOcr": True,
+                    "backendOcrIndex": index,
                 },
             )
         )
     return results
 
 
-def normalize_ocr_items(items: Any, *, fallback_text: str = "") -> list[dict[str, Any]]:
+def normalize_ocr_items(items: Any, *, default_text: str = "") -> list[dict[str, Any]]:
     if isinstance(items, list):
         normalized = [item for item in items if isinstance(item, dict)]
         if normalized:
             return normalized
-    return [{"text": fallback_text, "confidence": 0.0}] if fallback_text else []
+    return [{"text": default_text, "confidence": 0.0}] if default_text else []
 
 
 def float_or_default(value: Any, default: float) -> float:
@@ -209,6 +196,7 @@ def build_validation_candidate(
                 worker_id=worker_id,
             )
         )
+    ocr_payloads = attach_field_extractor_entities(expected_fields, ocr_payloads, payload_label=label)
     validation = validate_label_packet(expected_fields, ocr_payloads)
     hard = hard_validation_fields(validation["fields"], policy=policy)
     return {
@@ -218,75 +206,12 @@ def build_validation_candidate(
         "hardFields": hard,
         "hardFieldCount": len(hard),
         "averageConfidence": average_field_confidence(validation["fields"]),
+        "fieldExtractor": field_extractor_summary(ocr_payloads),
     }
 
 
-def maybe_fallback_escalation(
-    job: dict[str, Any],
-    payload: dict[str, Any],
-    engines: list[OcrEngine],
-    primary_engine: OcrEngine,
-    primary_candidate: dict[str, Any],
-    asset_jobs: list[dict[str, Any]],
-    client: CoordinatorClient,
-    worker_id: str,
-    started: float,
-    *,
-    cache_dir: Path | None,
-) -> list[dict[str, Any]]:
-    strategy = str(payload.get("ocr_strategy") or payload.get("ocrStrategy") or "paddleocr_authoritative")
-    if strategy in {"off", "none", "primary_only"}:
-        return []
-    if primary_candidate["hardFieldCount"] == 0:
-        return []
-    fallback_engine_id = str(payload.get("fallback_engine") or payload.get("fallbackEngine") or "easyocr")
-    if primary_engine.id == fallback_engine_id:
-        return []
-    fallback_engine = available_engine(engines, fallback_engine_id)
-    if not fallback_engine:
-        return []
-    elapsed_ms = int((monotonic() - started) * 1000)
-    target_latency_ms = int(payload.get("target_latency_ms") or payload.get("targetLatencyMs") or DEFAULT_TARGET_LATENCY_MS)
-    estimated_fallback_ms = fallback_engine.estimate(job, {}).estimated_ms * max(1, len(asset_jobs))
-    force = bool(payload.get("force_escalation") or payload.get("forceEscalation"))
-    if not force and elapsed_ms + estimated_fallback_ms > target_latency_ms:
-        return []
-
-    fallback_results = recognize_asset_jobs(fallback_engine, asset_jobs, client, cache_dir=cache_dir)
-    fallback_candidate = build_validation_candidate(
-        fallback_engine.id,
-        payload.get("expected_fields") or payload.get("expectedFields") or {},
-        fallback_results,
-        asset_jobs=asset_jobs,
-        worker_id=worker_id,
-        policy=escalation_policy(payload),
-    )
-    merged_candidate = build_validation_candidate(
-        f"primary+{fallback_engine.id}",
-        payload.get("expected_fields") or payload.get("expectedFields") or {},
-        [*primary_candidate["results"], *fallback_results],
-        asset_jobs=[*asset_jobs, *asset_jobs],
-        worker_id=worker_id,
-        policy=escalation_policy(payload),
-    )
-    return [fallback_candidate, merged_candidate]
-
-
-def available_engine(engines: list[OcrEngine], engine_id: str) -> OcrEngine | None:
-    for engine in engines:
-        if engine.id == engine_id and engine.healthcheck().available:
-            return engine
-    return None
-
-
-def escalation_policy(payload: dict[str, Any]) -> dict[str, Any]:
-    raw_statuses = payload.get("fallback_statuses") or payload.get("fallbackStatuses")
-    statuses = {str(status).upper() for status in raw_statuses} if raw_statuses else DEFAULT_ESCALATION_STATUSES
-    try:
-        min_confidence = float(payload.get("fallback_min_confidence") or payload.get("fallbackMinConfidence") or DEFAULT_ESCALATION_MIN_CONFIDENCE)
-    except (TypeError, ValueError):
-        min_confidence = DEFAULT_ESCALATION_MIN_CONFIDENCE
-    return {"hard_statuses": statuses, "min_confidence": min_confidence}
+def hard_field_policy() -> dict[str, Any]:
+    return {"hard_statuses": REVIEW_HARD_STATUSES, "min_confidence": REVIEW_LOW_CONFIDENCE_THRESHOLD}
 
 
 def hard_validation_fields(fields: list[dict[str, Any]], *, policy: dict[str, Any]) -> list[dict[str, Any]]:
@@ -338,19 +263,15 @@ def summarize_engine_usage(results: list[OcrResult]) -> list[dict[str, Any]]:
 def engine_display_name(engine_id: str) -> str:
     return {
         "null": "Deterministic Null OCR",
-        "tesseract": "Tesseract OCR",
-        "easyocr": "EasyOCR",
         "paddleocr": "PaddleOCR COLA",
-        "onnx": "ONNX OCR Local Model",
     }.get(engine_id, engine_id)
 
 
-def escalation_metadata(primary_candidate: dict[str, Any], candidates: list[dict[str, Any]], selected: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
-    fallback_candidates = [candidate for candidate in candidates if candidate["label"] != primary_candidate["label"]]
+def escalation_metadata(primary_candidate: dict[str, Any], selected: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
     return {
         "strategy": payload.get("ocr_strategy") or payload.get("ocrStrategy") or "paddleocr_authoritative",
         "targetLatencyMs": int(payload.get("target_latency_ms") or payload.get("targetLatencyMs") or DEFAULT_TARGET_LATENCY_MS),
-        "attempted": bool(fallback_candidates),
+        "attempted": False,
         "selected": selected["label"],
         "primaryHardFieldCount": primary_candidate["hardFieldCount"],
         "selectedHardFieldCount": selected["hardFieldCount"],
@@ -383,6 +304,41 @@ def ocr_result_to_validator_payload(result: OcrResult, *, asset_id: str | None, 
         "engine": result.engine_id,
         "assetId": asset_id,
         "imageId": asset_id or f"image-{image_index}",
+        "metadata": result.metadata,
+    }
+
+
+def attach_field_extractor_entities(expected_fields: dict[str, Any], ocr_payloads: list[dict[str, Any]], *, payload_label: str) -> list[dict[str, Any]]:
+    if not expected_fields:
+        return ocr_payloads
+    model_predictions = layoutlmv3_predictions(ocr_payloads)
+    predictions = list(model_predictions or [])
+    model_active = model_predictions is not None
+    for payload in ocr_payloads:
+        for prediction in payload.get("layoutlmv3Predictions") or []:
+            if isinstance(prediction, dict):
+                predictions.append(prediction)
+                model_active = True
+    source = "layoutlmv3-token-classifier" if model_active else f"paddleocr-weak-field-alignment:{payload_label}"
+    return attach_layoutlmv3_field_entities(expected_fields, ocr_payloads, predictions=predictions if model_active else None, source=source)
+
+
+def field_extractor_summary(ocr_payloads: list[dict[str, Any]]) -> dict[str, Any]:
+    entities = [entity for payload in ocr_payloads for entity in payload.get("fieldEntities") or [] if isinstance(entity, dict)]
+    by_field: dict[str, int] = {}
+    for entity in entities:
+        key = str(entity.get("fieldKey") or "")
+        if key:
+            by_field[key] = by_field.get(key, 0) + 1
+    methods = sorted({str(entity.get("method") or "") for entity in entities if entity.get("method")})
+    trained = any(method == "layoutlmv3-token-classifier" or method.startswith("layoutlmv3-token-classifier:") for method in methods)
+    return {
+        "name": "Enhanced OCR field extraction" if trained else "PaddleOCR baseline with weak field alignment",
+        "entityCount": len(entities),
+        "byField": dict(sorted(by_field.items())),
+        "methods": methods,
+        "trainedModelActive": trained,
+        "note": "Entities label OCR tokens as evidence. Deterministic validators still decide pass/fail.",
     }
 
 

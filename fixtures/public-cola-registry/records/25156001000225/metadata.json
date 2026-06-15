@@ -1,0 +1,123 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25156001000225",
+    "retrieved_at": "2026-06-14T02:33:44Z"
+  },
+  "ttb_id": "25156001000225",
+  "status": "APPROVED",
+  "approval_date": "06/25/2025",
+  "serial_number": "256525",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "BOURBON BARREL AGED BIG PUMPKIN",
+    "fanciful_name": null,
+    "class_type": "APPLE BASED FLAVORED WINE",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": "1657304",
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25156001000225",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16754,
+      "sha256": "29ce56b72681b96b039850fb554d64b0c7b2572b435021e76ed4ae8accf64156",
+      "downloaded_at": "2026-06-14T02:33:44Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Barrel Aged Big Pumpkin.png&filetype=l",
+      "local_path": "assets/label_01.png",
+      "content_type": "image/png",
+      "bytes": 956517,
+      "sha256": "431d4c95171cad8ef324e5e6ddbdc0b26f87012e3d6764daf4333e3ab5a477fe",
+      "downloaded_at": "2026-06-14T02:33:45Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "25156001000225"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "35229"
+    },
+    {
+      "label": "Serial #",
+      "value": "256525"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "APPLE BASED FLAVORED WINE"
+    },
+    {
+      "label": "Origin Code",
+      "value": "NEW YORK"
+    },
+    {
+      "label": "Brand Name",
+      "value": "BOURBON BARREL AGED BIG PUMPKIN"
+    },
+    {
+      "label": "Type of Application",
+      "value": "EXEMPTION"
+    },
+    {
+      "label": "For Sale In",
+      "value": "NY"
+    },
+    {
+      "label": "Grape Varietal(s)",
+      "value": "N/A"
+    },
+    {
+      "label": "Formula",
+      "value": "1657304"
+    },
+    {
+      "label": "Approval Date",
+      "value": "06/25/2025"
+    },
+    {
+      "label": "TTB ID: 25156001000225",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25156001000225",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Barrel Aged Big Pumpkin.png&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

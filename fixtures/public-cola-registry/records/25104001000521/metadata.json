@@ -1,0 +1,168 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25104001000521",
+    "retrieved_at": "2026-06-14T02:33:36Z"
+  },
+  "ttb_id": "25104001000521",
+  "status": "APPROVED",
+  "approval_date": "04/21/2025",
+  "serial_number": "25005L",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "GINKOUBAI",
+    "fanciful_name": "HANNYA TOU",
+    "class_type": "SAKE - IMPORTED FLAVORED",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": "1643769",
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25104001000521",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17652,
+      "sha256": "d26b143adc947aa88192247729acccfa15212e9c63fde74d6e03fdd6acdd2d7f",
+      "downloaded_at": "2026-06-14T02:33:36Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=JFC - GINKOUBAI HANNYA TOU brand.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 176454,
+      "sha256": "abceb41a1398ae7a7085d605b1747c0090aa722652740488f3137353d1e2624f",
+      "downloaded_at": "2026-06-14T02:33:36Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=hannya tau back 1.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 159554,
+      "sha256": "2455c01602d44d14374c1cadfd7b81cfe48a2d00a0bd1babb1c1f2639206f165",
+      "downloaded_at": "2026-06-14T02:33:36Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=hannya tau back 2.jpg&filetype=l",
+      "local_path": "assets/label_03.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 184949,
+      "sha256": "865c83977da914e179fd1662c39a793c8009ba163e7877a0abac8793cc0e3aed",
+      "downloaded_at": "2026-06-14T02:33:36Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=hannya tau back 3.jpg&filetype=l",
+      "local_path": "assets/label_04.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 140171,
+      "sha256": "3564878ee42de59c02a49549511cd387c76b4832e6471a63973f720de2670d2c",
+      "downloaded_at": "2026-06-14T02:33:36Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "25104001000521"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "17562"
+    },
+    {
+      "label": "Serial #",
+      "value": "25005L"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "SAKE - IMPORTED FLAVORED"
+    },
+    {
+      "label": "Origin Code",
+      "value": "JAPAN"
+    },
+    {
+      "label": "Brand Name",
+      "value": "GINKOUBAI"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "HANNYA TOU"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Grape Varietal(s)",
+      "value": "N/A"
+    },
+    {
+      "label": "Formula",
+      "value": "1643769"
+    },
+    {
+      "label": "Approval Date",
+      "value": "04/21/2025"
+    },
+    {
+      "label": "TTB ID: 25104001000521",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25104001000521",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=JFC - GINKOUBAI HANNYA TOU brand.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=hannya tau back 1.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=hannya tau back 2.jpg&filetype=l",
+      "local_path": "assets/label_03.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=hannya tau back 3.jpg&filetype=l",
+      "local_path": "assets/label_04.bin",
+      "content_type": null
+    }
+  ]
+}

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+import httpx
 from fastapi.testclient import TestClient
 
 from apps.api.app.config import Settings
@@ -12,7 +13,7 @@ from ttb_worker.capabilities import probe_capabilities
 from ttb_worker.agent import WorkerAgent, WorkerConfig, resolve_concurrency
 from ttb_worker.engines.base import EngineEstimate, EngineHealth, OcrResult
 from ttb_worker.engines.paddleocr_engine import resolve_model_config
-from ttb_worker.engines.tesseract_engine import TesseractEngine
+from ttb_worker.extraction.model_status import layoutlmv3_model_status
 from ttb_worker.heartbeat import HeartbeatCadence
 from ttb_worker.engines.null_engine import GOVERNMENT_WARNING_TEXT, NullOcrEngine
 from ttb_worker.tasks.evidence_task import normalize_bbox
@@ -70,14 +71,14 @@ def create_review(api_client: TestClient) -> dict:
     review_response = api_client.post(
         f"/api/applications/{application['id']}/review",
         headers=auth_headers(api_client, "reviewer", "worker-session"),
-        json={"mode": "distributed"},
+        json={"mode": "backend"},
     )
     assert review_response.status_code == 201, review_response.text
     return review_response.json()
 
 
 def create_join_token(api_client: TestClient) -> str:
-    response = api_client.post("/api/cluster/join-token", headers=auth_headers(api_client, "admin"), json={"ttlSeconds": 300})
+    response = api_client.post("/api/workers/join-token", headers=auth_headers(api_client, "admin"), json={"ttlSeconds": 300})
     assert response.status_code == 201, response.text
     return response.json()["token"]
 
@@ -126,19 +127,7 @@ def test_worker_processes_fake_review_end_to_end(api_client: TestClient, tmp_pat
     recalibrate = api_client.post("/api/workers/worker-pytest/recalibrate", headers=worker_auth(agent.client.worker_secret))
     assert recalibrate.json()["calibration"]["recalibrationStatus"] == "requested"
 
-    processed = 0
-    saw_processing = False
-    for _ in range(20):
-        if not agent.run_once():
-            break
-        processed += 1
-        current_status = api_client.get(f"/api/reviews/{review['id']}", headers=auth_headers(api_client, "reviewer", "worker-session")).json()["status"]
-        if current_status == "processing":
-            saw_processing = True
-        if current_status == "pass":
-            break
-    assert processed >= 3
-    assert saw_processing
+    assert agent.run_once() is True
 
     completed = api_client.get(f"/api/reviews/{review['id']}", headers=auth_headers(api_client, "reviewer", "worker-session")).json()
     assert completed["status"] == "pass"
@@ -146,11 +135,11 @@ def test_worker_processes_fake_review_end_to_end(api_client: TestClient, tmp_pat
     assert {field["fieldKey"] for field in completed["result"]["fields"]} >= {"brandName", "classType", "alcoholContent"}
 
     report = api_client.get(f"/api/reports/{review['id']}.json", headers=auth_headers(api_client, "reviewer", "worker-session")).json()
-    assert report["result"]["workersUsed"] == [{"workerId": "worker-pytest", "mode": "distributed"}]
+    assert report["result"]["workersUsed"] == [{"workerId": "worker-pytest", "mode": "backend"}]
     assert agent.run_once() is False
 
 
-def test_evidence_bbox_normalizes_easyocr_polygons():
+def test_evidence_bbox_normalizes_ocr_polygons():
     assert normalize_bbox([[10, 20], [110, 18], [112, 55], [9, 60]]) == {
         "x": 9.0,
         "y": 18.0,
@@ -167,10 +156,50 @@ def test_worker_reports_retryable_failures_to_coordinator(api_client: TestClient
     assert agent.run_once() is False
 
     jobs = api_client.get("/api/jobs?limit=10", headers=auth_headers(api_client, "admin", "worker-session")).json()
-    ocr_job = next(job for job in jobs if job["jobType"] == "ocr" and job["error"])
-    assert ocr_job["status"] == "queued"
-    assert ocr_job["assignedWorkerId"] is None
-    assert "RuntimeError: simulated OCR failure" in ocr_job["error"]
+    validation_job = next(job for job in jobs if job["jobType"] == "validation" and job["error"])
+    assert validation_job["status"] == "queued"
+    assert validation_job["assignedWorkerId"] is None
+    assert "RuntimeError: simulated OCR failure" in validation_job["error"]
+
+
+def test_worker_retries_quietly_when_coordinator_is_temporarily_unavailable(tmp_path: Path):
+    class OfflineClient:
+        worker_secret = "offline-secret"
+
+        def register_worker(self, payload):
+            request = httpx.Request("POST", "http://api:8000/api/workers/register")
+            raise httpx.ConnectError("temporary DNS failure", request=request)
+
+        def close(self):
+            pass
+
+    agent = WorkerAgent(
+        WorkerConfig(
+            coordinator="http://api:8000",
+            name="offline-worker",
+            concurrency=1,
+            engines="null",
+            data_dir=tmp_path / ".worker-cache",
+            session_id="worker-session",
+            secret_file=tmp_path / ".worker-cache" / "worker-secret.txt",
+        ),
+        client=OfflineClient(),
+        engines=[NullOcrEngine()],
+        capabilities={
+            "hostname": "pytest-host",
+            "platform": "linux",
+            "arch": "x86_64",
+            "cpuCount": 2,
+            "memory": {"totalBytes": 1024, "availableBytes": 512},
+            "accelerators": {"cuda": {"available": False, "devices": []}, "appleMps": {"available": False}},
+            "ocr": {},
+            "supportedImageFormats": ["png"],
+        },
+    )
+
+    assert agent.run_once() is False
+    assert agent.registered is False
+    assert agent.active_jobs == 0
 
 
 def test_capability_probe_and_heartbeat_cadence_are_deterministic(tmp_path: Path, monkeypatch):
@@ -185,7 +214,10 @@ def test_capability_probe_and_heartbeat_cadence_are_deterministic(tmp_path: Path
     capabilities = probe_capabilities("http://coordinator.test", tmp_path / "probe-cache")
     assert capabilities["network"]["status"] == "ok"
     assert capabilities["cpuCount"] >= 1
-    assert "tesseractBinary" in capabilities["ocr"]
+    assert "paddleocr" in capabilities["ocr"]
+    assert "fieldExtractor" in capabilities["ocr"]
+    assert set(capabilities["ocr"]) == {"paddleocr", "fieldExtractor"}
+    assert capabilities["engineProfile"]["preferredEngine"] == "paddleocr"
     assert capabilities["supportedImageFormats"]
 
     cadence = HeartbeatCadence(interval_seconds=30)
@@ -194,16 +226,6 @@ def test_capability_probe_and_heartbeat_cadence_are_deterministic(tmp_path: Path
     assert cadence.due() is False
     cadence.last_sent -= 31
     assert cadence.due() is True
-
-
-def test_tesseract_healthcheck_reports_unavailable_without_binary(monkeypatch):
-    monkeypatch.setattr("ttb_worker.engines.tesseract_engine.which", lambda _name: None)
-
-    health = TesseractEngine().healthcheck()
-
-    assert health.available is False
-    assert health.status == "unavailable"
-    assert "not on PATH" in (health.detail or "")
 
 
 def test_paddleocr_model_config_prefers_exported_custom_recognition(tmp_path: Path, monkeypatch):
@@ -222,16 +244,56 @@ def test_paddleocr_model_config_prefers_exported_custom_recognition(tmp_path: Pa
     assert config.det_model_dir == str((model_root / "det").resolve())
 
 
-def test_auto_engine_selection_prefers_real_ocr_over_null_fixture_engine():
-    engine = choose_engine([NullOcrEngine(), _FakeOcrEngine("tesseract", "REAL TEXT", estimated_ms=1200)], {"payload": {}})
+def test_layoutlmv3_model_status_reports_promoted_model(tmp_path: Path, monkeypatch):
+    model_root = tmp_path / "field-extractor" / "current"
+    model_root.mkdir(parents=True)
+    (model_root / "config.json").write_text("{}", encoding="utf-8")
+    (model_root / "model.safetensors").write_bytes(b"not-a-real-model-for-status-test")
+    (model_root / "model-card.json").write_text('{"status":"promoted","name":"test model"}', encoding="utf-8")
+    (model_root / "eval-metrics.json").write_text(
+        '{"baseline":{"fieldRecall":0.88,"falsePassRate":0.01},"candidate":{"fieldRecall":0.91,"falsePassRate":0.0}}',
+        encoding="utf-8",
+    )
+    (model_root / "failure-report.json").write_text('{"failures":[{"id":"a"},{"id":"b"}]}', encoding="utf-8")
+    monkeypatch.setenv("TTB_LAYOUTLMV3_MODEL_DIR", str(model_root))
 
-    assert engine.id == "tesseract"
+    status = layoutlmv3_model_status()
+
+    assert status["trainedModelLoaded"] is True
+    assert status["mode"] == "enhanced-ocr-field-extraction-hybrid-guarded"
+    assert status["metrics"]["candidate"]["fieldRecall"] == 0.91
+    assert status["failureReport"]["failureCount"] == 2
+
+
+def test_layoutlmv3_model_status_blocks_unpromoted_failed_artifact(tmp_path: Path, monkeypatch):
+    model_root = tmp_path / "field-extractor" / "current"
+    model_root.mkdir(parents=True)
+    (model_root / "config.json").write_text("{}", encoding="utf-8")
+    (model_root / "model.safetensors").write_bytes(b"not-a-real-model-for-status-test")
+    (model_root / "model-card.json").write_text('{"status":"local-default-hybrid-guarded","name":"test model"}', encoding="utf-8")
+    (model_root / "eval-metrics.json").write_text(
+        '{"baseline":{"fieldRecall":1.0,"falsePassRate":0.0},"candidate":{"fieldRecall":0.40,"falsePassRate":0.82}}',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("TTB_LAYOUTLMV3_MODEL_DIR", str(model_root))
+
+    status = layoutlmv3_model_status()
+
+    assert status["trainedModelLoaded"] is False
+    assert status["mode"] == "paddleocr-baseline-weak-alignment"
+    assert "not promoted" in status["message"]
+
+
+def test_auto_engine_selection_prefers_paddleocr_over_null_fixture_engine():
+    engine = choose_engine([NullOcrEngine(), _FakeOcrEngine("paddleocr", "REAL TEXT", estimated_ms=1200)], {"payload": {}})
+
+    assert engine.id == "paddleocr"
 
 
 def test_ocr_task_caches_repeated_field_jobs_for_same_asset(tmp_path: Path):
     image_path = tmp_path / "label.png"
     image_path.write_bytes(PNG_BYTES)
-    engine = _FakeOcrEngine("easyocr", "HOLLOW RIDGE 45% ALC/VOL", estimated_ms=1200)
+    engine = _FakeOcrEngine("paddleocr", "HOLLOW RIDGE 45% ALC/VOL", estimated_ms=1200)
     base_job = {
         "id": "ocr-cache-test",
         "payload": {
@@ -251,7 +313,34 @@ def test_ocr_task_caches_repeated_field_jobs_for_same_asset(tmp_path: Path):
     assert second["text"] == first["text"]
 
 
-def test_validation_escalates_hard_fields_to_easyocr_under_latency_budget():
+def test_ocr_task_force_fresh_bypasses_cached_result(tmp_path: Path):
+    image_path = tmp_path / "label.png"
+    image_path.write_bytes(PNG_BYTES)
+    engine = _FakeOcrEngine("paddleocr", "DECADENT ALES GOVERNMENT WARNING", estimated_ms=900)
+    base_payload = {
+        "asset_id": "asset-force-fresh-test",
+        "storage_path": str(image_path),
+        "field_ocr": True,
+        "field_key": "governmentWarning",
+    }
+    base_job = {"id": "ocr-force-fresh-test", "payload": base_payload}
+
+    first = process_ocr_job(base_job, _NoopClient(), [engine], cache_dir=tmp_path / "cache")
+    cached = process_ocr_job(base_job, _NoopClient(), [engine], cache_dir=tmp_path / "cache")
+    fresh = process_ocr_job(
+        {**base_job, "payload": {**base_payload, "force_fresh_ocr": True}},
+        _NoopClient(),
+        [engine],
+        cache_dir=tmp_path / "cache",
+    )
+
+    assert first["timings"]["cacheHit"] is False
+    assert cached["timings"]["cacheHit"] is True
+    assert fresh["timings"]["cacheHit"] is False
+    assert engine.calls == 2
+
+
+def test_validation_uses_single_paddleocr_candidate_even_when_requested_to_escalate():
     expected_fields = {
         "brandName": "Hollow Ridge",
         "classType": "Bourbon Whiskey",
@@ -260,13 +349,12 @@ def test_validation_escalates_hard_fields_to_easyocr_under_latency_budget():
         "governmentWarningRequired": True,
     }
     job = {
-        "id": "validation-easyocr-test",
+        "id": "validation-no-fallback-test",
         "applicationId": "app-worker-escalation",
         "payload": {
             "expected_fields": expected_fields,
-            "ocr_strategy": "tesseract_first_easyocr_escalation",
-            "primary_engine": "tesseract",
-            "fallback_engine": "easyocr",
+            "ocr_strategy": "paddleocr_authoritative",
+            "primary_engine": "paddleocr",
             "target_latency_ms": 5000,
             "force_escalation": True,
         },
@@ -285,20 +373,19 @@ def test_validation_escalates_hard_fields_to_easyocr_under_latency_budget():
         job,
         _NoopClient(),
         [
-            _FakeOcrEngine("tesseract", "BLURRY LOW CONFIDENCE TEXT", confidence=0.2, estimated_ms=1200),
-            _FakeOcrEngine("easyocr", fallback_text, confidence=0.95, estimated_ms=1800),
+            _FakeOcrEngine("paddleocr", fallback_text, confidence=0.95, estimated_ms=1800),
         ],
-        "worker-easyocr",
+        "worker-paddle-only",
     )
 
     review = result["review_result"]
-    assert review["escalation"]["attempted"] is True
-    assert review["escalation"]["selected"] in {"easyocr", "primary+easyocr"}
-    assert "easyocr" in {engine["engineId"] for engine in review["enginesUsed"]}
-    assert review["escalation"]["selectedHardFieldCount"] <= review["escalation"]["primaryHardFieldCount"]
+    assert review["escalation"]["attempted"] is False
+    assert review["escalation"]["selected"] == "primary"
+    assert {engine["engineId"] for engine in review["enginesUsed"]} == {"paddleocr"}
 
 
-def test_validation_uses_paddleocr_as_authoritative_default():
+def test_validation_uses_paddleocr_as_authoritative_default(monkeypatch, tmp_path: Path):
+    monkeypatch.setenv("TTB_LAYOUTLMV3_MODEL_DIR", str(tmp_path / "missing-model"))
     expected_fields = {
         "brandName": "Hollow Ridge",
         "classType": "Bourbon Whiskey",
@@ -326,7 +413,6 @@ def test_validation_uses_paddleocr_as_authoritative_default():
         _NoopClient(),
         [
             _FakeOcrEngine("paddleocr", paddle_text, confidence=0.95, estimated_ms=900),
-            _FakeOcrEngine("easyocr", "unused fallback", confidence=0.95, estimated_ms=1800),
         ],
         "worker-paddle",
     )
@@ -336,6 +422,38 @@ def test_validation_uses_paddleocr_as_authoritative_default():
     assert review["escalation"]["strategy"] == "paddleocr_authoritative"
     assert review["escalation"]["attempted"] is False
     assert review["enginesUsed"] == [{"engineId": "paddleocr", "displayName": "PaddleOCR COLA", "timingMs": 900}]
+    assert review["fieldExtractor"]["name"] == "PaddleOCR baseline with weak field alignment"
+    assert review["fieldExtractor"]["trainedModelActive"] is False
+
+
+def test_validation_prefers_layoutlmv3_field_entities_with_evidence_boxes(monkeypatch):
+    monkeypatch.setattr(
+        "ttb_worker.tasks.validation_task.layoutlmv3_predictions",
+        lambda _payloads: [{"entity": "BRAND_NAME", "fieldKey": "brandName", "tokenIndexes": [0, 1], "confidence": 0.98}],
+    )
+    expected_fields = {
+        "brandName": "Hollow Ridge",
+        "classType": "Bourbon Whiskey",
+        "alcoholContent": "45% alc/vol",
+        "netContents": "750 mL",
+    }
+    job = {
+        "id": "validation-layoutlm-test",
+        "applicationId": "app-worker-layoutlm",
+        "payload": {"expected_fields": expected_fields},
+    }
+    result = process_validation_job(
+        job,
+        _NoopClient(),
+        [_BoxedFakeOcrEngine()],
+        "worker-layoutlm",
+    )
+
+    review = result["review_result"]
+    brand = next(field for field in review["fields"] if field["fieldKey"] == "brandName")
+    assert review["fieldExtractor"]["byField"]["brandName"] >= 1
+    assert brand["evidence"][0]["method"].startswith("layoutlmv3-token-classifier")
+    assert brand["evidence"][0]["bbox"]["x"] == 100.0
 
 
 def test_worker_probe_and_cli_helpers(tmp_path: Path):
@@ -396,3 +514,39 @@ class _FakeOcrEngine(NullOcrEngine):
             lines=[{"text": self.text, "confidence": self.confidence}],
             elapsed_ms=self.estimated_ms,
         )
+
+
+class _BoxedFakeOcrEngine(NullOcrEngine):
+    id = "paddleocr"
+    display_name = "Fake PaddleOCR"
+
+    def estimate(self, task: dict, capabilities: dict) -> EngineEstimate:
+        return EngineEstimate(self.id, 900, 0.95, ["fake", "layoutlm"])
+
+    def healthcheck(self) -> EngineHealth:
+        return EngineHealth(self.id, True, "ok", "fake boxed OCR")
+
+    def recognize(self, image_bytes: bytes, options: dict | None = None):
+        words = [
+            _word("HOLLOW", 100, 100),
+            _word("RIDGE", 170, 100),
+            _word("BOURBON", 100, 150),
+            _word("WHISKEY", 190, 150),
+            _word("45%", 100, 200),
+            _word("ALC/VOL", 145, 200),
+            _word("750", 100, 250),
+            _word("ML", 145, 250),
+        ]
+        return OcrResult(
+            engine_id=self.id,
+            text="HOLLOW RIDGE\nBOURBON WHISKEY\n45% ALC/VOL\n750 ML",
+            confidence=0.95,
+            lines=[],
+            words=words,
+            elapsed_ms=900,
+            metadata={"imageWidth": 1000, "imageHeight": 1000, "layoutlmv3Ready": True},
+        )
+
+
+def _word(text: str, x: int, y: int) -> dict:
+    return {"text": text, "confidence": 0.95, "bbox": {"x": x, "y": y, "width": 60, "height": 30}}

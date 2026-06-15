@@ -1,0 +1,96 @@
+{
+  "fixture_id": "ttb_25100001000686_gin-bes",
+  "source_type": "official_public_registry",
+  "ttb_id": "25100001000686",
+  "expected_fields": {
+    "brandName": "GIN BES",
+    "fancifulName": null,
+    "classType": "OTHER GIN FB",
+    "productType": "distilled_spirits",
+    "alcoholContent": null,
+    "netContents": null,
+    "governmentWarningRequired": true,
+    "isImported": null,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": null,
+      "address": null
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_02.png",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
+    "Collector note: High-signal expansion; term=gin%; score=100; brand=GIN BES; label_images=2.",
+    "High-signal expansion score 100 from search term gin%."
+  ],
+  "demo_ready": true,
+  "signal": {
+    "score": 100,
+    "searchTerm": "gin%",
+    "scoreReasons": [
+      "brand",
+      "class/type",
+      "missing alcohol metadata",
+      "alcohol image hint",
+      "missing net contents metadata",
+      "net contents image hint",
+      "missing responsible party name metadata",
+      "responsible party image hint",
+      "missing responsible party address",
+      "government warning image hint",
+      "domestic/no country-of-origin requirement",
+      "2 label image(s)",
+      "approved"
+    ],
+    "ocrHints": {
+      "available": true,
+      "engines": [
+        "easyocr"
+      ],
+      "textLength": 504,
+      "alcoholHints": [
+        "43.5% Alc"
+      ],
+      "netContentsHints": [
+        "750 ml"
+      ],
+      "warningDetected": true,
+      "warningTermHits": 3,
+      "responsiblePartyHint": true,
+      "sample": "ES VEDRA SRL GIN BES PRODUCED & BOTTLED IN S. PIETRO DI FELETTO (TV) VIA $. MICHELE, 70 ITALY 1 43.5% Alc. by Vol: 750 ml WARNING: (1) GOVERNMENT ACCORDING 01 THE SURGEON GENERAL, WOMEN SHOULD NOT DRINK ALCOHOLIC BEVERAGES DURING PREGNANCY BECAUSE OF THE RISK OF BIRTH DEFECTS. (2) BEVERAGES IMPAIRS YOUR CONSUMPTION OF ALCOHOLIC CAR OR OPERATE MACHINERY, ABILITY TO DRIVE AND MAY CAUSE HEALTH PROBLEMS. IMPORTED BY: BES GIN MANHASSET, NY DISTILLED FROM GRAIN PRODUCT OF ITALY 0 0 4 5 9 5 0 5 5 2 1",
+      "errors": [
+        "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Bes Gin BF.jpg&filetype=l: tesseract: tesseract is not installed or it's not in your PATH. See README file for more information."
+      ]
+    }
+  },
+  "demo_audit": {
+    "status": "ready",
+    "source": "high_signal_ocr_preflight",
+    "reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+    "reviewed_common_fields": [
+      "alcoholContent",
+      "brandName",
+      "classType",
+      "countryOfOrigin",
+      "governmentWarning",
+      "netContents",
+      "producerName"
+    ]
+  }
+}

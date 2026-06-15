@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from .. import models
-from ..api.deps import get_current_user, require_permission
+from ..api.deps import get_current_user, get_session_id, require_permission
 from ..db import get_session
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
@@ -15,10 +15,13 @@ router = APIRouter(prefix="/api/reports", tags=["reports"])
 def get_review_report_json(
     review_id: str,
     session: Session = Depends(get_session),
+    session_id: str = Depends(get_session_id),
     current_user: models.User = Depends(get_current_user),
 ):
     review = session.get(models.Review, review_id)
     if not review or not review.application:
+        raise HTTPException(status_code=404, detail="Review not found.")
+    if review.application.session_id != session_id:
         raise HTTPException(status_code=404, detail="Review not found.")
     require_permission(
         session,

@@ -1,0 +1,25 @@
+{
+  "id": "specialty_proprietary_tequila_soda",
+  "description": "OTHER SPECIALTIES & PROPRIETARIES can be corroborated by a visible base spirit plus soda/cocktail/flavor evidence.",
+  "expectedFields": {
+    "productType": "distilled_spirits",
+    "brandName": "CUTWATER",
+    "fancifulName": "TEQUILA SODA",
+    "classType": "OTHER SPECIALTIES & PROPRIETARIES",
+    "alcoholContent": "7% ALC/VOL",
+    "netContents": "355 mL",
+    "governmentWarningRequired": true,
+    "producerName": "CUTWATER SPIRITS"
+  },
+  "ocrText": "CUTWATER TEQUILA SODA MADE WITH AWARD-WINNING REAL SPIRITS PRODUCED AND CANNED BY CUTWATER SPIRITS TEQUILA WITH SODA WATER AND A HINT OF NATURAL LIME FLAVOR 7% ALC/VOL 355 ML GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+  "expectedOverallStatus": "PASS",
+  "expectedStatuses": {
+    "brandName": "PASS",
+    "fancifulName": "PASS",
+    "classType": "PASS",
+    "alcoholContent": "PASS",
+    "netContents": "PASS",
+    "governmentWarningRequired": "PASS",
+    "producerName": "PASS"
+  }
+}

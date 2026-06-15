@@ -74,6 +74,6 @@ export function displayStatus(status: ApplicationStatus | FieldStatus): string {
     .join(" ");
 }
 
-export function backendModeFromProcessingMode(mode: ProcessingMode): "backend" | "distributed" {
-  return mode === "cluster" ? "distributed" : "backend";
+export function backendModeFromProcessingMode(_mode: ProcessingMode): "backend" {
+  return "backend";
 }

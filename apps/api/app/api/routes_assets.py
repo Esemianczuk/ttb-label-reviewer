@@ -20,6 +20,8 @@ def require_asset(session: Session, asset_id: str, session_id: str, current_user
     asset = session.get(models.Asset, asset_id)
     if not asset or not asset.application:
         raise HTTPException(status_code=404, detail="Asset not found.")
+    if asset.application.session_id != session_id:
+        raise HTTPException(status_code=404, detail="Asset not found.")
     if current_user:
         require_permission(
             session,
@@ -30,8 +32,6 @@ def require_asset(session: Session, asset_id: str, session_id: str, current_user
             entity_id=asset_id,
             not_found_for_applicant=True,
         )
-    elif asset.application.session_id != session_id:
-        raise HTTPException(status_code=404, detail="Asset not found.")
     return asset
 
 
@@ -49,6 +49,8 @@ def get_asset_metadata(
 def get_asset_content(asset_id: str, request: Request, session: Session = Depends(get_session), session_id: str = Depends(get_session_id)):
     asset = session.get(models.Asset, asset_id)
     if not asset or not asset.application:
+        raise HTTPException(status_code=404, detail="Asset not found.")
+    if asset.application.session_id != session_id:
         raise HTTPException(status_code=404, detail="Asset not found.")
     if not worker_authorized_for_asset(request, asset, session):
         current_user = get_current_user(request, session)

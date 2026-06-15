@@ -3,8 +3,9 @@ import { realColaFixtureSeeds } from "../../domain/application/realColaFixtures"
 
 describe("public COLA fixture seeds", () => {
   it("loads the bundled real registry records with label images", () => {
-    expect(realColaFixtureSeeds.length).toBe(41);
+    expect(realColaFixtureSeeds.length).toBe(66);
     expect(realColaFixtureSeeds.some((seed) => seed.id === "ttb-19337001000251")).toBe(true);
+    expect(realColaFixtureSeeds.some((seed) => seed.id === "ttb-25104001000521")).toBe(true);
     expect(realColaFixtureSeeds.some((seed) => seed.id === "ttb-19344001000769")).toBe(false);
 
     const first = realColaFixtureSeeds[0];

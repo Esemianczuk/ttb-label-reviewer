@@ -8,12 +8,8 @@ import {
   autoReviewApplicationWithBrowserOcr,
   createApplicantDraft,
   deleteApplicantDraft,
-  deleteApplicationPacket,
   finalizeReviewerDecision,
   getSnapshot,
-  purgeAllDemoData,
-  purgeOldJobs,
-  purgeRawImages,
   processReviewerBatch,
   requestApplicantCorrection,
   resubmitApplicantApplication,
@@ -21,13 +17,9 @@ import {
   reopenReviewerDecision,
   runAdminBenchmark,
   setActiveApplication,
-  setProcessingMode,
   submitApplicantApplication,
-  updateAdminSettings,
   updateFieldDecision,
-  updateJobOperation,
   updateReviewNotes,
-  updateWorkerOperation,
   unarchiveApplicantApplication,
   withdrawApplicantApplication,
   upsertApplication
@@ -50,7 +42,7 @@ export const browserDataProvider: DataProvider = {
       const snapshot = upsertApplication(variables as any);
       return { data: snapshot.applications.find((application) => application.id === (variables as any).id) as any };
     }
-    throw new Error(`Create is not supported for ${resource} in Browser Only mode.`);
+    throw new Error(`Create is not supported for ${resource} in browser fallback mode.`);
   },
   update: async ({ resource, id, variables }) => {
     if (resource === "applications") {
@@ -59,10 +51,10 @@ export const browserDataProvider: DataProvider = {
       const snapshot = upsertApplication({ ...existing, ...(variables as any), updatedAt: new Date().toISOString() });
       return { data: snapshot.applications.find((application) => application.id === String(id)) as any };
     }
-    throw new Error(`Update is not supported for ${resource} in Browser Only mode.`);
+    throw new Error(`Update is not supported for ${resource} in browser fallback mode.`);
   },
-  deleteOne: async ({ id }) => {
-    return { data: { id } as any };
+  deleteOne: async ({ resource }) => {
+    throw new Error(`Delete is not supported for ${resource} in browser fallback mode.`);
   },
   getApiUrl: () => "browser://ttb-console",
   custom: async ({ url, method, payload }) => {
@@ -71,7 +63,6 @@ export const browserDataProvider: DataProvider = {
       throw new Error(`Unsupported browser data method ${method}.`);
     }
     if (action === "demo/reset") return { data: resetSnapshot() as any };
-    if (action === "mode") return { data: setProcessingMode((payload as any).mode) as any };
     if (action === "applications/active") return { data: setActiveApplication((payload as any).applicationId) as any };
     if (action === "reviews/auto") {
       if (import.meta.env.MODE === "test") return { data: autoReviewApplication((payload as any).applicationId, (payload as any).mode) as any };
@@ -97,14 +88,8 @@ export const browserDataProvider: DataProvider = {
     if (action === "applications/archive") return { data: archiveApplicantApplication((payload as any).applicationId) as any };
     if (action === "applications/unarchive") return { data: unarchiveApplicantApplication((payload as any).applicationId) as any };
     if (action === "corrections/request") return { data: requestApplicantCorrection(payload as any) as any };
-    if (action === "admin/settings") return { data: updateAdminSettings(payload as any) as any };
-    if (action === "admin/worker") return { data: updateWorkerOperation(payload as any) as any };
-    if (action === "admin/job") return { data: updateJobOperation(payload as any) as any };
     if (action === "admin/benchmark") return { data: runAdminBenchmark(payload as any) as any };
-    if (action === "admin/purge-raw-images") return { data: purgeRawImages() as any };
-    if (action === "admin/purge-old-jobs") return { data: purgeOldJobs() as any };
-    if (action === "admin/delete-packet") return { data: deleteApplicationPacket((payload as any).applicationId) as any };
-    if (action === "admin/purge-all") return { data: purgeAllDemoData() as any };
+    if (action.startsWith("admin/")) throw new Error("This admin console is read-only except for benchmark runs.");
     throw new Error(`Browser data action ${action} is not supported by the active provider.`);
   }
 };

@@ -1,0 +1,123 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25072001000171",
+    "retrieved_at": "2026-06-14T02:33:50Z"
+  },
+  "ttb_id": "25072001000171",
+  "status": "APPROVED",
+  "approval_date": "03/19/2025",
+  "serial_number": "25GD01",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "GINGER DIVINE",
+    "fanciful_name": "GINGER LEMON LIQUEUR",
+    "class_type": "HERBS AND SEEDS SCHNAPPS LIQUEUR",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": "1648619",
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25072001000171",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17050,
+      "sha256": "20386cd154bf2dd5bbe0bdc9b89dde7862070e5d7e5b5803d54bfe8b1b7b693c",
+      "downloaded_at": "2026-06-14T02:33:51Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=GD label.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 196404,
+      "sha256": "810a3ed94e403746b3ff97a0c88c3bd9a6d9eae55911b2c95a5cd24af7f3e557",
+      "downloaded_at": "2026-06-14T02:33:51Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "25072001000171"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "34898"
+    },
+    {
+      "label": "Serial #",
+      "value": "25GD01"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "HERBS AND SEEDS SCHNAPPS LIQUEUR"
+    },
+    {
+      "label": "Origin Code",
+      "value": "PUERTO RICO"
+    },
+    {
+      "label": "Brand Name",
+      "value": "GINGER DIVINE"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "GINGER LEMON LIQUEUR"
+    },
+    {
+      "label": "Type of Application",
+      "value": "EXEMPTION"
+    },
+    {
+      "label": "For Sale In",
+      "value": "PR"
+    },
+    {
+      "label": "Formula",
+      "value": "1648619"
+    },
+    {
+      "label": "Approval Date",
+      "value": "03/19/2025"
+    },
+    {
+      "label": "TTB ID: 25072001000171",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25072001000171",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=GD label.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

@@ -296,4 +296,21 @@ body {
     align-items: stretch;
     flex-direction: column;
   }
+
+  .gov-page-header {
+    padding: 14px;
+  }
+
+  .gov-page-title.ant-typography {
+    font-size: 32px !important;
+    line-height: 1.08 !important;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .gov-page-description {
+    margin-top: 8px !important;
+    font-size: 16px;
+    line-height: 1.45;
+  }
 }

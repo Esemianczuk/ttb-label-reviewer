@@ -108,7 +108,7 @@ def test_reviewer_cannot_manage_workers_admin_can_and_worker_token_cannot_use_hu
         assert client.get("/api/workers", headers=auth_headers(client, "reviewer")).status_code == 403
         assert client.get("/api/workers", headers=auth_headers(client, "admin")).status_code == 200
 
-        join_token = client.post("/api/cluster/join-token", headers=auth_headers(client, "admin"), json={"ttlSeconds": 300}).json()["token"]
+        join_token = client.post("/api/workers/join-token", headers=auth_headers(client, "admin"), json={"ttlSeconds": 300}).json()["token"]
         registered = client.post(
             "/api/workers/register",
             json={

@@ -42,7 +42,7 @@ describe("phase 16 console testing matrix", () => {
           <Route
             path="/admin"
             element={
-              <RequireAccess resource="workers" action="manage" roles={["admin"]}>
+              <RequireAccess resource="workers" action="list" roles={["admin"]}>
                 <div>Admin workspace</div>
               </RequireAccess>
             }

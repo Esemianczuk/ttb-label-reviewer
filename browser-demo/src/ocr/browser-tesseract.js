@@ -7,10 +7,12 @@ const DEFAULT_CONFIDENCE = 0.75;
 const CDN_FALLBACK_ENV = 'VITE_ALLOW_TESSERACT_CDN_FALLBACK';
 const PREPROCESS_MAX_SCALE = 2.5;
 const PREPROCESS_MAX_DIMENSION = 1800;
+const ROTATED_EDGE_BAND_FRACTION = 0.22;
 
 let workerPromise = null;
 let assetConfigPromise = null;
 let currentProgressCallback = null;
+let currentVariantProgress = null;
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -61,8 +63,71 @@ function variantRectangle(width, height, fractions) {
   return rectangleFromFractions(width, height, fractions);
 }
 
+function cropFromVariant(variant) {
+  if (!variant?.rectangle || !variant?.source) return null;
+  if (variant.source.crop) {
+    return {
+      x: variant.source.crop.x,
+      y: variant.source.crop.y,
+      width: variant.source.crop.width,
+      height: variant.source.crop.height,
+      unit: 'pixel',
+      source: 'ocr',
+    };
+  }
+  const scale = variant.source.scale || 1;
+  return {
+    x: Math.max(0, variant.rectangle.left / scale),
+    y: Math.max(0, variant.rectangle.top / scale),
+    width: Math.max(1, variant.rectangle.width / scale),
+    height: Math.max(1, variant.rectangle.height / scale),
+    unit: 'pixel',
+    source: 'ocr',
+  };
+}
+
+function variantProgressMeta(variant, variantIndex, totalVariants, progress = 0) {
+  const safeTotal = Math.max(1, totalVariants || 1);
+  const safeIndex = Math.max(0, variantIndex || 0);
+  const safeProgress = clamp(Number.isFinite(progress) ? progress : 0, 0, 1);
+  return {
+    phase: 'ocr-variant',
+    variantId: variant.id,
+    variantLabel: variant.label,
+    variantIndex: safeIndex + 1,
+    variantTotal: safeTotal,
+    variantProgress: safeProgress,
+    overallProgress: clamp((safeIndex + safeProgress) / safeTotal, 0, 1),
+    psm: variant.psm,
+    crop: cropFromVariant(variant),
+  };
+}
+
+function emitProgress(onProgress, message, meta) {
+  onProgress?.(message, meta);
+}
+
 function coverageVariantsForSource(source) {
   const full = { left: 0, top: 0, width: source.width, height: source.height };
+  if (source.kind === 'rotated-edge') {
+    return [
+      {
+        id: `${source.id}-upright-block`,
+        label: source.label,
+        psm: PSM.SINGLE_BLOCK,
+        source,
+        rectangle: full,
+      },
+      {
+        id: `${source.id}-upright-sparse`,
+        label: `${source.label} sparse text`,
+        psm: PSM.SPARSE_TEXT,
+        source,
+        rectangle: full,
+      },
+    ];
+  }
+
   if (source.kind === 'original') {
     return [
       {
@@ -181,12 +246,46 @@ function ocrVariantsForSources(sources) {
   return variants;
 }
 
+function rotatedEdgeSourceDescriptors(width, height, scale) {
+  const edgeWidth = Math.max(96, Math.round(width * ROTATED_EDGE_BAND_FRACTION));
+  const regions = [
+    { id: 'left-edge', label: 'Left vertical warning band', x: 0, y: 0, width: edgeWidth, height },
+    {
+      id: 'right-edge',
+      label: 'Right vertical warning band',
+      x: Math.max(0, width - edgeWidth),
+      y: 0,
+      width: edgeWidth,
+      height,
+    },
+  ];
+  const sources = [];
+  for (const region of regions) {
+    for (const rotation of [90, 270]) {
+      const cropWidth = Math.max(1, Math.round(region.width * scale));
+      const cropHeight = Math.max(1, Math.round(region.height * scale));
+      sources.push({
+        id: `${region.id}-rot${rotation}`,
+        kind: 'rotated-edge',
+        label: `${region.label} rotated ${rotation === 90 ? 'clockwise' : 'counter-clockwise'}`,
+        width: cropHeight,
+        height: cropWidth,
+        scale,
+        crop: { x: region.x, y: region.y, width: region.width, height: region.height },
+        rotation,
+      });
+    }
+  }
+  return sources;
+}
+
 export function createOcrVariantPlanForTests(width, height) {
   const scale = sourceScaleFor(width, height);
   return ocrVariantsForSources([
     { id: 'original', kind: 'original', label: 'Original', width, height, scale: 1 },
     { id: 'normalized-gray', kind: 'normalized-gray', label: 'Normalized grayscale', width: Math.round(width * scale), height: Math.round(height * scale), scale },
     { id: 'threshold-inverted', kind: 'threshold-inverted', label: 'Inverted threshold', width: Math.round(width * scale), height: Math.round(height * scale), scale },
+    ...rotatedEdgeSourceDescriptors(width, height, scale),
   ]).map(({ id, label, psm, rectangle, source }) => ({
     id,
     label,
@@ -198,6 +297,8 @@ export function createOcrVariantPlanForTests(width, height) {
       scale: source.scale,
       width: source.width,
       height: source.height,
+      crop: source.crop,
+      rotation: source.rotation,
     },
   }));
 }
@@ -213,23 +314,70 @@ function shouldTreatBboxAsRelative(lineBbox, rectangle) {
   );
 }
 
+function mapSourcePointToOriginal(x, y, source) {
+  const scale = source.scale || 1;
+  const crop = source.crop;
+  if (!crop || !source.rotation) {
+    return {
+      x: (x / scale) + (crop?.x || 0),
+      y: (y / scale) + (crop?.y || 0),
+    };
+  }
+
+  const cropWidth = crop.width * scale;
+  const cropHeight = crop.height * scale;
+  if (source.rotation === 90) {
+    return {
+      x: crop.x + (y / scale),
+      y: crop.y + ((cropHeight - x) / scale),
+    };
+  }
+  if (source.rotation === 270) {
+    return {
+      x: crop.x + ((cropWidth - y) / scale),
+      y: crop.y + (x / scale),
+    };
+  }
+  if (source.rotation === 180) {
+    return {
+      x: crop.x + ((cropWidth - x) / scale),
+      y: crop.y + ((cropHeight - y) / scale),
+    };
+  }
+  return {
+    x: crop.x + (x / scale),
+    y: crop.y + (y / scale),
+  };
+}
+
 function mapBboxToOriginal(lineBbox, variant) {
   if (!lineBbox) return null;
   const source = variant.source || { scale: 1 };
-  const scale = source.scale || 1;
   const rectangle = variant.rectangle;
   const relative = shouldTreatBboxAsRelative(lineBbox, rectangle);
   const offsetX = relative && rectangle ? rectangle.left : 0;
   const offsetY = relative && rectangle ? rectangle.top : 0;
-  const x0 = (lineBbox.x0 + offsetX) / scale;
-  const y0 = (lineBbox.y0 + offsetY) / scale;
-  const x1 = (lineBbox.x1 + offsetX) / scale;
-  const y1 = (lineBbox.y1 + offsetY) / scale;
+  const x0 = lineBbox.x0 + offsetX;
+  const y0 = lineBbox.y0 + offsetY;
+  const x1 = lineBbox.x1 + offsetX;
+  const y1 = lineBbox.y1 + offsetY;
+  const points = [
+    mapSourcePointToOriginal(x0, y0, source),
+    mapSourcePointToOriginal(x1, y0, source),
+    mapSourcePointToOriginal(x1, y1, source),
+    mapSourcePointToOriginal(x0, y1, source),
+  ];
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+  const left = Math.min(...xs);
+  const top = Math.min(...ys);
+  const right = Math.max(...xs);
+  const bottom = Math.max(...ys);
   return {
-    x: Math.max(0, x0),
-    y: Math.max(0, y0),
-    width: Math.max(1, x1 - x0),
-    height: Math.max(1, y1 - y0),
+    x: Math.max(0, left),
+    y: Math.max(0, top),
+    width: Math.max(1, right - left),
+    height: Math.max(1, bottom - top),
   };
 }
 
@@ -368,6 +516,53 @@ async function preprocessImageSource(fileOrBlob, dimensions, mode) {
   };
 }
 
+async function createRotatedEdgeSources(fileOrBlob, dimensions) {
+  if (!('createImageBitmap' in globalThis)) return [];
+  const bitmap = await createImageBitmap(fileOrBlob);
+  const scale = sourceScaleFor(dimensions.width, dimensions.height);
+  const sources = [];
+  try {
+    for (const descriptor of rotatedEdgeSourceDescriptors(dimensions.width, dimensions.height, scale)) {
+      const source = await createRotatedCropSource(bitmap, descriptor.crop, descriptor.rotation, scale);
+      sources.push({
+        ...source,
+        ...descriptor,
+      });
+    }
+  } finally {
+    bitmap.close?.();
+  }
+  return sources;
+}
+
+async function createRotatedCropSource(bitmap, region, rotation, scale) {
+  const cropWidth = Math.max(1, Math.round(region.width * scale));
+  const cropHeight = Math.max(1, Math.round(region.height * scale));
+  const width = rotation === 90 || rotation === 270 ? cropHeight : cropWidth;
+  const height = rotation === 90 || rotation === 270 ? cropWidth : cropHeight;
+  const canvas = canvasFor(width, height);
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context) throw new Error('Canvas image preprocessing is not available in this environment.');
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = 'high';
+  if (rotation === 90) {
+    context.translate(width, 0);
+    context.rotate(Math.PI / 2);
+  } else if (rotation === 270) {
+    context.translate(0, height);
+    context.rotate(-Math.PI / 2);
+  } else if (rotation === 180) {
+    context.translate(width, height);
+    context.rotate(Math.PI);
+  }
+  context.drawImage(bitmap, region.x, region.y, region.width, region.height, 0, 0, cropWidth, cropHeight);
+  return {
+    blob: await canvasToBlob(canvas),
+    width,
+    height,
+  };
+}
+
 async function createOcrSources(fileOrBlob, dimensions, onProgress) {
   const sources = [
     {
@@ -382,12 +577,38 @@ async function createOcrSources(fileOrBlob, dimensions, onProgress) {
   ];
   for (const mode of ['normalized-gray', 'threshold-inverted']) {
     try {
-      onProgress?.(`Preparing ${mode === 'normalized-gray' ? 'grayscale' : 'high-contrast'} OCR view...`);
+      emitProgress(onProgress, `Preparing ${mode === 'normalized-gray' ? 'grayscale' : 'high-contrast'} OCR view...`, {
+        phase: 'preprocess',
+        crop: {
+          x: 0,
+          y: 0,
+          width: dimensions.width,
+          height: dimensions.height,
+          unit: 'pixel',
+          source: 'ocr',
+        },
+      });
       const source = await preprocessImageSource(fileOrBlob, dimensions, mode);
       if (source) sources.push(source);
     } catch (error) {
-      onProgress?.(`Skipping ${mode} preprocessing: ${error?.message || 'not available'}`);
+      emitProgress(onProgress, `Skipping ${mode} preprocessing: ${error?.message || 'not available'}`, { phase: 'preprocess' });
     }
+  }
+  try {
+    emitProgress(onProgress, 'Preparing upright side-warning OCR views...', {
+      phase: 'preprocess',
+      crop: {
+        x: 0,
+        y: 0,
+        width: dimensions.width,
+        height: dimensions.height,
+        unit: 'pixel',
+        source: 'ocr',
+      },
+    });
+    sources.push(...(await createRotatedEdgeSources(fileOrBlob, dimensions)));
+  } catch (error) {
+    emitProgress(onProgress, `Skipping rotated side-warning OCR views: ${error?.message || 'not available'}`, { phase: 'preprocess' });
   }
   return sources;
 }
@@ -403,7 +624,14 @@ async function getWorker(onProgress) {
       cacheMethod: 'write',
       logger: (message) => {
         if (message.status && Number.isFinite(message.progress)) {
-          currentProgressCallback?.(`${message.status} ${Math.round(message.progress * 100)}%`);
+          const percent = Math.round(message.progress * 100);
+          const variantPrefix = currentVariantProgress
+            ? `${currentVariantProgress.label} (${currentVariantProgress.index}/${currentVariantProgress.total}): `
+            : '';
+          const meta = currentVariantProgress?.variant
+            ? variantProgressMeta(currentVariantProgress.variant, currentVariantProgress.index - 1, currentVariantProgress.total, message.progress)
+            : { phase: 'ocr-engine', variantProgress: message.progress, overallProgress: message.progress };
+          emitProgress(currentProgressCallback, `${variantPrefix}${message.status} ${percent}%`, meta);
         }
       },
     }).then(async (worker) => {
@@ -485,7 +713,7 @@ export function resetTesseractAssetConfigForTests() {
 
 export async function recognizeImageInBrowser(fileOrBlob, { onProgress } = {}) {
   const startedAt = performance.now();
-  onProgress?.('Preparing browser OCR...');
+  emitProgress(onProgress, 'Preparing browser OCR...', { phase: 'queued', overallProgress: 0 });
   const [worker, dimensions, assetConfig] = await Promise.all([
     getWorker(onProgress),
     dimensionsForBlob(fileOrBlob),
@@ -496,27 +724,41 @@ export async function recognizeImageInBrowser(fileOrBlob, { onProgress } = {}) {
   const blocks = [];
   const variantResults = [];
 
-  for (const variant of variants) {
-    onProgress?.(`Reading ${variant.label}...`);
-    await worker.setParameters({ tessedit_pageseg_mode: variant.psm });
-    const variantStartedAt = performance.now();
-    const recognizeOptions = isFullRectangle(variant.rectangle, variant.source) ? {} : { rectangle: variant.rectangle };
-    const { data } = await worker.recognize(variant.source.blob, recognizeOptions, { text: true, blocks: true });
-    const durationMs = Math.round(performance.now() - variantStartedAt);
-    const rawText = data.text || '';
-    const variantBlocks = lineBlocksFromTesseract(data, variant);
-    blocks.push(...variantBlocks);
-    variantResults.push({
-      id: variant.id,
-      label: variant.label,
-      source: variant.source.kind,
-      scale: variant.source.scale,
-      rawText,
-      score: usefulLines(rawText).length,
-      textLength: rawText.trim().length,
-      lineCount: variantBlocks.length,
-      durationMs,
-    });
+  try {
+    for (const [variantIndex, variant] of variants.entries()) {
+      currentVariantProgress = {
+        label: variant.label,
+        index: variantIndex + 1,
+        total: variants.length,
+        variant,
+      };
+      emitProgress(
+        onProgress,
+        `Scanning ${variant.label} (${variantIndex + 1}/${variants.length})...`,
+        variantProgressMeta(variant, variantIndex, variants.length, 0),
+      );
+      await worker.setParameters({ tessedit_pageseg_mode: variant.psm });
+      const variantStartedAt = performance.now();
+      const recognizeOptions = isFullRectangle(variant.rectangle, variant.source) ? {} : { rectangle: variant.rectangle };
+      const { data } = await worker.recognize(variant.source.blob, recognizeOptions, { text: true, blocks: true });
+      const durationMs = Math.round(performance.now() - variantStartedAt);
+      const rawText = data.text || '';
+      const variantBlocks = lineBlocksFromTesseract(data, variant);
+      blocks.push(...variantBlocks);
+      variantResults.push({
+        id: variant.id,
+        label: variant.label,
+        source: variant.source.kind,
+        scale: variant.source.scale,
+        rawText,
+        score: usefulLines(rawText).length,
+        textLength: rawText.trim().length,
+        lineCount: variantBlocks.length,
+        durationMs,
+      });
+    }
+  } finally {
+    currentVariantProgress = null;
   }
 
   const rawText = mergeVariantText(variantResults);

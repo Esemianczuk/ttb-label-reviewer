@@ -1,0 +1,111 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25251001000041",
+    "retrieved_at": "2026-06-14T02:33:45Z"
+  },
+  "ttb_id": "25251001000041",
+  "status": "APPROVED",
+  "approval_date": "09/10/2025",
+  "serial_number": "25RR02",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "RUMCAST RESERVE MAURITINUS MLMO",
+    "fanciful_name": null,
+    "class_type": "OTHER RUM WHITE USB",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25251001000041",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17222,
+      "sha256": "7ba29aa3cb4a173b8cd55ba85d04ad6d3fb60786d4dcc29eccd9563993a9c0db",
+      "downloaded_at": "2026-06-14T02:33:45Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Rumcast Mauritius.png&filetype=l",
+      "local_path": "assets/label_01.png",
+      "content_type": "image/png",
+      "bytes": 1184308,
+      "sha256": "afdca03bc8a9ad424249f896cdb676ea6e75bc67df781d402cf1c333d5cae31e",
+      "downloaded_at": "2026-06-14T02:33:46Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "25251001000041"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "20751"
+    },
+    {
+      "label": "Serial #",
+      "value": "25RR02"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "OTHER RUM WHITE USB"
+    },
+    {
+      "label": "Origin Code",
+      "value": "MAURITIUS"
+    },
+    {
+      "label": "Brand Name",
+      "value": "RUMCAST RESERVE MAURITINUS MLMO"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "09/10/2025"
+    },
+    {
+      "label": "TTB ID: 25251001000041",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25251001000041",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Rumcast Mauritius.png&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

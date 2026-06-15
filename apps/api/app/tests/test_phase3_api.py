@@ -70,7 +70,7 @@ def upload_image(client: TestClient, application_id: str, session_id: str = "ses
 
 
 def create_join_token(client: TestClient) -> str:
-    response = client.post("/api/cluster/join-token", json={"ttlSeconds": 300}, headers=auth_headers(client, "admin"))
+    response = client.post("/api/workers/join-token", json={"ttlSeconds": 300}, headers=auth_headers(client, "admin"))
     assert response.status_code == 201, response.text
     body = response.json()
     assert "python -m ttb_worker" in body["command"]
@@ -133,7 +133,39 @@ def test_health_and_application_session_scope(client: TestClient):
 
     assert client.get("/api/applications", headers=auth_headers(client, "applicant", "session-a")).json()[0]["id"] == application["id"]
     assert client.get("/api/applications").status_code == 401
-    assert client.get(f"/api/applications/{application['id']}", headers=auth_headers(client, "admin", "session-b")).status_code == 200
+    assert client.get(f"/api/applications/{application['id']}", headers=auth_headers(client, "admin", "session-b")).status_code == 404
+
+
+def test_public_demo_fixtures_are_private_per_console_session(client: TestClient):
+    public_id = "app-ttb-19337001000251"
+    alpha_headers = auth_headers(client, "reviewer", "console-alpha")
+    beta_headers = auth_headers(client, "reviewer", "console-beta")
+
+    alpha_apps = client.get("/api/applications", headers=alpha_headers)
+    beta_apps = client.get("/api/applications", headers=beta_headers)
+    assert alpha_apps.status_code == 200, alpha_apps.text
+    assert beta_apps.status_code == 200, beta_apps.text
+    alpha_rows = alpha_apps.json()
+    beta_rows = beta_apps.json()
+    assert len(alpha_rows) == len(beta_rows) >= 50
+    assert {row["id"] for row in alpha_rows}.isdisjoint({row["id"] for row in beta_rows})
+    assert {row["sessionId"] for row in alpha_rows} == {"console-alpha"}
+    assert {row["sessionId"] for row in beta_rows} == {"console-beta"}
+
+    alpha_application = client.get(f"/api/applications/{public_id}", headers=alpha_headers)
+    beta_application = client.get(f"/api/applications/{public_id}", headers=beta_headers)
+    assert alpha_application.status_code == 200, alpha_application.text
+    assert beta_application.status_code == 200, beta_application.text
+    assert alpha_application.json()["id"] != beta_application.json()["id"]
+    assert alpha_application.json()["metadata"]["publicApplicationId"] == public_id
+    assert beta_application.json()["metadata"]["publicApplicationId"] == public_id
+
+    alpha_review = client.post(f"/api/applications/{public_id}/review", headers=alpha_headers, json={"mode": "backend"})
+    assert alpha_review.status_code == 201, alpha_review.text
+    assert alpha_review.json()["applicationId"] == alpha_application.json()["id"]
+    assert client.get("/api/jobs", headers=auth_headers(client, "admin", "console-alpha")).json()
+    assert client.get("/api/jobs", headers=auth_headers(client, "admin", "console-beta")).json() == []
+    assert client.get(f"/api/reviews/{alpha_review.json()['id']}", headers=beta_headers).status_code == 404
 
 
 def test_asset_upload_is_sanitized_and_session_scoped(client: TestClient):
@@ -166,7 +198,7 @@ def test_review_queue_fake_worker_and_report_flow(client: TestClient):
     application = create_application(client)
     upload_image(client, application["id"])
 
-    review_response = client.post(f"/api/applications/{application['id']}/review", json={"mode": "distributed"}, headers=auth_headers(client, "reviewer"))
+    review_response = client.post(f"/api/applications/{application['id']}/review", json={"mode": "backend"}, headers=auth_headers(client, "reviewer"))
     assert review_response.status_code == 201, review_response.text
     review = review_response.json()
     assert review["status"] == "queued"
@@ -174,44 +206,9 @@ def test_review_queue_fake_worker_and_report_flow(client: TestClient):
     worker = register_worker(client)
     secret = worker["workerSecret"]
 
-    completed_ocr_jobs = []
-    while True:
-        claim_response = client.post(
-            "/api/workers/worker-test-1/claim",
-            headers=worker_auth(secret),
-            json={"sessionId": "session-a", "supportedJobTypes": ["ocr", "evidence_crop", "validation"]},
-        )
-        assert claim_response.status_code == 200, claim_response.text
-        claim_body = claim_response.json()
-        assert claim_body["job"]
-        assert {"queued_job", "available_worker", "session_scoped"}.issubset(set(claim_body["assignment"]["reason_codes"]))
-        ocr_job = claim_body["job"]
-        if ocr_job["jobType"] != "ocr":
-            evidence_job = ocr_job
-            break
-        heartbeat = client.post("/api/workers/worker-test-1/heartbeat", headers=worker_auth(secret), json={"activeJobs": 1, "status": "online"})
-        assert heartbeat.status_code == 200
-        complete_job(
-            client,
-            ocr_job["id"],
-            {
-                "text": "Hollow Ridge",
-                "status": "OCR_DONE",
-                "engine": "paddleocr",
-                "assetId": ocr_job["payload"]["asset_id"],
-                "fieldKey": ocr_job["payload"].get("field_key", "label"),
-                "fieldLabel": ocr_job["payload"].get("field_label", "Label evidence"),
-            },
-            secret,
-        )
-        completed_ocr_jobs.append(ocr_job)
-    assert client.get(f"/api/reviews/{review['id']}", headers=auth_headers(client, "reviewer")).json()["status"] == "processing"
-    assert len(completed_ocr_jobs) == 1
-
-    complete_job(client, evidence_job["id"], {"crops": [{"field": "brandName", "confidence": 0.99}]}, secret)
-
     validation_job = claim_job(client, "validation", secret)
-    assert len(validation_job["payload"]["completed_ocr_results"]) == len(completed_ocr_jobs)
+    assert validation_job["payload"]["asset_ids"]
+    assert "completed_ocr_results" not in validation_job["payload"]
     final_result = {
         "overallStatus": "PASS",
         "review_result": {
@@ -258,12 +255,12 @@ def test_job_cancel_releases_worker_capacity(client: TestClient):
     review = client.post(f"/api/applications/{application['id']}/review", json={}, headers=auth_headers(client, "reviewer")).json()
     worker = register_worker(client)
     secret = worker["workerSecret"]
-    job = claim_job(client, "ocr", secret)
+    job = claim_job(client, "validation", secret)
 
     cancelled = client.post(f"/api/jobs/{job['id']}/cancel", headers=auth_headers(client, "admin")).json()
     assert cancelled["status"] == "cancelled"
     assert cancelled["assignedWorkerId"] is None
-    assert client.get(f"/api/jobs/{job['id']}", headers=auth_headers(client, "applicant", "session-b")).status_code == 200
+    assert client.get(f"/api/jobs/{job['id']}", headers=auth_headers(client, "applicant", "session-b")).status_code == 404
     assert client.get(f"/api/reviews/{review['id']}", headers=auth_headers(client, "reviewer")).status_code == 200
     assert client.get("/api/workers/worker-test-1", headers=auth_headers(client, "admin")).json()["activeJobs"] == 0
 
@@ -300,6 +297,11 @@ def test_admin_operations_endpoints_manage_backend_jobs_settings_and_workers(cli
     assert updated.status_code == 200, updated.text
     assert updated.json()["value"]["maxConcurrency"] == 7
     assert updated.json()["value"]["preferredOcrEngine"] == "paddleocr"
+
+    ocr_status = client.get("/api/admin/ocr-model-status", headers=admin_headers)
+    assert ocr_status.status_code == 200, ocr_status.text
+    assert ocr_status.json()[0]["id"] == "layoutlmv3-cola"
+    assert "trainedModelLoaded" in ocr_status.json()[0]
 
     worker = register_worker(client)
     drained = client.post(f"/api/workers/{worker['id']}/drain", headers=admin_headers)
@@ -355,10 +357,21 @@ def test_phase12_session_websocket_emits_live_resource_events(client: TestClient
         assert heartbeat.status_code == 200, heartbeat.text
         assert "worker.heartbeat" in collect_live_events(websocket, {"worker.heartbeat"})
 
-        job = claim_job(client, "ocr", secret)
+        job = claim_job(client, "validation", secret)
         assert "job.assigned" in collect_live_events(websocket, {"job.assigned"})
 
-        complete_job(client, job["id"], {"text": "live", "status": "OCR_DONE"}, secret)
+        complete_job(
+            client,
+            job["id"],
+            {
+                "overallStatus": "PASS",
+                "review_result": {
+                    "overallStatus": "PASS",
+                    "fields": [{"fieldKey": "brandName", "status": "PASS", "expected": "Hollow Ridge", "extracted": "Hollow Ridge"}],
+                },
+            },
+            secret,
+        )
         assert "job.completed" in collect_live_events(websocket, {"job.completed"})
 
         settings = client.patch("/api/settings/admin.operations", json={"value": {"maxConcurrency": 5}}, headers=auth_headers(client, "admin"))

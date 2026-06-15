@@ -2,6 +2,7 @@ import { Refine } from "@refinedev/core";
 import routerProvider, { DocumentTitleHandler, UnsavedChangesNotifier } from "@refinedev/react-router";
 import { App as AntApp, ConfigProvider, theme } from "antd";
 import type { ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router";
 import {
   AdminAuditPage,
@@ -20,7 +21,6 @@ import { ApplicantPortal } from "./pages/applicant/ApplicantPortal";
 import { ApplicantApplicationDetail } from "./pages/applicant/ApplicantApplicationDetail";
 import { ApplicantTimeline } from "./pages/applicant/ApplicantTimeline";
 import { NewApplicationWizard } from "./pages/applicant/NewApplicationWizard";
-import { RoleLanding } from "./pages/public/RoleLanding";
 import { ReviewQueuePage } from "./pages/reviewer/ReviewQueuePage";
 import { ReviewerBatchesPage } from "./pages/reviewer/ReviewerBatchesPage";
 import { ReviewerPortal } from "./pages/reviewer/ReviewerPortal";
@@ -38,6 +38,10 @@ import { canAccess } from "./providers/access/permissionMatrix";
 import { useCurrentRole } from "./hooks/useCurrentRole";
 import { governmentTheme } from "./theme/governmentTheme";
 import type { UserRole } from "./domain/application/types";
+import { useConsoleStore } from "./hooks/useConsoleStore";
+import { reviewerEntryApplication } from "./domain/application/reviewerEntry";
+import { setActiveApplication } from "./providers/data/browserStore";
+import { writeReviewerAutoRunPreference } from "./components/review/ReviewWorkbench";
 
 export function App() {
   return (
@@ -81,7 +85,7 @@ function ConsoleRefineShell() {
     >
       <Routes>
         <Route path="/" element={<AppLayout />}>
-          <Route index element={<RoleLanding />} />
+          <Route index element={<ReviewerEntryRedirect />} />
           <Route path="reviewer" element={<RequireAccess resource="reviews" action="list" roles={["reviewer"]}><ReviewerPortal /></RequireAccess>} />
           <Route path="reviewer/queue" element={<RequireAccess resource="reviews" action="list" roles={["reviewer"]}><ReviewQueuePage /></RequireAccess>} />
           <Route path="reviewer/applications/:applicationId" element={<RequireAccess resource="reviews" action="show" roles={["reviewer"]}><ReviewWorkbenchPage /></RequireAccess>} />
@@ -98,17 +102,17 @@ function ConsoleRefineShell() {
           <Route path="applicant/applications/:applicationId/corrections" element={<RequireAccess resource="applications" action="update" roles={["applicant"]}><ApplicantCorrectionRedirect /></RequireAccess>} />
           <Route path="applicant/applications/:applicationId" element={<RequireAccess resource="applications" action="show" roles={["applicant"]}><ApplicantApplicationDetail /></RequireAccess>} />
           <Route path="applicant/applications/:applicationId/timeline" element={<RequireAccess resource="auditEvents" action="list" roles={["applicant"]}><ApplicantTimeline /></RequireAccess>} />
-          <Route path="admin" element={<RequireAccess resource="workers" action="manage" roles={["admin"]}><AdminPortal /></RequireAccess>} />
-          <Route path="admin/users" element={<RequireAccess resource="users" action="manage" roles={["admin"]}><AdminUsersPage /></RequireAccess>} />
-          <Route path="admin/roles" element={<RequireAccess resource="settings" action="manage" roles={["admin"]}><AdminRolesPage /></RequireAccess>} />
-          <Route path="admin/workers" element={<RequireAccess resource="workers" action="manage" roles={["admin"]}><AdminWorkersPage /></RequireAccess>} />
-          <Route path="admin/jobs" element={<RequireAccess resource="jobs" action="manage" roles={["admin"]}><AdminJobsPage /></RequireAccess>} />
-          <Route path="admin/engines" element={<RequireAccess resource="settings" action="manage" roles={["admin"]}><AdminEnginesPage /></RequireAccess>} />
-          <Route path="admin/benchmarks" element={<RequireAccess resource="benchmarks" action="manage" roles={["admin"]}><AdminBenchmarksPage /></RequireAccess>} />
-          <Route path="admin/audit" element={<RequireAccess resource="auditEvents" action="manage" roles={["admin"]}><AdminAuditPage /></RequireAccess>} />
-          <Route path="admin/retention" element={<RequireAccess resource="settings" action="purge" roles={["admin"]}><AdminRetentionPage /></RequireAccess>} />
-          <Route path="admin/fixtures" element={<RequireAccess resource="fixtures" action="manage" roles={["admin"]}><AdminFixturesPage /></RequireAccess>} />
-          <Route path="admin/settings" element={<RequireAccess resource="settings" action="manage" roles={["admin"]}><AdminSettingsPage /></RequireAccess>} />
+          <Route path="admin" element={<RequireAccess resource="workers" action="list" roles={["admin"]}><AdminPortal /></RequireAccess>} />
+          <Route path="admin/users" element={<RequireAccess resource="users" action="list" roles={["admin"]}><AdminUsersPage /></RequireAccess>} />
+          <Route path="admin/roles" element={<RequireAccess resource="settings" action="show" roles={["admin"]}><AdminRolesPage /></RequireAccess>} />
+          <Route path="admin/workers" element={<RequireAccess resource="workers" action="list" roles={["admin"]}><AdminWorkersPage /></RequireAccess>} />
+          <Route path="admin/jobs" element={<RequireAccess resource="jobs" action="list" roles={["admin"]}><AdminJobsPage /></RequireAccess>} />
+          <Route path="admin/engines" element={<RequireAccess resource="settings" action="show" roles={["admin"]}><AdminEnginesPage /></RequireAccess>} />
+          <Route path="admin/benchmarks" element={<RequireAccess resource="benchmarks" action="list" roles={["admin"]}><AdminBenchmarksPage /></RequireAccess>} />
+          <Route path="admin/audit" element={<RequireAccess resource="auditEvents" action="list" roles={["admin"]}><AdminAuditPage /></RequireAccess>} />
+          <Route path="admin/retention" element={<RequireAccess resource="settings" action="show" roles={["admin"]}><AdminRetentionPage /></RequireAccess>} />
+          <Route path="admin/fixtures" element={<RequireAccess resource="fixtures" action="list" roles={["admin"]}><AdminFixturesPage /></RequireAccess>} />
+          <Route path="admin/settings" element={<RequireAccess resource="settings" action="show" roles={["admin"]}><AdminSettingsPage /></RequireAccess>} />
           <Route path="resources/:resourceName" element={<ResourceIndexPage />} />
           <Route path="resources/:resourceName/:id" element={<ResourceIndexPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -123,6 +127,29 @@ function ConsoleRefineShell() {
 function ApplicantCorrectionRedirect() {
   const { applicationId } = useParams();
   return <Navigate to={`/applicant/applications/${applicationId}/edit`} replace />;
+}
+
+function ReviewerEntryRedirect() {
+  const { snapshot } = useConsoleStore();
+  const { setRole } = useCurrentRole();
+  const [ready, setReady] = useState(false);
+  const targetApplication = useMemo(
+    () => reviewerEntryApplication(snapshot.applications, snapshot.activeApplicationId),
+    [snapshot.activeApplicationId, snapshot.applications]
+  );
+
+  useEffect(() => {
+    setRole("reviewer");
+    writeReviewerAutoRunPreference(true);
+    if (targetApplication) {
+      setActiveApplication(targetApplication.id, "Demo Reviewer", "reviewer");
+    }
+    const readyTimer = window.setTimeout(() => setReady(true), 0);
+    return () => window.clearTimeout(readyTimer);
+  }, [targetApplication?.id]);
+
+  if (!ready) return null;
+  return <Navigate to={targetApplication ? `/reviewer/applications/${targetApplication.id}` : "/reviewer"} replace />;
 }
 
 export function RequireAccess({

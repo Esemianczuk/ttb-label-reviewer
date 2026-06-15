@@ -3,9 +3,8 @@ import type { ProcessingMode } from "../../domain/application/types";
 import { apiLiveProvider, browserLiveProvider } from "../live/liveProvider";
 import { apiDataProvider } from "./backendDataProvider";
 import { browserDataProvider } from "./browserDataProvider";
-import { mockDataProvider } from "./mockDataProvider";
 
-export type ConsoleProviderKey = "browser" | "api" | "mock";
+export type ConsoleProviderKey = "browser" | "api";
 
 export type ConsoleProviderDefinition = {
   key: ConsoleProviderKey;
@@ -19,7 +18,7 @@ export type ConsoleProviderDefinition = {
 export const providerRegistry: Record<ConsoleProviderKey, ConsoleProviderDefinition> = {
   browser: {
     key: "browser",
-    label: "Browser Only",
+    label: "Browser Fallback",
     dataProvider: browserDataProvider,
     liveProvider: browserLiveProvider,
     requiresBackend: false,
@@ -32,14 +31,6 @@ export const providerRegistry: Record<ConsoleProviderKey, ConsoleProviderDefinit
     liveProvider: apiLiveProvider,
     requiresBackend: true,
     auth: "backend-demo"
-  },
-  mock: {
-    key: "mock",
-    label: "Mock Data",
-    dataProvider: mockDataProvider,
-    liveProvider: browserLiveProvider,
-    requiresBackend: false,
-    auth: "local-demo"
   }
 };
 

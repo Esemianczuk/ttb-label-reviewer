@@ -83,7 +83,7 @@ def create_worker(
     engines: dict[str, dict] | None = None,
 ):
     cached_asset_ids = cached_asset_ids or []
-    engines = engines or {"null": {"available": True, "status": "ok"}}
+    engines = engines or {"paddleocr": {"available": True, "status": "ok"}}
     worker = models.Worker(
         id=worker_id,
         hostname=f"{worker_id}.local",
@@ -118,8 +118,8 @@ def test_cached_large_asset_beats_faster_remote_worker_when_network_is_slow(sess
     remote_worker = create_worker(session, "remote-worker", cached_asset_ids=[], ocr_ms=100, download_bps=1000, latency_ms=1000)
 
     now = models.now_utc()
-    cached_score = score_worker_engine(session, job, cached_worker, "null", now, {}, {"session-a": 1}, {})
-    remote_score = score_worker_engine(session, job, remote_worker, "null", now, {}, {"session-a": 1}, {})
+    cached_score = score_worker_engine(session, job, cached_worker, "paddleocr", now, {}, {"session-a": 1}, {})
+    remote_score = score_worker_engine(session, job, remote_worker, "paddleocr", now, {}, {"session-a": 1}, {})
 
     assert cached_score.decision.estimated_components["network_transfer_ms"] == 0
     assert remote_score.decision.estimated_components["network_transfer_ms"] > cached_score.decision.score_ms
@@ -150,8 +150,8 @@ def test_scheduler_scores_queue_depth_and_reliability(session):
     session.commit()
 
     now = models.now_utc()
-    idle_score = score_worker_engine(session, job, idle, "null", now, {}, {"session-a": 1}, {"busy-worker": 1})
-    busy_score = score_worker_engine(session, job, busy, "null", now, {}, {"session-a": 1}, {"busy-worker": 1})
+    idle_score = score_worker_engine(session, job, idle, "paddleocr", now, {}, {"session-a": 1}, {"busy-worker": 1})
+    busy_score = score_worker_engine(session, job, busy, "paddleocr", now, {}, {"session-a": 1}, {"busy-worker": 1})
 
     assert idle_score.decision.estimated_components["queue_penalty_ms"] < busy_score.decision.estimated_components["queue_penalty_ms"]
     assert busy_score.decision.estimated_components["reliability_penalty_ms"] == 750
@@ -166,8 +166,8 @@ def test_scheduler_applies_session_fairness_penalty(session):
     now = models.now_utc()
     active_by_session = {"session-a": 2, "session-b": 0}
     queued_by_session = {"session-a": 5, "session-b": 1}
-    score_a = score_worker_engine(session, job_a, worker, "null", now, active_by_session, queued_by_session, {})
-    score_b = score_worker_engine(session, job_b, worker, "null", now, active_by_session, queued_by_session, {})
+    score_a = score_worker_engine(session, job_a, worker, "paddleocr", now, active_by_session, queued_by_session, {})
+    score_b = score_worker_engine(session, job_b, worker, "paddleocr", now, active_by_session, queued_by_session, {})
 
     assert score_a.decision.estimated_components["session_fairness_penalty_ms"] > score_b.decision.estimated_components[
         "session_fairness_penalty_ms"
@@ -190,63 +190,6 @@ def test_scheduler_rejects_stale_or_incapable_workers(session):
     assert worker_is_eligible(worker, models.now_utc()) is False
 
 
-def test_scheduler_prefers_worker_with_easyocr_escalation_for_hard_validation(session):
-    application, asset, _ = create_application_job(session)
-    session.query(models.Job).delete()
-    review = models.Review(application_id=application.id, mode="distributed", status="queued")
-    session.add(review)
-    session.flush()
-    validation = models.Job(
-        application_id=application.id,
-        review_id=review.id,
-        session_id=application.session_id,
-        job_type="validation",
-        status="queued",
-        priority=100,
-        payload_json={
-            "asset_ids": [asset.id],
-            "expected_fields": application.expected_fields,
-            "ocr_strategy": "tesseract_first_easyocr_escalation",
-            "primary_engine": "tesseract",
-            "fallback_engine": "easyocr",
-            "target_latency_ms": 5000,
-        },
-        required_capabilities={"validation": True},
-    )
-    session.add(validation)
-    tesseract_only = create_worker(
-        session,
-        "tesseract-only",
-        cached_asset_ids=[asset.id],
-        ocr_ms=250,
-        engines={"tesseract": {"available": True, "status": "ok"}},
-    )
-    escalation_ready = create_worker(
-        session,
-        "easyocr-ready",
-        cached_asset_ids=[asset.id],
-        ocr_ms=250,
-        engines={"tesseract": {"available": True, "status": "ok"}, "easyocr": {"available": True, "status": "ok"}},
-    )
-
-    assert choose_assignment_for_worker(
-        session,
-        requesting_worker=tesseract_only,
-        supported_job_types=["validation"],
-        session_id="session-a",
-    ) is None
-    assignment = choose_assignment_for_worker(
-        session,
-        requesting_worker=escalation_ready,
-        supported_job_types=["validation"],
-        session_id="session-a",
-    )
-
-    assert assignment is not None
-    assert assignment.worker.id == "easyocr-ready"
-    assert "easyocr_escalation_available" in assignment.decision.reason_codes
-
-
 def test_scheduler_prefers_accelerated_paddleocr_for_critical_field_ocr(session):
     _, asset, job = create_application_job(session, size_bytes=2 * 1024 * 1024)
     job.payload_json = {
@@ -259,19 +202,19 @@ def test_scheduler_prefers_accelerated_paddleocr_for_critical_field_ocr(session)
         "ocr_strategy": "paddleocr_authoritative",
     }
     session.commit()
-    tesseract_only = create_worker(
+    cpu_paddle = create_worker(
         session,
-        "tesseract-field-worker",
+        "cpu-paddle-worker",
         cached_asset_ids=[asset.id],
-        ocr_ms=250,
-        engines={"tesseract": {"available": True, "status": "ok"}},
+        ocr_ms=2500,
+        engines={"paddleocr": {"available": True, "status": "ok"}},
     )
     accelerated_paddle = create_worker(
         session,
         "cuda-paddle-worker",
         cached_asset_ids=[asset.id],
         ocr_ms=250,
-        engines={"tesseract": {"available": True, "status": "ok"}, "paddleocr": {"available": True, "status": "ok"}, "easyocr": {"available": True, "status": "ok"}},
+        engines={"paddleocr": {"available": True, "status": "ok"}},
     )
     accelerated_paddle.capabilities["accelerators"] = {"cuda": {"available": True, "devices": [{"name": "Test CUDA"}]}, "appleMps": {"available": False}}
     accelerated_paddle.calibration["engines"]["paddleocr"] = {"available": True, "steadyStateMs": 800, "warmupMs": 0}
@@ -279,7 +222,7 @@ def test_scheduler_prefers_accelerated_paddleocr_for_critical_field_ocr(session)
 
     assert choose_assignment_for_worker(
         session,
-        requesting_worker=tesseract_only,
+        requesting_worker=cpu_paddle,
         supported_job_types=["ocr"],
         session_id="session-a",
     ) is None
@@ -300,7 +243,7 @@ def test_scheduler_prefers_accelerated_paddleocr_for_critical_field_ocr(session)
 def test_scheduler_honors_review_stage_dependencies(session):
     application, asset, _ = create_application_job(session)
     session.query(models.Job).delete()
-    review = models.Review(application_id=application.id, mode="distributed", status="queued")
+    review = models.Review(application_id=application.id, mode="backend", status="queued")
     session.add(review)
     session.flush()
     ocr = models.Job(

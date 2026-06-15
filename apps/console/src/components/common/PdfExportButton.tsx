@@ -4,7 +4,7 @@ import type { ButtonProps } from "antd";
 import jsPDF from "jspdf";
 import { useState } from "react";
 import { fieldLabels } from "../../domain/application/demoData";
-import { cropBoxForImage, estimatedCropForField } from "../../domain/application/evidenceCrops";
+import { cropBoxForImage } from "../../domain/application/evidenceCrops";
 import { applicationNumberFor } from "../../domain/application/applicationNumber";
 import type {
   EvidenceCrop,
@@ -84,16 +84,6 @@ const COLORS = {
 
 const PASSING_STATUSES: FieldStatus[] = ["PASS", "PASS_WITH_WARNINGS", "NOT_APPLICABLE"];
 const FAILING_STATUSES: FieldStatus[] = ["FAIL", "NOT_FOUND"];
-const TRUSTED_ESTIMATED_CROP_FIELDS = new Set<ReviewField["fieldKey"]>([
-  "brandName",
-  "fancifulName",
-  "classType",
-  "alcoholContent",
-  "netContents",
-  "governmentWarning",
-  "producerName"
-]);
-
 export function PdfExportButton({ application, pageName, children, type, size, block }: PdfExportButtonProps) {
   const [loading, setLoading] = useState(false);
   const { message: messageApi } = AntApp.useApp();
@@ -324,9 +314,9 @@ async function drawFieldCard(ctx: ReportContext, field: ReviewField) {
   const { doc, application } = ctx;
   const evidence = field.evidence[0];
   const image = findEvidenceImage(application.images, evidence);
-  const crop = evidence?.crop || estimatedCropForField(field.fieldKey);
-  const canShowCrop = shouldShowCrop(field, crop);
-  const cropAsset = image && canShowCrop ? await imageToJpegDataUrl(image.url, crop) : null;
+  const crop = evidence?.crop;
+  const trustedCrop = shouldShowCrop(crop) ? crop : undefined;
+  const cropAsset = image && trustedCrop ? await imageToJpegDataUrl(image.url, trustedCrop) : null;
   const finalStatus = getFieldStatus(field);
   const overridden = Boolean(field.reviewerStatus) && field.reviewerStatus !== field.status;
   const columnTopOffset = overridden ? 62 : 52;
@@ -363,8 +353,8 @@ async function drawFieldCard(ctx: ReportContext, field: ReviewField) {
 
   if (cropAsset) {
     drawImageContained(doc, cropAsset, x + 364, columnTop + 16, 148, 76);
-    setFont(doc, 7.8, "normal", crop.source === "ocr" ? COLORS.blue : COLORS.muted);
-    doc.text(crop.source === "ocr" ? "OCR crop used for extraction" : "Estimated evidence crop", x + 364, columnTop + 104);
+    setFont(doc, 7.8, "normal", COLORS.blue);
+    doc.text("OCR/entity crop used for extraction", x + 364, columnTop + 104);
   } else {
     drawTextBox(doc, x + 364, columnTop + 16, 148, 76, evidence?.excerpt || field.extracted || "No evidence excerpt available.", {
       size: Math.min(8.8, valueTextSize),
@@ -408,7 +398,7 @@ function drawProcessingTrace(ctx: ReportContext) {
 }
 
 function drawRawOcrAppendix(ctx: ReportContext) {
-  const rawText = ctx.application.review?.rawOcrText;
+  const rawText = rawOcrTextForReport(ctx.application);
   if (!rawText) return;
   ensureSpace(ctx, 170);
   drawSectionTitle(ctx, "Raw OCR Text Appendix");
@@ -510,6 +500,18 @@ function drawSimpleTable(ctx: ReportContext, headers: string[], rows: string[][]
       rowIndex += 1;
     }
   }
+}
+
+function rawOcrTextForReport(application: ReviewApplication): string {
+  const review =
+    application.review as
+      | (ReviewApplication["review"] & {
+          rawText?: string;
+          combinedText?: string;
+          combinedOcr?: { rawText?: string };
+        })
+      | undefined;
+  return String(review?.rawOcrText || review?.rawText || review?.combinedText || review?.combinedOcr?.rawText || "").trim();
 }
 
 function drawTableHeader(doc: jsPDF, x: number, y: number, width: number, height: number, headers: string[], columnWidths: number[]) {
@@ -706,8 +708,8 @@ function findEvidenceImage(images: LabelImage[], evidence?: ReviewEvidence) {
   return images.find((image) => image.id === evidence?.sourceImageId) || images[0];
 }
 
-function shouldShowCrop(field: ReviewField, crop: EvidenceCrop) {
-  return crop.source === "ocr" || TRUSTED_ESTIMATED_CROP_FIELDS.has(field.fieldKey);
+function shouldShowCrop(crop?: EvidenceCrop): crop is EvidenceCrop {
+  return crop?.source === "ocr";
 }
 
 function expectedFieldEntries(fields: ExpectedFields): string[][] {

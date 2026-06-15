@@ -1,25 +1,15 @@
 import {
   BarChartOutlined,
-  DeleteOutlined,
-  DownloadOutlined,
-  PauseCircleOutlined,
-  PlayCircleOutlined,
-  ReloadOutlined,
-  StopOutlined,
-  ToolOutlined
+  DownloadOutlined
 } from "@ant-design/icons";
 import {
   Button,
   Card,
   Col,
-  Form,
-  Input,
-  InputNumber,
-  Popconfirm,
+  Empty,
   Row,
   Select,
   Space,
-  Switch,
   Table,
   Tag,
   Typography,
@@ -81,30 +71,33 @@ export function AdminRolesPage() {
 }
 
 export function AdminWorkersPage() {
-  const { snapshot, loading, runAction } = useAdminOperations();
-  const [messageApi, contextHolder] = message.useMessage();
-  const act = async (workerId: string, action: "recalibrate" | "drain" | "disable" | "enable") => {
-    await runAction("admin/worker", { workerId, action });
-    messageApi.success(`Worker ${action} requested.`);
-  };
+  const { snapshot } = useAdminOperations();
 
   return (
     <AdminPage title="Workers" description="Registered local workers advertise engines, capacity, heartbeat freshness, and operational health.">
       <Space orientation="vertical" className="full-width" size={16}>
-        {contextHolder}
-        <Row gutter={[16, 16]}>
-          {snapshot.workers.map((worker) => (
-            <Col xs={24} lg={8} key={worker.id}>
-              <WorkerCard worker={worker} loading={loading} onAction={act} />
-            </Col>
-          ))}
-        </Row>
+        <GovAlert type="info" title="Read-only assessment posture">
+          Worker controls are shown as operational state only. The hardened demo does not drain, disable, or mutate workers from the console.
+        </GovAlert>
+        {snapshot.workers.length ? (
+          <Row gutter={[16, 16]}>
+            {snapshot.workers.map((worker) => (
+              <Col xs={24} lg={8} key={worker.id}>
+                <WorkerCard worker={worker} />
+              </Col>
+            ))}
+          </Row>
+        ) : (
+          <Card size="small">
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No backend workers are registered. Start the local PaddleOCR backend runner to see worker health here." />
+          </Card>
+        )}
       </Space>
     </AdminPage>
   );
 }
 
-function WorkerCard({ worker, loading, onAction }: { worker: WorkerSnapshot; loading: boolean; onAction: (workerId: string, action: "recalibrate" | "drain" | "disable" | "enable") => void }) {
+function WorkerCard({ worker }: { worker: WorkerSnapshot }) {
   const load = worker.maxConcurrency ? Math.round((worker.activeJobs / worker.maxConcurrency) * 100) : 0;
   const sourceLabel = workerSourceLabel(worker);
   return (
@@ -135,23 +128,14 @@ function WorkerCard({ worker, loading, onAction }: { worker: WorkerSnapshot; loa
         <Typography.Text>Average: {worker.avgMsPerImage || 0} ms/image</Typography.Text>
         <Typography.Text>Last heartbeat: {new Date(worker.lastSeenAt).toLocaleString()}</Typography.Text>
         <Space wrap>{workerEngineTags(worker).map((engine) => <Tag key={engine}>{engine}</Tag>)}</Space>
-        <Space wrap>
-          <Button loading={loading} icon={<ReloadOutlined />} onClick={() => onAction(worker.id, "recalibrate")}>Recalibrate</Button>
-          <Button loading={loading} icon={<PauseCircleOutlined />} onClick={() => onAction(worker.id, "drain")}>Drain</Button>
-          {worker.disabled ? (
-            <Button loading={loading} icon={<PlayCircleOutlined />} onClick={() => onAction(worker.id, "enable")}>Enable</Button>
-          ) : (
-            <Button loading={loading} danger icon={<StopOutlined />} onClick={() => onAction(worker.id, "disable")}>Disable</Button>
-          )}
-        </Space>
+        <Tag color="blue">observability only</Tag>
       </Space>
     </Card>
   );
 }
 
 function workerSourceLabel(worker: WorkerSnapshot): string {
-  if (worker.id === "worker-local-browser" || worker.platform.toLowerCase().includes("chromium")) return "local browser session";
-  if (worker.id.startsWith("worker-fastapi") || worker.id.startsWith("worker-mac")) return "demo fixture worker";
+  if (worker.platform.toLowerCase().includes("chromium")) return "local browser session";
   return "registered backend worker";
 }
 
@@ -168,12 +152,7 @@ function WorkerHealthTag({ worker }: { worker: WorkerSnapshot }) {
 }
 
 export function AdminJobsPage() {
-  const { snapshot, loading, runAction } = useAdminOperations();
-  const [messageApi, contextHolder] = message.useMessage();
-  const act = async (jobId: string, action: "retry" | "cancel" | "raise_priority") => {
-    await runAction("admin/job", { jobId, action });
-    messageApi.success(`Job ${action.replace("_", " ")} requested.`);
-  };
+  const { snapshot, loading } = useAdminOperations();
   const applicationById = new Map(snapshot.applications.map((application) => [application.id, application]));
   const columns: ColumnsType<AdminJob> = [
     { title: "Job ID", dataIndex: "id", width: 240, ellipsis: true },
@@ -186,138 +165,126 @@ export function AdminJobsPage() {
     { title: "Attempts", dataIndex: "attempts" },
     { title: "Created", render: (_, job) => new Date(job.createdAt).toLocaleString() },
     { title: "Duration", render: (_, job) => jobDuration(job) },
-    { title: "Scheduler Reason", dataIndex: "schedulerReason", ellipsis: true },
-    {
-      title: "Actions",
-      fixed: "right",
-      width: 240,
-      render: (_, job) => (
-        <Space>
-          <Button loading={loading} onClick={() => act(job.id, "retry")}>Retry</Button>
-          <Button loading={loading} onClick={() => act(job.id, "raise_priority")}>Raise</Button>
-          <Button loading={loading} danger onClick={() => act(job.id, "cancel")}>Cancel</Button>
-        </Space>
-      )
-    }
+    { title: "Scheduler Reason", dataIndex: "schedulerReason", ellipsis: true }
   ];
   return (
     <AdminPage title="Job Queue" description="Operational queue for OCR, evidence extraction, validation, and review-result tasks. Scheduler reasons are shown as text.">
       <Card size="small" title="Jobs">
-        {contextHolder}
-        <Table loading={loading} rowKey="id" dataSource={snapshot.jobs} columns={columns} pagination={{ pageSize: 10 }} scroll={{ x: 1500 }} />
+        {snapshot.jobs.length ? (
+          <Table loading={loading} rowKey="id" dataSource={snapshot.jobs} columns={columns} pagination={{ pageSize: 10 }} scroll={{ x: 1260 }} />
+        ) : (
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No backend jobs are queued. Run a backend automated review to create OCR and validation jobs." />
+        )}
       </Card>
     </AdminPage>
   );
 }
 
 export function AdminEnginesPage() {
-  const { snapshot, runAction } = useAdminOperations();
+  const { snapshot } = useAdminOperations();
+  const fieldExtractor = snapshot.ocrModelStatus[0];
   return (
-    <AdminPage title="OCR Engine Settings" description="Choose allowed local engines and concurrency for browser, backend, and cluster processing.">
-      <SettingsForm
-        title="Engine Settings"
-        settings={snapshot.adminSettings}
-        fields={["preferredOcrEngine", "browserOcrAllowed", "backendCpuOcrAllowed", "gpuOcrAllowed", "distributedWorkersAllowed", "maxConcurrency"]}
-        onUpdate={(values) => runAction("admin/settings", values as Record<string, unknown>)}
-      />
+    <AdminPage title="OCR Engine Policy" description="Inspect the hardened OCR path used by backend review. Browser OCR is retained only as an offline fallback.">
+      <Space orientation="vertical" className="full-width" size={16}>
+        <RuntimePolicyPanel settings={snapshot.adminSettings} />
+        <FieldExtractorStatusPanel status={fieldExtractor} />
+      </Space>
     </AdminPage>
   );
 }
 
-export function AdminSettingsPage() {
-  const { snapshot, runAction } = useAdminOperations();
+function RuntimePolicyPanel({ settings }: { settings: AdminSettings }) {
   return (
-    <AdminPage title="System Settings" description="Sectioned operational settings for validators, warning strictness, local retention, and report-only storage.">
-      <GovAlert type="warning" title="Settings affect the local assessment environment">
-        LAN mode, retention deletion, and cluster worker settings should be changed intentionally and verified in the audit log.
+    <Card size="small" title="Authoritative Runtime Policy">
+      <Row gutter={[12, 12]}>
+        <Col xs={24} md={8}><ModelMetric label="Primary OCR engine" value="PaddleOCR" /></Col>
+        <Col xs={24} md={8}><ModelMetric label="Browser OCR" value="Private emergency path" /></Col>
+        <Col xs={24} md={8}><ModelMetric label="Max local concurrency" value={String(settings.maxConcurrency)} /></Col>
+      </Row>
+      <GovAlert type="info" title="No admin mode switching">
+        Reviews use backend PaddleOCR when the coordinator is reachable. If the backend is absent, the console falls back to browser-local OCR automatically.
       </GovAlert>
-      <SettingsForm
-        title="System Settings"
-        settings={snapshot.adminSettings}
-        fields={["validatorThreshold", "warningStrictness", "retentionRawImagesDays", "retentionJobsDays", "keepReportsOnly"]}
-        onUpdate={(values) => runAction("admin/settings", values as Record<string, unknown>)}
-      />
-    </AdminPage>
-  );
-}
-
-function SettingsForm({ title, settings, fields, onUpdate }: { title: string; settings: AdminSettings; fields: Array<keyof AdminSettings>; onUpdate: (settings: Partial<AdminSettings>) => Promise<void> }) {
-  const [messageApi, contextHolder] = message.useMessage();
-  const [form] = Form.useForm<Partial<AdminSettings>>();
-  const [dirty, setDirty] = useState(false);
-  return (
-    <Card size="small" title={title}>
-      {contextHolder}
-      {fields.includes("distributedWorkersAllowed") ? (
-        <GovAlert type="warning" title="Cluster mode is optional">
-          Worker registration requires a join token and persistent worker secret. Browser Only mode remains available without distributed workers.
-        </GovAlert>
-      ) : null}
-      {fields.some((field) => String(field).startsWith("retention")) ? (
-        <GovAlert type="warning" title="Retention changes can delete local data">
-          Retention controls can purge raw assets, old jobs, and demo packets from the local environment.
-        </GovAlert>
-      ) : null}
-      <Form
-        form={form}
-        key={fields.map((field) => `${String(field)}:${String(settings[field])}`).join("|")}
-        layout="vertical"
-        initialValues={settings}
-        onValuesChange={() => setDirty(true)}
-        onFinish={async (values) => {
-          await onUpdate(values);
-          setDirty(false);
-          messageApi.success("Settings saved.");
-        }}
-      >
-        {dirty ? <GovAlert type="warning" title="Unsaved changes">Review the changed values and press Save Settings to write them to the active provider.</GovAlert> : null}
-        <Row gutter={16}>
-          {fields.map((key) => (
-            <Col xs={24} md={12} xl={8} key={key}>
-              <Form.Item label={settingLabel(key)} name={key} valuePropName={typeof settings[key] === "boolean" ? "checked" : "value"}>
-                {settingControl(key, settings[key])}
-              </Form.Item>
-            </Col>
-          ))}
-        </Row>
-        <Space>
-          <Button type="primary" htmlType="submit" disabled={!dirty}>
-            Save Settings
-          </Button>
-          <Button
-            onClick={() => {
-              form.resetFields();
-              setDirty(false);
-            }}
-          >
-            Revert
-          </Button>
-        </Space>
-      </Form>
     </Card>
   );
 }
 
-function settingControl(key: keyof AdminSettings, value: AdminSettings[keyof AdminSettings]) {
-  if (typeof value === "boolean") return <Switch />;
-  if (key === "preferredOcrEngine") {
-    return (
-      <Select
-        options={[
-          { value: "paddleocr", label: "PaddleOCR COLA preferred" },
-          { value: "paddleocr+easyocr-fallback", label: "PaddleOCR with EasyOCR fallback" },
-          { value: "easyocr", label: "EasyOCR fallback mode" },
-          { value: "tesseract", label: "Tesseract only" },
-          { value: "browser-tesseract", label: "Browser Tesseract.js" }
+function FieldExtractorStatusPanel({ status }: { status?: { trainedModelLoaded: boolean; status: string; mode: string; modelDir: string; message: string; modelCard?: Record<string, unknown> | null; metrics?: Record<string, unknown> | null; failureReport?: Record<string, unknown> | null } }) {
+  if (!status) return null;
+  const candidate = (status.metrics?.candidate || (status.modelCard?.metrics as any)?.candidate || {}) as Record<string, unknown>;
+  const baseline = (status.metrics?.baseline || (status.modelCard?.metrics as any)?.baseline || {}) as Record<string, unknown>;
+  return (
+    <Card
+      size="small"
+      title="Enhanced OCR Field Extraction"
+      extra={<Tag color={status.trainedModelLoaded ? "green" : status.status === "unavailable" ? "red" : "gold"}>{status.trainedModelLoaded ? "trained model active" : status.status}</Tag>}
+    >
+      <Space orientation="vertical" className="full-width" size={12}>
+        {!status.trainedModelLoaded ? (
+          <GovAlert type="warning" title="Guarded baseline extraction is active">
+            Backend workers will use PaddleOCR full-image OCR plus conservative weak alignment until a promoted LayoutLMv3 model is staged.
+          </GovAlert>
+        ) : (
+          <GovAlert type="success" title="Guarded enhanced extraction is active">
+            PaddleOCR reads the full image, LayoutLMv3 proposes field evidence, deterministic plausibility checks accept safe spans, and weak alignment backfills misses.
+          </GovAlert>
+        )}
+        <Typography.Text>{status.message}</Typography.Text>
+        {typeof status.modelCard?.runtimePolicy === "string" ? <Typography.Text>{status.modelCard.runtimePolicy}</Typography.Text> : null}
+        <Typography.Text code>{status.modelDir}</Typography.Text>
+        <Row gutter={[12, 12]}>
+          <Col xs={24} md={8}><ModelMetric label="Pure model field recall" value={metricPercent(candidate.fieldRecall)} /></Col>
+          <Col xs={24} md={8}><ModelMetric label="Pure model false-pass rate" value={metricPercent(candidate.falsePassRate)} /></Col>
+          <Col xs={24} md={8}><ModelMetric label="Baseline field recall" value={metricPercent(baseline.fieldRecall)} /></Col>
+        </Row>
+      </Space>
+    </Card>
+  );
+}
+
+function ModelMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="pipeline-stat">
+      <Typography.Text type="secondary">{label}</Typography.Text>
+      <Typography.Title level={4}>{value}</Typography.Title>
+    </div>
+  );
+}
+
+function metricPercent(value: unknown): string {
+  return typeof value === "number" ? `${Math.round(value * 1000) / 10}%` : "Not measured";
+}
+
+export function AdminSettingsPage() {
+  const { snapshot } = useAdminOperations();
+  return (
+    <AdminPage title="System Policy" description="Read-only policy values for validators, warning strictness, local retention, and report-only storage.">
+      <GovAlert type="info" title="Assessment console is locked down">
+        The demo exposes policy values and RBAC boundaries without allowing settings changes from the admin page.
+      </GovAlert>
+      <SettingsReadOnlyTable settings={snapshot.adminSettings} />
+    </AdminPage>
+  );
+}
+
+function SettingsReadOnlyTable({ settings }: { settings: AdminSettings }) {
+  const rows = (Object.keys(settings) as Array<keyof AdminSettings>).map((key) => ({
+    key,
+    label: settingLabel(key),
+    value: String(settings[key])
+  }));
+  return (
+    <Card size="small" title="Policy Values">
+      <Table
+        rowKey="key"
+        dataSource={rows}
+        pagination={false}
+        columns={[
+          { title: "Policy", dataIndex: "label" },
+          { title: "Value", dataIndex: "value" }
         ]}
       />
-    );
-  }
-  if (key === "warningStrictness") {
-    return <Select options={["lenient", "standard", "strict"].map((level) => ({ value: level, label: level }))} />;
-  }
-  if (key === "validatorThreshold") return <InputNumber min={0.5} max={0.99} step={0.01} className="full-width" />;
-  return <InputNumber min={0} max={365} className="full-width" />;
+    </Card>
+  );
 }
 
 export function AdminBenchmarksPage() {
@@ -328,7 +295,7 @@ export function AdminBenchmarksPage() {
     messageApi.success("Benchmark completed.");
   };
   return (
-    <AdminPage title="Benchmarks" description="Run quick local benchmarks and review saved browser, backend, or cluster benchmark JSON results.">
+    <AdminPage title="Benchmarks" description="Run quick local benchmarks and review saved browser or backend benchmark JSON results.">
       <Space orientation="vertical" className="full-width" size={16}>
         {contextHolder}
         <Card size="small" title="Run Benchmarks">
@@ -444,66 +411,19 @@ function AuditTable({ rows, applications, loading }: { rows: AuditEvent[]; appli
 }
 
 export function AdminRetentionPage() {
-  const { snapshot, runAction } = useAdminOperations();
-  const [messageApi, contextHolder] = message.useMessage();
-  const [selectedApplicationId, setSelectedApplicationId] = useState<string>();
-  const [purgeConfirmation, setPurgeConfirmation] = useState("");
-  const confirm = async (action: () => Promise<void>, success: string) => {
-    await action();
-    messageApi.success(success);
-  };
+  const { snapshot } = useAdminOperations();
   return (
-    <AdminPage title="Data Retention" description="Purge raw assets, old jobs, specific packets, or all demo data from the local environment.">
+    <AdminPage title="Data Retention" description="Inspect local retention posture without destructive admin actions.">
       <Space orientation="vertical" className="full-width" size={16}>
-        {contextHolder}
-        <GovAlert type="warning" title="Retention deletion is permanent in this local demo">
-          Use these controls only when you intend to remove local assets, jobs, or demo packets. Each action is recorded in the audit log.
+        <GovAlert type="info" title="Retention actions are disabled in the assessment console">
+          The backend still demonstrates audited retention endpoints for RBAC tests, but this admin page is read-only to prevent accidental data loss during review.
         </GovAlert>
-        <SettingsForm
-          title="Retention Defaults"
-          settings={snapshot.adminSettings}
-          fields={["retentionRawImagesDays", "retentionJobsDays", "keepReportsOnly"]}
-          onUpdate={(values) => runAction("admin/settings", values as Record<string, unknown>)}
-        />
-        <Card size="small" title="Retention Actions">
-          <Space orientation="vertical" className="full-width" size={12}>
-            <Space wrap>
-              <Popconfirm title="Purge raw images?" onConfirm={() => confirm(() => runAction("admin/purge-raw-images"), "Raw images purged.")}>
-                <Button danger icon={<DeleteOutlined />}>Purge Raw Images</Button>
-              </Popconfirm>
-              <Popconfirm title="Purge completed and failed jobs?" onConfirm={() => confirm(() => runAction("admin/purge-old-jobs"), "Old jobs purged.")}>
-                <Button danger icon={<DeleteOutlined />}>Purge Old Jobs</Button>
-              </Popconfirm>
-            </Space>
-            <Space wrap>
-              <Select
-                aria-label="Application packet to delete"
-                placeholder="Choose application packet"
-                value={selectedApplicationId}
-                onChange={setSelectedApplicationId}
-                options={snapshot.applications.map((application) => ({ value: application.id, label: `${applicationNumberFor(application)} - ${application.title}` }))}
-                style={{ minWidth: 360 }}
-              />
-              <Popconfirm
-                title="Delete selected application packet?"
-                onConfirm={() => selectedApplicationId && confirm(() => runAction("admin/delete-packet", { applicationId: selectedApplicationId }), "Application packet deleted.")}
-              >
-                <Button danger disabled={!selectedApplicationId} icon={<DeleteOutlined />}>Delete Selected Packet</Button>
-              </Popconfirm>
-            </Space>
-            <Space wrap>
-              <Input
-                aria-label="Type PURGE ALL to enable purge all demo data"
-                placeholder="Type PURGE ALL"
-                value={purgeConfirmation}
-                onChange={(event) => setPurgeConfirmation(event.target.value)}
-                style={{ width: 180 }}
-              />
-              <Popconfirm title="Purge all demo data?" onConfirm={() => confirm(() => runAction("admin/purge-all"), "All demo data purged.")}>
-                <Button danger disabled={purgeConfirmation !== "PURGE ALL"} icon={<DeleteOutlined />}>Purge All Demo Data</Button>
-              </Popconfirm>
-            </Space>
-          </Space>
+        <Card size="small" title="Retention Defaults">
+          <Row gutter={[12, 12]}>
+            <Col xs={24} md={8}><ModelMetric label="Raw image retention" value={`${snapshot.adminSettings.retentionRawImagesDays} days`} /></Col>
+            <Col xs={24} md={8}><ModelMetric label="Job retention" value={`${snapshot.adminSettings.retentionJobsDays} days`} /></Col>
+            <Col xs={24} md={8}><ModelMetric label="Reports only" value={snapshot.adminSettings.keepReportsOnly ? "enabled" : "disabled"} /></Col>
+          </Row>
         </Card>
         <Card size="small" title="Storage">
           <Typography.Text>{(estimatedStorageBytes(snapshot) / 1024 / 1024).toFixed(1)} MB estimated raw image storage.</Typography.Text>

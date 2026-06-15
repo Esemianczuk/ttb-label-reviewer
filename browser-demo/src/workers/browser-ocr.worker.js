@@ -6,8 +6,8 @@ self.addEventListener('message', async (event) => {
 
   try {
     const ocrResult = await recognizeImageInBrowser(file, {
-      onProgress: (message) => {
-        self.postMessage({ type: 'progress', taskId, message });
+      onProgress: (message, meta) => {
+        self.postMessage({ type: 'progress', taskId, message, meta });
       },
     });
     self.postMessage({ type: 'result', taskId, ocrResult });

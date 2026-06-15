@@ -4,7 +4,7 @@ This project is hardened for assessment and local evaluation. It is not a produc
 
 ## Local-First Defaults
 
-- Browser Only mode does not send uploaded images to a backend.
+- Browser fallback does not send uploaded images to a backend.
 - Backend mode stores uploaded assets under the local `data/assets` object store.
 - No cloud AI or external OCR API is required.
 - Production browser and console builds use packaged Tesseract assets by default.
@@ -35,6 +35,8 @@ Backend uploads are validated before storage:
 ## Session, Ownership, And Roles
 
 Backend human routes require signed demo bearer tokens. Applicants are scoped to applications they own. Reviewers can review applications but cannot manage workers or retention. Admins can manage coordinator operations.
+
+Each browser attaches with a generated `X-Session-Id`. Backend demo fixtures are materialized per session, so multiple evaluators can use the same running coordinator without sharing application, review, job, asset, report, or retention state. Public demo URLs remain stable in the console while the API resolves them to that session's private backend rows.
 
 Sensitive denials write `authz.denied` audit events where the API has an authenticated actor. Sensitive transitions and overrides also create audit events.
 

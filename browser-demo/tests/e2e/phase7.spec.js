@@ -98,13 +98,15 @@ test('agent override flow recalculates and exports reviewer notes', async ({ pag
 test('backend mode completes against a live coordinator', async ({ page }) => {
   const backendUrl = process.env.TTB_E2E_BACKEND_URL;
   test.skip(!backendUrl, 'Set TTB_E2E_BACKEND_URL to run the live backend smoke test.');
+  test.setTimeout(120000);
+  const sessionId = process.env.TTB_E2E_SESSION_ID || 'local-dev-session';
 
   await page.addInitScript(
-    ({ url }) => {
+    ({ url, sessionId }) => {
       window.localStorage.setItem('ttb-reviewer-backend-url', url);
-      window.localStorage.setItem('ttb-reviewer-session-id', 'phase7-ui');
+      window.localStorage.setItem('ttb-reviewer-session-id', sessionId);
     },
-    { url: backendUrl },
+    { url: backendUrl, sessionId },
   );
   await page.goto('/');
 
@@ -133,6 +135,6 @@ test('browser-only OCR smoke runs with packaged worker assets', async ({ page })
 
   await expect(page.getByText('Uploaded application 1 of 1')).toBeVisible();
   await page.getByRole('button', { name: 'Auto Review' }).click();
-  await expect(page.getByText(/Using browser worker pool OCR|Preparing browser OCR|Processing 1 image/)).toBeVisible();
+  await expect(page.getByText(/Using browser worker pool OCR|Preparing browser OCR|Processing 1 image/).first()).toBeVisible();
   await expect(page.getByText('Final Decision')).toBeVisible({ timeout: 120000 });
 });

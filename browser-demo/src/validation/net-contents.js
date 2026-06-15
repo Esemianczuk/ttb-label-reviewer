@@ -2,7 +2,7 @@ import { findRegexCandidates } from '../extraction/candidate-search.js';
 import { netContentsEquivalent, parseNetContents } from '../normalization/units-normalize.js';
 import { makeReview, SEVERITY, STATUS } from './status.js';
 
-const NET_CONTENTS_PATTERN = /(?:\d{1,5}(?:\.\d+)?\s*M\s*L\b|(?:7\s*\/?\s*[5S]\s*[0O]|\/\s*[5S]\s*[0O]|T\s*[5S]\s*[0O])\s*M?\s*L\b|\d{1,4}(?:\.\d+)?\s*(?:L|LITER|LITRE|LITERS|LITRES)\b)/gi;
+const NET_CONTENTS_PATTERN = /(?:\d{1,5}(?:\.\d+)?\s*M\s*L\b|(?:7\s*\/?\s*[5S]\s*[0O]|\/\s*[5S]\s*[0O]|T\s*[5S]\s*[0O])\s*M?\s*L\b|[1I|l]\s*P(?:IN)?T(?:\s+\d{1,3}(?:\.\d+)?\s*FL\.?\s*[O0]Z\.?)?|\d{1,3}(?:\.\d+)?\s*P(?:IN)?T(?:\s+\d{1,3}(?:\.\d+)?\s*FL\.?\s*[O0]Z\.?)?|\d{1,3}(?:\.\d+)?\s*FL\.?\s*[O0]Z\.?|\d{1,4}(?:\.\d+)?\s*(?:L|LITER|LITRE|LITERS|LITRES)\b)/gi;
 const AMBIGUOUS_ML_PATTERN = /\bM\s*L\b/i;
 
 export function validateNetContents(expected, ocrResult) {

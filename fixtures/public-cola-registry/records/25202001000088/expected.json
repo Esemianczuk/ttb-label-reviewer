@@ -1,0 +1,89 @@
+{
+  "fixture_id": "ttb_25202001000088_bourbon-base",
+  "source_type": "official_public_registry",
+  "ttb_id": "25202001000088",
+  "expected_fields": {
+    "brandName": "BOURBON BASE",
+    "fancifulName": null,
+    "classType": "STRAIGHT BOURBON WHISKY",
+    "productType": "distilled_spirits",
+    "alcoholContent": null,
+    "netContents": null,
+    "governmentWarningRequired": true,
+    "isImported": null,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": null,
+      "address": null
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
+    "Collector note: High-signal expansion; term=bourbon%; score=84; brand=BOURBON BASE; label_images=1.",
+    "High-signal expansion score 84 from search term bourbon%."
+  ],
+  "demo_ready": true,
+  "signal": {
+    "score": 84,
+    "searchTerm": "bourbon%",
+    "scoreReasons": [
+      "brand",
+      "class/type",
+      "missing alcohol metadata",
+      "alcohol image hint",
+      "missing net contents metadata",
+      "missing responsible party name metadata",
+      "responsible party image hint",
+      "missing responsible party address",
+      "government warning image hint",
+      "domestic/no country-of-origin requirement",
+      "1 label image(s)",
+      "approved"
+    ],
+    "ocrHints": {
+      "available": true,
+      "engines": [
+        "easyocr"
+      ],
+      "textLength": 345,
+      "alcoholHints": [
+        "53.5%VOL",
+        "75%"
+      ],
+      "netContentsHints": [],
+      "warningDetected": true,
+      "warningTermHits": 3,
+      "responsiblePartyHint": true,
+      "sample": "1 MS 1 1 #1 Company L 1 EST 2 0 2 4 B I L 8 F rye 5 1 distilled by MGPI 75% corn HF M 5 impairs U women during to the Surgeon General, problems. GOVERNMENT WARNING: FRIENDS 2 Made 1 causehealth According t yourability pregnancy and may (2) (1) Kentucky AGED YEARS Proud- 1 8 BOURBON WHISKEY 50040 Cask STRENGTH SINGLE BARREL ALC.53.5%VOL. 107 1",
+      "errors": [
+        "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=bourbon-base-cask-strength-single-barrel-107-8-GOV-5x3.jpg&filetype=l: tesseract: tesseract is not installed or it's not in your PATH. See README file for more information."
+      ]
+    }
+  },
+  "demo_audit": {
+    "status": "ready",
+    "source": "high_signal_ocr_preflight",
+    "reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+    "reviewed_common_fields": [
+      "alcoholContent",
+      "brandName",
+      "classType",
+      "countryOfOrigin",
+      "governmentWarning",
+      "netContents",
+      "producerName"
+    ]
+  }
+}

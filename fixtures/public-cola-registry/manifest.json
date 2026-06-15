@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-06-12T18:48:53Z",
+  "generated_at": "2026-06-14T03:10:34Z",
   "source": "TTB Public COLA Registry",
-  "records_count": 50,
+  "records_count": 75,
   "records": [
     {
       "fixture_id": "ttb_19337001000251_transcontinental",
@@ -13,8 +13,7 @@
       "record_dir": "records/19337001000251",
       "expected_json": "records/19337001000251/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_19344001000769_beer-drinking-is-not-a-crime",
@@ -39,8 +38,7 @@
       "record_dir": "records/19346001000245",
       "expected_json": "records/19346001000245/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_19350001000422_chloe",
@@ -65,8 +63,7 @@
       "record_dir": "records/19350001000429",
       "expected_json": "records/19350001000429/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_19351001000469_gino-pedrotti",
@@ -78,8 +75,7 @@
       "record_dir": "records/19351001000469",
       "expected_json": "records/19351001000469/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_19352001000901_chapman-crafted-beer",
@@ -117,8 +113,7 @@
       "record_dir": "records/19354001000375",
       "expected_json": "records/19354001000375/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_19362001000052_ske-tic",
@@ -130,8 +125,7 @@
       "record_dir": "records/19362001000052",
       "expected_json": "records/19362001000052/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_19363001000082_mr-b-s-meadery",
@@ -143,8 +137,7 @@
       "record_dir": "records/19363001000082",
       "expected_json": "records/19363001000082/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20004001000117_brewery-emperial",
@@ -169,8 +162,7 @@
       "record_dir": "records/20006001000584",
       "expected_json": "records/20006001000584/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20009001000806_send-it",
@@ -182,8 +174,7 @@
       "record_dir": "records/20009001000806",
       "expected_json": "records/20009001000806/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20009001000816_send-it",
@@ -195,8 +186,7 @@
       "record_dir": "records/20009001000816",
       "expected_json": "records/20009001000816/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20009001000885_devils-backbone-distilling-co",
@@ -208,8 +198,7 @@
       "record_dir": "records/20009001000885",
       "expected_json": "records/20009001000885/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20010001000197_sunstone-winery",
@@ -234,8 +223,7 @@
       "record_dir": "records/20010001000242",
       "expected_json": "records/20010001000242/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20010001000803_cutwater",
@@ -247,8 +235,7 @@
       "record_dir": "records/20010001000803",
       "expected_json": "records/20010001000803/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20014001001179_what-the-phoque",
@@ -260,8 +247,7 @@
       "record_dir": "records/20014001001179",
       "expected_json": "records/20014001001179/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20016001000598_monaco",
@@ -273,8 +259,7 @@
       "record_dir": "records/20016001000598",
       "expected_json": "records/20016001000598/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20016001001081_the-cocktail-chemist",
@@ -286,8 +271,7 @@
       "record_dir": "records/20016001001081",
       "expected_json": "records/20016001001081/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20017001000486_willow-hill",
@@ -299,8 +283,7 @@
       "record_dir": "records/20017001000486",
       "expected_json": "records/20017001000486/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20021001000243_heathen-brewing",
@@ -312,8 +295,7 @@
       "record_dir": "records/20021001000243",
       "expected_json": "records/20021001000243/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20021001000874_2sp-brewing-comapny",
@@ -338,8 +320,7 @@
       "record_dir": "records/20023001000513",
       "expected_json": "records/20023001000513/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20023001000590_omnipollo",
@@ -351,8 +332,7 @@
       "record_dir": "records/20023001000590",
       "expected_json": "records/20023001000590/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20030001000826_b-nektar",
@@ -364,8 +344,7 @@
       "record_dir": "records/20030001000826",
       "expected_json": "records/20030001000826/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20038001000269_doc-wylder-s",
@@ -377,8 +356,7 @@
       "record_dir": "records/20038001000269",
       "expected_json": "records/20038001000269/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20038001000502_the-beer-den",
@@ -390,8 +368,7 @@
       "record_dir": "records/20038001000502",
       "expected_json": "records/20038001000502/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20041001000838_natural-light",
@@ -403,8 +380,7 @@
       "record_dir": "records/20041001000838",
       "expected_json": "records/20041001000838/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20047001000150_whiskey-barrel-aged-sticke-alt-german-style-ale",
@@ -416,8 +392,7 @@
       "record_dir": "records/20047001000150",
       "expected_json": "records/20047001000150/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20047001000152_whiskey-barrel-aged-sticke-alt-german-style-ale",
@@ -429,8 +404,7 @@
       "record_dir": "records/20047001000152",
       "expected_json": "records/20047001000152/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20052001000890_tequila-ocho",
@@ -442,8 +416,7 @@
       "record_dir": "records/20052001000890",
       "expected_json": "records/20052001000890/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20055001000188_domaine-ramonet",
@@ -455,8 +428,7 @@
       "record_dir": "records/20055001000188",
       "expected_json": "records/20055001000188/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20055001000326_whiskey-run-creek-vineyard-winery",
@@ -468,8 +440,7 @@
       "record_dir": "records/20055001000326",
       "expected_json": "records/20055001000326/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20056001000027_domaine-anne-gros",
@@ -481,8 +452,7 @@
       "record_dir": "records/20056001000027",
       "expected_json": "records/20056001000027/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20062001000300_etienne-sauzet",
@@ -494,8 +464,7 @@
       "record_dir": "records/20062001000300",
       "expected_json": "records/20062001000300/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20062001000455_sin-verguenza",
@@ -507,8 +476,7 @@
       "record_dir": "records/20062001000455",
       "expected_json": "records/20062001000455/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20062001000465_sin-verguenza",
@@ -520,8 +488,7 @@
       "record_dir": "records/20062001000465",
       "expected_json": "records/20062001000465/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20070001001241_tequila-galan",
@@ -533,8 +500,7 @@
       "record_dir": "records/20070001001241",
       "expected_json": "records/20070001001241/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20070001001244_tequila-galan",
@@ -546,8 +512,7 @@
       "record_dir": "records/20070001001244",
       "expected_json": "records/20070001001244/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20073001000932_irvine-roberts-vineyards",
@@ -559,8 +524,7 @@
       "record_dir": "records/20073001000932",
       "expected_json": "records/20073001000932/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20082001000147_lemon-creek",
@@ -598,8 +562,7 @@
       "record_dir": "records/20099001000399",
       "expected_json": "records/20099001000399/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20112001000226_landon-winery",
@@ -611,8 +574,7 @@
       "record_dir": "records/20112001000226",
       "expected_json": "records/20112001000226/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20124001000063_north-coast-wine-club",
@@ -624,8 +586,7 @@
       "record_dir": "records/20124001000063",
       "expected_json": "records/20124001000063/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20134001000705_kinsey",
@@ -637,8 +598,7 @@
       "record_dir": "records/20134001000705",
       "expected_json": "records/20134001000705/expected.json",
       "demo_ready": true,
-      "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_status": "ready"
     },
     {
       "fixture_id": "ttb_20268001000065_haiball",
@@ -650,8 +610,357 @@
       "record_dir": "records/20268001000065",
       "expected_json": "records/20268001000065/expected.json",
       "demo_ready": true,
+      "demo_status": "ready"
+    },
+    {
+      "fixture_id": "ttb_23223001000234_whiskey-thief",
+      "ttb_id": "23223001000234",
+      "brand_name": "WHISKEY THIEF",
+      "class_type": "STRAIGHT BOURBON WHISKY",
+      "product_type": "distilled_spirits",
+      "asset_count": 3,
+      "record_dir": "records/23223001000234",
+      "expected_json": "records/23223001000234/expected.json",
+      "demo_ready": true,
       "demo_status": "ready",
-      "demo_exclusion_reason": ""
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 84
+    },
+    {
+      "fixture_id": "ttb_23310001000252_whiskey-thief-distilling-co",
+      "ttb_id": "23310001000252",
+      "brand_name": "WHISKEY THIEF DISTILLING CO",
+      "class_type": "STRAIGHT BOURBON WHISKY",
+      "product_type": "distilled_spirits",
+      "asset_count": 3,
+      "record_dir": "records/23310001000252",
+      "expected_json": "records/23310001000252/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 84
+    },
+    {
+      "fixture_id": "ttb_24362001000403_ginormous-imperial-ipa",
+      "ttb_id": "24362001000403",
+      "brand_name": "GINORMOUS IMPERIAL IPA",
+      "class_type": "BEER",
+      "product_type": "malt_beverage",
+      "asset_count": 2,
+      "record_dir": "records/24362001000403",
+      "expected_json": "records/24362001000403/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 84
+    },
+    {
+      "fixture_id": "ttb_25009001000736_rum-bar",
+      "ttb_id": "25009001000736",
+      "brand_name": "RUM BAR",
+      "class_type": "RUM SPECIALTIES",
+      "product_type": "distilled_spirits",
+      "asset_count": 3,
+      "record_dir": "records/25009001000736",
+      "expected_json": "records/25009001000736/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 84
+    },
+    {
+      "fixture_id": "ttb_25041001000673_ginza-no-suzume",
+      "ttb_id": "25041001000673",
+      "brand_name": "GINZA NO SUZUME",
+      "class_type": "OTHER SPECIALTIES & PROPRIETARIES",
+      "product_type": "distilled_spirits",
+      "asset_count": 3,
+      "record_dir": "records/25041001000673",
+      "expected_json": "records/25041001000673/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 100
+    },
+    {
+      "fixture_id": "ttb_25051001000047_rum-caray",
+      "ttb_id": "25051001000047",
+      "brand_name": "RUM CARAY",
+      "class_type": "PUERTO RICAN RUM (GOLD)",
+      "product_type": "distilled_spirits",
+      "asset_count": 3,
+      "record_dir": "records/25051001000047",
+      "expected_json": "records/25051001000047/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 90
+    },
+    {
+      "fixture_id": "ttb_25051001000049_rum-caray",
+      "ttb_id": "25051001000049",
+      "brand_name": "RUM CARAY",
+      "class_type": "PUERTO RICAN RUM (GOLD)",
+      "product_type": "distilled_spirits",
+      "asset_count": 3,
+      "record_dir": "records/25051001000049",
+      "expected_json": "records/25051001000049/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 90
+    },
+    {
+      "fixture_id": "ttb_25072001000171_ginger-divine",
+      "ttb_id": "25072001000171",
+      "brand_name": "GINGER DIVINE",
+      "class_type": "HERBS AND SEEDS SCHNAPPS LIQUEUR",
+      "product_type": "distilled_spirits",
+      "asset_count": 2,
+      "record_dir": "records/25072001000171",
+      "expected_json": "records/25072001000171/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 92
+    },
+    {
+      "fixture_id": "ttb_25073001000560_bourbon-30",
+      "ttb_id": "25073001000560",
+      "brand_name": "BOURBON 30",
+      "class_type": "BOURBON WHISKY",
+      "product_type": "distilled_spirits",
+      "asset_count": 4,
+      "record_dir": "records/25073001000560",
+      "expected_json": "records/25073001000560/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 86
+    },
+    {
+      "fixture_id": "ttb_25077001000314_ginrei-shiro",
+      "ttb_id": "25077001000314",
+      "brand_name": "GINREI SHIRO",
+      "class_type": "OTHER SPECIALTIES & PROPRIETARIES",
+      "product_type": "distilled_spirits",
+      "asset_count": 3,
+      "record_dir": "records/25077001000314",
+      "expected_json": "records/25077001000314/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 86
+    },
+    {
+      "fixture_id": "ttb_25092001000252_bourbon-30",
+      "ttb_id": "25092001000252",
+      "brand_name": "BOURBON 30",
+      "class_type": "BOURBON WHISKY",
+      "product_type": "distilled_spirits",
+      "asset_count": 4,
+      "record_dir": "records/25092001000252",
+      "expected_json": "records/25092001000252/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 86
+    },
+    {
+      "fixture_id": "ttb_25092001000264_bourbon-30",
+      "ttb_id": "25092001000264",
+      "brand_name": "BOURBON 30",
+      "class_type": "BOURBON WHISKY",
+      "product_type": "distilled_spirits",
+      "asset_count": 3,
+      "record_dir": "records/25092001000264",
+      "expected_json": "records/25092001000264/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 84
+    },
+    {
+      "fixture_id": "ttb_25093001000084_ginglinger-fix",
+      "ttb_id": "25093001000084",
+      "brand_name": "GINGLINGER-FIX",
+      "class_type": "SPARKLING WINE/CHAMPAGNE",
+      "product_type": "wine",
+      "asset_count": 3,
+      "record_dir": "records/25093001000084",
+      "expected_json": "records/25093001000084/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 100
+    },
+    {
+      "fixture_id": "ttb_25094001000051_ginglinger-fix",
+      "ttb_id": "25094001000051",
+      "brand_name": "GINGLINGER-FIX",
+      "class_type": "SPARKLING WINE/CHAMPAGNE",
+      "product_type": "wine",
+      "asset_count": 3,
+      "record_dir": "records/25094001000051",
+      "expected_json": "records/25094001000051/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 100
+    },
+    {
+      "fixture_id": "ttb_25100001000686_gin-bes",
+      "ttb_id": "25100001000686",
+      "brand_name": "GIN BES",
+      "class_type": "OTHER GIN FB",
+      "product_type": "distilled_spirits",
+      "asset_count": 3,
+      "record_dir": "records/25100001000686",
+      "expected_json": "records/25100001000686/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 100
+    },
+    {
+      "fixture_id": "ttb_25104001000521_ginkoubai",
+      "ttb_id": "25104001000521",
+      "brand_name": "GINKOUBAI",
+      "class_type": "SAKE - IMPORTED FLAVORED",
+      "product_type": "distilled_spirits",
+      "asset_count": 5,
+      "record_dir": "records/25104001000521",
+      "expected_json": "records/25104001000521/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 102
+    },
+    {
+      "fixture_id": "ttb_25117001000065_vodka-brooklyn-wine-co",
+      "ttb_id": "25117001000065",
+      "brand_name": "VODKA BROOKLYN WINE CO.",
+      "class_type": "VODKA 80-89 PROOF",
+      "product_type": "distilled_spirits",
+      "asset_count": 3,
+      "record_dir": "records/25117001000065",
+      "expected_json": "records/25117001000065/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 84
+    },
+    {
+      "fixture_id": "ttb_25142001000123_bourbon-30",
+      "ttb_id": "25142001000123",
+      "brand_name": "BOURBON 30",
+      "class_type": "WHISKY SPECIALTIES",
+      "product_type": "distilled_spirits",
+      "asset_count": 4,
+      "record_dir": "records/25142001000123",
+      "expected_json": "records/25142001000123/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 86
+    },
+    {
+      "fixture_id": "ttb_25156001000225_bourbon-barrel-aged-big-pumpkin",
+      "ttb_id": "25156001000225",
+      "brand_name": "BOURBON BARREL AGED BIG PUMPKIN",
+      "class_type": "APPLE BASED FLAVORED WINE",
+      "product_type": "wine",
+      "asset_count": 2,
+      "record_dir": "records/25156001000225",
+      "expected_json": "records/25156001000225/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 88
+    },
+    {
+      "fixture_id": "ttb_25156001000242_rum4u",
+      "ttb_id": "25156001000242",
+      "brand_name": "RUM4U",
+      "class_type": "OTHER FORIEGN RUM",
+      "product_type": "distilled_spirits",
+      "asset_count": 3,
+      "record_dir": "records/25156001000242",
+      "expected_json": "records/25156001000242/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 84
+    },
+    {
+      "fixture_id": "ttb_25191001000415_vodka-southeastern",
+      "ttb_id": "25191001000415",
+      "brand_name": "VODKA SOUTHEASTERN",
+      "class_type": "VODKA 80-89 PROOF",
+      "product_type": "distilled_spirits",
+      "asset_count": 2,
+      "record_dir": "records/25191001000415",
+      "expected_json": "records/25191001000415/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 88
+    },
+    {
+      "fixture_id": "ttb_25202001000088_bourbon-base",
+      "ttb_id": "25202001000088",
+      "brand_name": "BOURBON BASE",
+      "class_type": "STRAIGHT BOURBON WHISKY",
+      "product_type": "distilled_spirits",
+      "asset_count": 2,
+      "record_dir": "records/25202001000088",
+      "expected_json": "records/25202001000088/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 84
+    },
+    {
+      "fixture_id": "ttb_25251001000041_rumcast-reserve-mauritinus-mlmo",
+      "ttb_id": "25251001000041",
+      "brand_name": "RUMCAST RESERVE MAURITINUS MLMO",
+      "class_type": "OTHER RUM WHITE USB",
+      "product_type": "distilled_spirits",
+      "asset_count": 2,
+      "record_dir": "records/25251001000041",
+      "expected_json": "records/25251001000041/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 98
+    },
+    {
+      "fixture_id": "ttb_26009001000332_vodka-kangaroo-joeys",
+      "ttb_id": "26009001000332",
+      "brand_name": "VODKA KANGAROO JOEYS",
+      "class_type": "VODKA 80-89 PROOF",
+      "product_type": "distilled_spirits",
+      "asset_count": 2,
+      "record_dir": "records/26009001000332",
+      "expected_json": "records/26009001000332/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 98
+    },
+    {
+      "fixture_id": "ttb_26082001000399_whisky-of-blood",
+      "ttb_id": "26082001000399",
+      "brand_name": "WHISKY OF BLOOD",
+      "class_type": "OTHER IMPORTED WHISKY FB",
+      "product_type": "distilled_spirits",
+      "asset_count": 3,
+      "record_dir": "records/26082001000399",
+      "expected_json": "records/26082001000399/expected.json",
+      "demo_ready": true,
+      "demo_status": "ready",
+      "demo_exclusion_reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+      "signal_score": 90
     }
   ]
 }

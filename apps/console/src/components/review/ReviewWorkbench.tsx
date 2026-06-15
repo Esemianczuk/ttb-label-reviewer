@@ -28,13 +28,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import type { EvidenceCrop, FieldStatus, LabelImage, ProcessingMode, ReviewApplication, ReviewEvidence, ReviewField, ReviewResult } from "../../domain/application/types";
 import { cropBoxForImage, estimatedCropForField } from "../../domain/application/evidenceCrops";
-import { createReviewForApplication } from "../../domain/application/demoData";
 import type { BrowserReviewProgressEvent } from "../../domain/application/browserOcrReview";
 import { useConsoleStore } from "../../hooks/useConsoleStore";
 import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
 import {
   acceptAutoReview,
-  autoReviewApplicationWithBrowserOcr,
   finalizeReviewerDecision,
   queueApplication,
   reopenReviewerDecision,
@@ -42,12 +40,13 @@ import {
   updateFieldDecision,
   updateReviewNotes
 } from "../../providers/data/browserStore";
+import { runAutomatedReviewForMode } from "../../providers/data/reviewAutomation";
+import { useProcessingModeContext } from "../../providers/processing/ProcessingModeProvider";
 import { GovProcessTracker } from "../application/GovProcessTracker";
 import { FloatingImageViewer, ImageWorkbench, type ImageProcessingOverlayState } from "../common/ImageWorkbench";
 import { PdfExportButton } from "../common/PdfExportButton";
 import { StatusTag } from "../common/StatusTag";
 import { GovAlert } from "../common/GovAlert";
-import { GovFieldResultBadge } from "./GovFieldResultBadge";
 import { criticalFields, effectiveFieldStatus } from "../../pages/reviewer/reviewerUtils";
 import { applicationNumberFor } from "../../domain/application/applicationNumber";
 
@@ -60,15 +59,27 @@ type ReviewProcessingProgress = {
   applicationId: string;
   message: string;
   percent: number;
+  scanIndex?: number;
   stage: BrowserReviewProgressEvent["stage"];
   mode: ProcessingMode;
   imageId?: string;
   imageName?: string;
+  fieldKey?: ReviewField["fieldKey"];
   fieldLabel?: string;
   confidence?: number;
   crop?: EvidenceCrop;
   workerLabel?: string;
 };
+
+const REVIEW_PROGRESS_FIELDS: Array<{ key: ReviewField["fieldKey"]; label: string; critical: boolean }> = [
+  { key: "brandName", label: "Brand", critical: true },
+  { key: "classType", label: "Class/Type", critical: true },
+  { key: "alcoholContent", label: "ABV", critical: true },
+  { key: "netContents", label: "Net Contents", critical: true },
+  { key: "producerName", label: "Producer", critical: false },
+  { key: "countryOfOrigin", label: "Origin", critical: false },
+  { key: "governmentWarning", label: "Warning", critical: true }
+];
 
 function isApplicationClosed(application: ReviewApplication): boolean {
   return CLOSED_REVIEW_STATUSES.includes(application.status);
@@ -114,29 +125,17 @@ export function writePendingAutoReviewApplicationId(applicationId: string | null
   }
 }
 
-async function waitForProgressPaint(): Promise<void> {
-  if (typeof window === "undefined" || typeof window.requestAnimationFrame !== "function") return;
-  await new Promise<void>((resolve) => {
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => resolve());
-    });
-  });
-}
-
-async function waitForReviewAnimation(ms: number): Promise<void> {
-  if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-  await new Promise((resolve) => window.setTimeout(resolve, ms));
-}
-
 function progressFromEvent(applicationId: string, mode: ProcessingMode, event: BrowserReviewProgressEvent): ReviewProcessingProgress {
   return {
     applicationId,
     message: event.message,
     percent: event.percent,
+    scanIndex: event.scanIndex,
     stage: event.stage,
     mode,
     imageId: event.imageId,
     imageName: event.imageName,
+    fieldKey: event.field?.fieldKey || fieldKeyFromLabel(event.fieldLabel || event.field?.label),
     fieldLabel: event.fieldLabel || event.field?.label,
     confidence: event.confidence ?? event.field?.confidence,
     crop: event.crop || event.field?.evidence[0]?.crop,
@@ -144,8 +143,8 @@ function progressFromEvent(applicationId: string, mode: ProcessingMode, event: B
   };
 }
 
-function mergeLiveReviewField(fields: ReviewField[], nextField: ReviewField): ReviewField[] {
-  const existingIndex = fields.findIndex((field) => field.id === nextField.id);
+export function mergeLiveReviewField(fields: ReviewField[], nextField: ReviewField): ReviewField[] {
+  const existingIndex = fields.findIndex((field) => (field.fieldKey && field.fieldKey === nextField.fieldKey) || field.id === nextField.id);
   if (existingIndex >= 0) {
     return fields.map((field, index) => (index === existingIndex ? nextField : field));
   }
@@ -158,82 +157,146 @@ function imageProcessingStateFromProgress(progress: ReviewProcessingProgress): I
     stage: progress.stage,
     message: progress.message,
     percent: progress.percent,
+    scanIndex: progress.scanIndex,
     mode: progress.mode,
     fieldLabel: progress.fieldLabel,
     confidence: progress.confidence,
-    crop: progress.crop,
+    crop: progress.crop || (progress.fieldKey ? estimatedCropForField(progress.fieldKey) : undefined),
     workerLabel: progress.workerLabel
   };
 }
 
+function applyProgressUpdate(current: ReviewProcessingProgress | null, next: ReviewProcessingProgress): ReviewProcessingProgress {
+  if (!current || current.applicationId !== next.applicationId) return next;
+  if (current.stage === "complete" && next.stage !== "complete") return current;
+  return {
+    ...next,
+    percent: next.stage === "complete" ? 100 : Math.max(current.percent, next.percent),
+    scanIndex: next.scanIndex ?? current.scanIndex
+  };
+}
+
 function workerLabelForMode(mode: ProcessingMode): string {
-  if (mode === "cluster") return "Distributed OCR workers";
   if (mode === "backend") return "FastAPI coordinator";
   return "Browser OCR worker pool";
 }
 
 async function playCoordinatorReviewProgress(
   application: ReviewApplication,
-  review: ReviewResult,
   mode: ProcessingMode,
-  emit: (event: BrowserReviewProgressEvent) => Promise<void>
+  emit: (event: BrowserReviewProgressEvent) => void | Promise<void>,
+  keepAnimating: () => boolean
 ): Promise<void> {
   const workerLabel = workerLabelForMode(mode);
   const firstImage = application.images[0];
   await emit({
     stage: "queued",
-    message: mode === "cluster" ? "Queued distributed OCR job and selecting workers." : "Queued backend OCR job with the coordinator.",
-    percent: 10,
+    message: "Queued enhanced extraction; preparing a full-label OCR pass.",
+    percent: 0,
+    scanIndex: 0,
     imageId: firstImage?.id,
     imageName: firstImage?.name,
     workerLabel
   });
-  await waitForReviewAnimation(110);
+  await sleep(140);
   await emit({
     stage: "segmenting",
-    message: mode === "cluster" ? "Parallel workers are segmenting label regions." : "Backend service is segmenting label regions.",
-    percent: 24,
+    message: "Full-label OCR pass is reading text and geometry across the whole image.",
+    percent: 4,
+    scanIndex: 1,
     imageId: firstImage?.id,
     imageName: firstImage?.name,
     workerLabel
   });
-  await waitForReviewAnimation(140);
-  await emit({
-    stage: "ocr",
-    message: mode === "cluster" ? "Worker results are returning OCR evidence." : "Backend OCR evidence returned to the console.",
-    percent: 42,
-    imageId: firstImage?.id,
-    imageName: firstImage?.name,
-    workerLabel
-  });
-  await waitForReviewAnimation(120);
+
+  let index = 0;
+  const minimumAnimationSteps = 4;
+  const maxAnimationSteps = 180;
+  while ((keepAnimating() || index < minimumAnimationSteps) && index < maxAnimationSteps) {
+    const cyclePercent = 8 + Math.min(76, (index / Math.max(minimumAnimationSteps, 1)) * 18);
+    await emit({
+      stage: "ocr",
+      message: "Scanning the full label once; crop boxes will lock in after OCR returns token geometry.",
+      percent: Math.max(8, Math.min(84, Math.round(cyclePercent))),
+      scanIndex: index,
+      imageId: firstImage?.id,
+      imageName: firstImage?.name,
+      workerLabel
+    });
+    index += 1;
+    await sleep(170);
+  }
+
   await emit({
     stage: "validating",
-    message: "Deterministic validators are classifying expected vs extracted evidence.",
-    percent: 52,
+    message: "Backend OCR returned text geometry; preparing evidence crop lock-in.",
+    percent: 86,
+    scanIndex: index,
     imageId: firstImage?.id,
     imageName: firstImage?.name,
     workerLabel: "Validation engine"
   });
-  for (const [index, field] of review.fields.entries()) {
+}
+
+async function playCompletedEvidenceCropReveal(
+  application: ReviewApplication,
+  review: ReviewResult,
+  emit: (event: BrowserReviewProgressEvent) => void | Promise<void>
+): Promise<void> {
+  const fields = review.fields.filter((field) => processingEvidenceCrop(field));
+  const orderedFields = fields.slice().sort((left, right) => compareFieldsByEvidencePosition(application, left, right));
+  for (const [index, field] of orderedFields.entries()) {
     await emit({
       stage: "field",
-      message: `${field.label}: ${fieldPassFailStatus(field).toLowerCase()} at ${Math.round(field.confidence * 100)}% confidence.`,
-      percent: Math.min(94, 56 + Math.round(((index + 1) / Math.max(review.fields.length, 1)) * 36)),
-      imageId: field.evidence[0]?.sourceImageId || firstImage?.id,
-      imageName: application.images.find((image) => image.id === field.evidence[0]?.sourceImageId)?.name || firstImage?.name,
+      message: `${field.label}: cropping the supporting OCR evidence now.`,
+      percent: Math.max(88, Math.min(100, Math.round(88 + ((index + 1) / Math.max(orderedFields.length, 1)) * 12))),
+      scanIndex: index,
+      imageId: field.evidence[0]?.sourceImageId || application.images[0]?.id,
+      imageName: application.images.find((image) => image.id === field.evidence[0]?.sourceImageId)?.name || application.images[0]?.name,
       field,
       fieldLabel: field.label,
       confidence: field.confidence,
-      crop: field.evidence[0]?.crop,
-      workerLabel: mode === "cluster" ? `Parallel lane ${(index % 3) + 1}` : "Coordinator validator"
+      crop: processingEvidenceCrop(field),
+      workerLabel: "OCR crop evidence"
     });
-    await waitForReviewAnimation(mode === "cluster" ? 70 : 85);
+    await sleep(210);
   }
+}
+
+function processingEvidenceCrop(field?: ReviewField): EvidenceCrop | undefined {
+  return field?.evidence[0]?.crop;
+}
+
+function compareFieldsByEvidencePosition(application: ReviewApplication, left: ReviewField, right: ReviewField): number {
+  const leftImageIndex = imageIndexForEvidence(application, left);
+  const rightImageIndex = imageIndexForEvidence(application, right);
+  if (leftImageIndex !== rightImageIndex) return leftImageIndex - rightImageIndex;
+  const leftCrop = processingEvidenceCrop(left);
+  const rightCrop = processingEvidenceCrop(right);
+  if (!leftCrop || !rightCrop) return left.label.localeCompare(right.label);
+  const leftY = cropSortValue(leftCrop.y, leftCrop.unit);
+  const rightY = cropSortValue(rightCrop.y, rightCrop.unit);
+  if (Math.abs(leftY - rightY) > 0.035) return leftY - rightY;
+  return cropSortValue(leftCrop.x, leftCrop.unit) - cropSortValue(rightCrop.x, rightCrop.unit);
+}
+
+function imageIndexForEvidence(application: ReviewApplication, field: ReviewField): number {
+  const evidenceImageId = field.evidence[0]?.sourceImageId;
+  const index = application.images.findIndex((image) => image.id === evidenceImageId);
+  return index >= 0 ? index : Number.MAX_SAFE_INTEGER;
+}
+
+function cropSortValue(value: number, unit: EvidenceCrop["unit"]): number {
+  return unit === "ratio" ? value : value / 10_000;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
 export function ReviewWorkbench({ applicationId, titleLevel = 2 }: { applicationId?: string; titleLevel?: 1 | 2 }) {
   const { snapshot, activeApplication } = useConsoleStore();
+  const { dataProvider, backendUnavailable } = useProcessingModeContext();
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
   const [selectedImageId, setSelectedImageId] = useState<string | undefined>();
@@ -241,6 +304,7 @@ export function ReviewWorkbench({ applicationId, titleLevel = 2 }: { application
   const [reviewProgress, setReviewProgress] = useState<ReviewProcessingProgress | null>(null);
   const [liveReviewFields, setLiveReviewFields] = useState<Record<string, ReviewField[]>>({});
   const [autoRunOnNext, setAutoRunOnNext] = useState(() => readReviewerAutoRunPreference());
+  const [nextTriggeredReviewId, setNextTriggeredReviewId] = useState<string | null>(null);
   const autoReviewAttemptedIdsRef = useRef(new Set<string>());
   const application = applicationId ? snapshot.applications.find((candidate) => candidate.id === applicationId) : activeApplication;
   const selectedImage = application?.images.find((image) => image.id === selectedImageId) || application?.images[0];
@@ -267,9 +331,9 @@ export function ReviewWorkbench({ applicationId, titleLevel = 2 }: { application
       const targetApplication = snapshot.applications.find((candidate) => candidate.id === targetApplicationId);
       if (!targetApplication) return;
       const processingMode = snapshot.processingMode;
-      const emitEvent = async (event: BrowserReviewProgressEvent) => {
+      const emitEvent = (event: BrowserReviewProgressEvent) => {
         const progress = progressFromEvent(targetApplicationId, processingMode, event);
-        setReviewProgress(progress);
+        setReviewProgress((current) => applyProgressUpdate(current, progress));
         if (event.imageId) setSelectedImageId(event.imageId);
         if (event.field) {
           setLiveReviewFields((current) => ({
@@ -277,42 +341,34 @@ export function ReviewWorkbench({ applicationId, titleLevel = 2 }: { application
             [targetApplicationId]: mergeLiveReviewField(current[targetApplicationId] || [], event.field as ReviewField)
           }));
         }
-        await waitForProgressPaint();
       };
       setReviewingId(targetApplicationId);
       setLiveReviewFields((current) => ({ ...current, [targetApplicationId]: [] }));
       setReviewProgress({
         applicationId: targetApplicationId,
         message: "Preparing evidence analysis.",
-        percent: 6,
+        percent: 0,
         stage: "queued",
         mode: processingMode,
+        scanIndex: 0,
         imageId: targetApplication.images[0]?.id,
         imageName: targetApplication.images[0]?.name,
         workerLabel: workerLabelForMode(processingMode)
       });
       try {
-        await waitForProgressPaint();
-        let progressStep = 0;
         if (processingMode !== "browser") {
-          const previewReview = createReviewForApplication(targetApplication, processingMode);
-          await playCoordinatorReviewProgress(targetApplication, previewReview, processingMode, emitEvent);
-          await autoReviewApplicationWithBrowserOcr(targetApplicationId, processingMode);
+          let backendSettled = false;
+          const backendReview = runAutomatedReviewForMode(targetApplicationId, processingMode, { dataProvider, backendUnavailable }).finally(() => {
+            backendSettled = true;
+          });
+          await playCoordinatorReviewProgress(targetApplication, processingMode, emitEvent, () => !backendSettled);
+          const completedSnapshot = await backendReview;
+          const completedApplication = completedSnapshot.applications.find((candidate) => candidate.id === targetApplicationId);
+          if (completedApplication?.review) {
+            await playCompletedEvidenceCropReveal(completedApplication, completedApplication.review, emitEvent);
+          }
         } else {
-          await autoReviewApplicationWithBrowserOcr(targetApplicationId, processingMode, {
-          onProgress: (message) => {
-            progressStep += 1;
-            setReviewProgress({
-              applicationId: targetApplicationId,
-              message,
-                percent: Math.min(88, 18 + progressStep * 10),
-                stage: "ocr",
-                mode: processingMode,
-                imageId: targetApplication.images[0]?.id,
-                imageName: targetApplication.images[0]?.name,
-                workerLabel: workerLabelForMode(processingMode)
-            });
-            },
+          await runAutomatedReviewForMode(targetApplicationId, processingMode, {
             onProgressEvent: emitEvent
           });
         }
@@ -322,6 +378,7 @@ export function ReviewWorkbench({ applicationId, titleLevel = 2 }: { application
           percent: 100,
           stage: "complete",
           mode: processingMode,
+          scanIndex: 99,
           imageId: targetApplication.images[0]?.id,
           imageName: targetApplication.images[0]?.name,
           workerLabel: "Review package ready"
@@ -341,20 +398,23 @@ export function ReviewWorkbench({ applicationId, titleLevel = 2 }: { application
         }, 1200);
       }
     },
-    [messageApi, snapshot.applications, snapshot.processingMode]
+    [backendUnavailable, dataProvider, messageApi, snapshot.applications, snapshot.processingMode]
   );
 
   useEffect(() => {
-    if (!application || !autoRunOnNext) return;
+    if (!application) return;
     const pendingApplicationId = readPendingAutoReviewApplicationId();
-    const isPendingTarget = pendingApplicationId === application.id;
-    if (pendingApplicationId && !isPendingTarget) return;
-    if (isPendingTarget) writePendingAutoReviewApplicationId(null);
+    if (pendingApplicationId !== application.id) return;
+    writePendingAutoReviewApplicationId(null);
     if (application.review || isApplicationClosed(application)) return;
     if (reviewingId === application.id || autoReviewAttemptedIdsRef.current.has(application.id)) return;
+    if (!autoRunOnNext) return;
     autoReviewAttemptedIdsRef.current.add(application.id);
+    setNextTriggeredReviewId(application.id);
     queueApplication(application.id);
-    void runAutoReview(application.id, false);
+    void runAutoReview(application.id, false).finally(() => {
+      setNextTriggeredReviewId((current) => (current === application.id ? null : current));
+    });
   }, [application?.id, application?.review, application?.status, autoRunOnNext, reviewingId, runAutoReview]);
 
   const goToOffset = (offset: number, options: { autoReview?: boolean } = {}) => {
@@ -373,13 +433,7 @@ export function ReviewWorkbench({ applicationId, titleLevel = 2 }: { application
     setAutoRunOnNext(checked);
     if (!checked) {
       writePendingAutoReviewApplicationId(null);
-      return;
     }
-    if (!application || application.review || isApplicationClosed(application)) return;
-    writePendingAutoReviewApplicationId(null);
-    autoReviewAttemptedIdsRef.current.add(application.id);
-    queueApplication(application.id);
-    void runAutoReview(application.id);
   };
 
   const runSafely = (action: () => void, success?: string) => {
@@ -396,7 +450,7 @@ export function ReviewWorkbench({ applicationId, titleLevel = 2 }: { application
       () => ({
         n: () => goToOffset(1),
         p: () => goToOffset(-1),
-        r: () => application && !autoRunOnNext && !isApplicationClosed(application) && void runAutoReview(application.id),
+        r: () => application && !isApplicationClosed(application) && (!application.review || !autoRunOnNext) && void runAutoReview(application.id),
         a: () => application && runSafely(() => acceptAutoReview(application.id), "Automated result accepted.")
       }),
       [reviewableIndex, application?.id, reviewableApplications, snapshot.processingMode, autoRunOnNext]
@@ -423,8 +477,9 @@ export function ReviewWorkbench({ applicationId, titleLevel = 2 }: { application
           onRun={() => void runAutoReview(application.id)}
           autoRunOnNext={autoRunOnNext}
           onAutoRunChange={handleAutoRunChange}
+          suppressAutomationButton={readPendingAutoReviewApplicationId() === application.id || nextTriggeredReviewId === application.id}
         />
-        {activeReviewProgress ? <ReviewProgressBanner progress={activeReviewProgress} /> : null}
+        {activeReviewProgress ? <ReviewProgressBanner progress={activeReviewProgress} application={application} liveFields={activeLiveFields} /> : null}
         <Row gutter={[16, 16]} className="reviewer-evidence-layout">
           <Col xs={24}>
             <EvidenceViewer application={application} selectedImage={selectedImage} onSelectImage={setSelectedImageId} processing={imageProcessing} />
@@ -452,7 +507,8 @@ function ReviewHeader({
   onRun,
   reviewing,
   autoRunOnNext,
-  onAutoRunChange
+  onAutoRunChange,
+  suppressAutomationButton
 }: {
   application: ReviewApplication;
   titleLevel: 1 | 2;
@@ -464,8 +520,11 @@ function ReviewHeader({
   reviewing: boolean;
   autoRunOnNext: boolean;
   onAutoRunChange: (checked: boolean) => void;
+  suppressAutomationButton: boolean;
 }) {
   const closed = isApplicationClosed(application);
+  const showAutomationButton = !closed && !suppressAutomationButton && (!application.review || !autoRunOnNext);
+  const callOutAutomation = showAutomationButton && !application.review && autoRunOnNext && !reviewing;
   return (
     <Card className="workbench-header" size="small">
       <div className="stack-tight">
@@ -492,9 +551,9 @@ function ReviewHeader({
         <Checkbox checked={autoRunOnNext} onChange={(event) => onAutoRunChange(event.target.checked)}>
           Auto-run automation
         </Checkbox>
-        {!autoRunOnNext && !closed ? (
-          <Button icon={<PlayCircleOutlined />} loading={reviewing} onClick={onRun}>
-            {application.review ? "Rerun automated review" : "Run automated review"}
+        {showAutomationButton ? (
+          <Button className={callOutAutomation ? "automation-run-callout" : undefined} icon={<PlayCircleOutlined />} loading={reviewing} onClick={onRun}>
+            {application.review ? "Rerun automation" : "Run automation"}
           </Button>
         ) : null}
         <RawOcrButton application={application} />
@@ -520,7 +579,15 @@ function RawOcrButton({ application }: { application: ReviewApplication }) {
   );
 }
 
-function ReviewProgressBanner({ progress }: { progress: ReviewProcessingProgress }) {
+function ReviewProgressBanner({
+  progress,
+  application,
+  liveFields
+}: {
+  progress: ReviewProcessingProgress;
+  application: ReviewApplication;
+  liveFields: ReviewField[];
+}) {
   return (
     <GovAlert type="info" title="Review in progress">
       <Space wrap className="review-progress-strip" size={10}>
@@ -528,14 +595,69 @@ function ReviewProgressBanner({ progress }: { progress: ReviewProcessingProgress
         <Typography.Text>{progress.message}</Typography.Text>
         <Typography.Text type="secondary">{Math.round(progress.percent)}%</Typography.Text>
       </Space>
+      <FieldProgressLanes application={application} progress={progress} liveFields={liveFields} />
     </GovAlert>
   );
 }
 
+function FieldProgressLanes({
+  application,
+  progress,
+  liveFields
+}: {
+  application: ReviewApplication;
+  progress: ReviewProcessingProgress;
+  liveFields: ReviewField[];
+}) {
+  const completedKeys = new Set(liveFields.map((field) => field.fieldKey));
+  const lanes = reviewProgressFields(application);
+  if (!lanes.length) return null;
+  return (
+    <div className="review-progress-lanes" aria-label="Field OCR job progress">
+      {lanes.map((lane) => {
+        const done = completedKeys.has(lane.key);
+        const active = progress.fieldKey === lane.key && progress.stage !== "complete";
+        const width = done ? 100 : active ? Math.max(15, Math.min(92, progress.percent)) : 0;
+        const status = done ? "Classified" : active ? progress.workerLabel || "Running" : "Queued";
+        return (
+          <div key={lane.key} className={`review-progress-lane ${done ? "review-progress-lane-done" : ""} ${active ? "review-progress-lane-active" : ""}`}>
+            <span>{lane.label}</span>
+            <i aria-hidden="true">
+              <b style={{ width: `${width}%` }} />
+            </i>
+            <small>{status}</small>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function reviewProgressFields(application: ReviewApplication) {
+  return REVIEW_PROGRESS_FIELDS.filter((field) => {
+    if (field.key === "governmentWarning") return application.expectedFields.governmentWarningRequired;
+    const value = application.expectedFields[field.key as keyof typeof application.expectedFields];
+    return value !== undefined && value !== null && String(value).trim() !== "";
+  });
+}
+
+function fieldKeyFromLabel(label?: string): ReviewField["fieldKey"] | undefined {
+  const normalized = String(label || "").toLowerCase();
+  if (!normalized) return undefined;
+  if (normalized.includes("brand")) return "brandName";
+  if (normalized.includes("class") || normalized.includes("type")) return "classType";
+  if (normalized.includes("alcohol") || normalized.includes("abv") || normalized.includes("proof")) return "alcoholContent";
+  if (normalized.includes("net")) return "netContents";
+  if (normalized.includes("producer") || normalized.includes("bottler") || normalized.includes("importer")) return "producerName";
+  if (normalized.includes("origin")) return "countryOfOrigin";
+  if (normalized.includes("warning")) return "governmentWarning";
+  return undefined;
+}
+
 function humanProgressStage(stage: ReviewProcessingProgress["stage"]): string {
-  if (stage === "segmenting") return "Segmenting";
-  if (stage === "ocr") return "Reading";
-  if (stage === "validating" || stage === "field") return "Classifying";
+  if (stage === "segmenting" || stage === "ocr") return "Full OCR pass";
+  if (stage === "validating") return "Preparing crops";
+  if (stage === "field") return "Cropping evidence";
   if (stage === "complete") return "Complete";
   return "Queued";
 }
@@ -618,8 +740,15 @@ function defaultTextViewerPosition() {
 }
 
 function rawOcrTextForApplication(application: ReviewApplication): string {
-  const review = application.review as (ReviewApplication["review"] & { rawText?: string }) | undefined;
-  const rawText = String(review?.rawOcrText || review?.rawText || "").trim();
+  const review =
+    application.review as
+      | (ReviewApplication["review"] & {
+          rawText?: string;
+          combinedText?: string;
+          combinedOcr?: { rawText?: string };
+        })
+      | undefined;
+  const rawText = String(review?.rawOcrText || review?.rawText || review?.combinedText || review?.combinedOcr?.rawText || "").trim();
   if (rawText) return rawText;
   if (review?.fields.length) {
     return [
@@ -628,7 +757,7 @@ function rawOcrTextForApplication(application: ReviewApplication): string {
       ...review.fields.map((field) => `${field.label}: ${field.extracted || field.reason}`)
     ].join("\n");
   }
-  return "Run automated review to generate OCR text for this application.";
+  return "Run automation to generate OCR text for this application.";
 }
 
 export function ReviewIssueSummary({ application }: { application?: ReviewApplication }) {
@@ -815,7 +944,7 @@ export function FieldReviewTable({
       >
         {processing ? <div className="live-review-status" aria-live="polite">Waiting for the first classified field...</div> : null}
         <GovAlert type="info" title={processing ? "Automated review running" : "Automated review required"}>
-          {processing ? "Classified evidence will appear here as each field is resolved." : "Run automated review to compare expected application values with extracted label evidence."}
+          {processing ? "Classified evidence will appear here as each field is resolved." : "Run automation to compare expected application values with extracted label evidence."}
         </GovAlert>
       </Card>
     );
@@ -970,7 +1099,6 @@ function FieldPassFailDecision({
   const current = fieldPassFailStatus(field);
   return (
     <div className={`field-pass-fail-control field-pass-fail-control-${current.toLowerCase()}`}>
-      <GovFieldResultBadge status={current} />
       <Segmented
         aria-label={`${field.label} pass fail decision`}
         value={current}
@@ -988,11 +1116,21 @@ function FieldPassFailDecision({
           }
         }}
         options={[
-          { label: "Pass", value: "PASS" },
-          { label: "Fail", value: "FAIL" }
+          { label: <FieldPassFailOption status="PASS" />, value: "PASS" },
+          { label: <FieldPassFailOption status="FAIL" />, value: "FAIL" }
         ]}
       />
     </div>
+  );
+}
+
+function FieldPassFailOption({ status }: { status: "PASS" | "FAIL" }) {
+  const Icon = status === "PASS" ? CheckCircleOutlined : CloseCircleOutlined;
+  return (
+    <span className={`field-pass-fail-option field-pass-fail-option-${status.toLowerCase()}`}>
+      <Icon />
+      <span>{status === "PASS" ? "Pass" : "Fail"}</span>
+    </span>
   );
 }
 
@@ -1067,7 +1205,7 @@ function EvidenceThumb({ image, images, field, evidence }: { image: LabelImage; 
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedImageId, setSelectedImageId] = useState(image.id);
   const isFailedField = fieldPassFailStatus(field) === "FAIL";
-  const crop = evidence?.crop || estimatedCropForField(field.fieldKey);
+  const crop = evidence?.crop?.source === "ocr" ? evidence.crop : undefined;
   const cropImage = useEvidenceCropImage(image, crop, `${field.label} evidence`);
   const fullImage = images.find((candidate) => candidate.id === selectedImageId) || image;
   useEffect(() => {
@@ -1092,10 +1230,10 @@ function EvidenceThumb({ image, images, field, evidence }: { image: LabelImage; 
         height: cropImage.height
       }
     : image;
-  if (isFailedField) {
+  if (isFailedField || !crop) {
     return (
       <>
-        <Tooltip title="This field failed or needs reviewer judgment. Expand the full label image to verify whether the evidence is present.">
+        <Tooltip title={isFailedField ? "This field failed or needs reviewer judgment. Expand the full label image to verify whether the evidence is present." : "No token-level evidence box was stored for this field. Expand the full label image to review the evidence."}>
           <button
             type="button"
             className="field-evidence-thumb-button field-evidence-full-image-button"
@@ -1135,7 +1273,7 @@ function EvidenceThumb({ image, images, field, evidence }: { image: LabelImage; 
   );
 }
 
-function useEvidenceCropImage(image: LabelImage, crop: EvidenceCrop, label: string) {
+function useEvidenceCropImage(image: LabelImage, crop: EvidenceCrop | undefined, label: string) {
   const [cropImage, setCropImage] = useState<{ url: string; width: number; height: number } | null>(null);
 
   useEffect(() => {
@@ -1143,6 +1281,10 @@ function useEvidenceCropImage(image: LabelImage, crop: EvidenceCrop, label: stri
     let objectUrl = "";
     const load = async () => {
       try {
+        if (!crop) {
+          setCropImage(null);
+          return;
+        }
         const loaded = await loadHtmlImage(image.url);
         const cropBox = cropBoxForImage(crop, loaded.naturalWidth, loaded.naturalHeight);
         const scale = Math.min(1, 420 / cropBox.width);
@@ -1167,7 +1309,7 @@ function useEvidenceCropImage(image: LabelImage, crop: EvidenceCrop, label: stri
       cancelled = true;
       if (objectUrl.startsWith("blob:")) URL.revokeObjectURL(objectUrl);
     };
-  }, [crop.height, crop.source, crop.unit, crop.width, crop.x, crop.y, image.url, label]);
+  }, [crop?.height, crop?.source, crop?.unit, crop?.width, crop?.x, crop?.y, image.url, label]);
 
   return cropImage;
 }
@@ -1198,7 +1340,7 @@ function FinalDispositionBar({
   const hasAutomatedReview = Boolean(application.review);
   const closed = isApplicationClosed(application);
   const approvalBlockReason = !hasAutomatedReview
-    ? "Run automated review before passing this application."
+    ? "Run automation before passing this application."
     : unresolvedCriticalFields.length
       ? "Resolve failed critical fields before passing this application."
       : "";

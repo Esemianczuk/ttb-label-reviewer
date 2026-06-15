@@ -13,8 +13,13 @@ describe("permission matrix", () => {
     expect(canAccess("reviewer", "workers", "list")).toBe(false);
   });
 
-  it("lets admins access every resource and action", () => {
-    expect(canAccess("admin", "settings", "update")).toBe(true);
-    expect(canAccess("admin", "workers", "recalibrate")).toBe(true);
+  it("lets admins inspect operations without destructive admin actions", () => {
+    expect(canAccess("admin", "settings", "show")).toBe(true);
+    expect(canAccess("admin", "workers", "list")).toBe(true);
+    expect(canAccess("admin", "jobs", "show")).toBe(true);
+    expect(canAccess("admin", "benchmarks", "run")).toBe(true);
+    expect(canAccess("admin", "settings", "update")).toBe(false);
+    expect(canAccess("admin", "workers", "recalibrate")).toBe(false);
+    expect(canAccess("admin", "jobs", "cancel")).toBe(false);
   });
 });

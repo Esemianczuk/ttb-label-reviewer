@@ -95,7 +95,7 @@ export class BrowserOcrWorkerPool {
         try {
           const result = await this.runTask(slot, task, {
             signal,
-            onProgress: (message) => onTaskProgress?.(task, message, slot.index),
+            onProgress: (message, meta) => onTaskProgress?.(task, message, meta, slot.index),
           });
           results[taskIndex] = result;
           onTaskComplete?.(task, result, slot.index);
@@ -136,7 +136,7 @@ export class BrowserOcrWorkerPool {
       const onMessage = (event) => {
         const data = event.data || {};
         if (data.taskId !== taskId) return;
-        if (data.type === 'progress') onProgress?.(data.message || 'Processing...');
+        if (data.type === 'progress') onProgress?.(data.message || 'Processing...', data.meta || null);
         if (data.type === 'result') finish(null, data.ocrResult);
         if (data.type === 'error') finish(new Error(data.error || 'Browser OCR worker failed.'));
       };

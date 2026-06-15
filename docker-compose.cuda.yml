@@ -1,0 +1,16 @@
+services:
+  worker:
+    build:
+      context: .
+      dockerfile: docker/worker-cuda.Dockerfile
+      args:
+        PADDLEPADDLE_VERSION: ${PADDLEPADDLE_VERSION:-3.2.2}
+        PADDLE_GPU_INDEX: ${PADDLE_GPU_INDEX:-https://www.paddlepaddle.org.cn/packages/stable/cu126/}
+    image: ttb-label-reviewer-worker-cuda:local
+    environment:
+      TTB_WORKER_NAME: compose-paddleocr-cuda
+      TTB_WORKER_DATA_DIR: /worker-cache/cuda
+      TTB_WORKER_SECRET_FILE: /worker-cache/cuda/worker-secret.txt
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    gpus: all

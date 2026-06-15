@@ -5,11 +5,8 @@ import importlib.util
 from typing import Iterable
 
 from .base import EngineHealth, OcrEngine
-from .easyocr_engine import EasyOcrEngine
 from .null_engine import NullOcrEngine
-from .onnx_engine import OnnxOcrEngine
 from .paddleocr_engine import PaddleOcrEngine
-from .tesseract_engine import TesseractEngine
 
 
 def build_engines(selection: str | Iterable[str] = "auto", capabilities: dict | None = None) -> list[OcrEngine]:
@@ -24,10 +21,15 @@ def build_engines(selection: str | Iterable[str] = "auto", capabilities: dict | 
         candidates = [engine for engine in candidates if engine.id in requested]
 
     available = [engine for engine in candidates if engine.healthcheck().available]
+    if requested != ["auto"] and not available and not explicit_null_only:
+        requested_display = ", ".join(requested)
+        raise RuntimeError(f"Requested OCR engine(s) are unavailable: {requested_display}")
     production = [engine for engine in available if not _fixture_engine(engine.id)]
     if production:
         return _dedupe(production)
-    return _dedupe(available or [NullOcrEngine()])
+    if explicit_null_only:
+        return _dedupe(available or [NullOcrEngine()])
+    raise RuntimeError("PaddleOCR is required for backend workers. Use browser fallback only when the backend is unavailable.")
 
 
 def inspect_engines(selection: str | Iterable[str] = "auto", capabilities: dict | None = None) -> dict:
@@ -36,11 +38,8 @@ def inspect_engines(selection: str | Iterable[str] = "auto", capabilities: dict 
     if requested != ["auto"]:
         candidates = [engine for engine in candidates if engine.id in requested]
     health = {engine.id: _health_to_dict(engine.healthcheck()) for engine in _dedupe(candidates)}
-    production_available = any(engine_id != "null" and value.get("available") for engine_id, value in health.items())
-    if production_available:
+    if any(engine_id != "null" and value.get("available") for engine_id, value in health.items()):
         health.pop("null", None)
-    elif "null" not in health:
-        health["null"] = _health_to_dict(NullOcrEngine().healthcheck())
     return health
 
 
@@ -53,25 +52,13 @@ def _normalize_selection(selection: str | Iterable[str]) -> list[str]:
 
 def _gpu_requested(capabilities: dict | None) -> bool:
     accelerators = (capabilities or {}).get("accelerators") or {}
-    return bool(accelerators.get("cuda", {}).get("available") or accelerators.get("appleMps", {}).get("available"))
-
-
-def _accelerator_device(capabilities: dict | None) -> str:
-    accelerators = (capabilities or {}).get("accelerators") or {}
-    if accelerators.get("cuda", {}).get("available"):
-        return "cuda"
-    if accelerators.get("appleMps", {}).get("available"):
-        return "mps"
-    return "cpu"
+    return bool(accelerators.get("cuda", {}).get("available"))
 
 
 def _engine_candidates(capabilities: dict | None, *, include_heavy: bool, include_null: bool = False) -> list[OcrEngine]:
-    candidates: list[OcrEngine] = [TesseractEngine()]
+    candidates: list[OcrEngine] = []
     if include_heavy or _paddleocr_installed() or _paddleocr_custom_configured():
         candidates.append(PaddleOcrEngine(use_gpu=_gpu_requested(capabilities)))
-    if include_heavy or _easyocr_installed():
-        candidates.append(EasyOcrEngine(use_gpu=_gpu_requested(capabilities), device=_accelerator_device(capabilities)))
-    candidates.append(OnnxOcrEngine())
     if include_null:
         candidates.append(NullOcrEngine())
     return candidates
@@ -79,10 +66,6 @@ def _engine_candidates(capabilities: dict | None, *, include_heavy: bool, includ
 
 def _heavy_ocr_enabled() -> bool:
     return os.environ.get("TTB_WORKER_ENABLE_HEAVY_OCR", "0") == "1"
-
-
-def _easyocr_installed() -> bool:
-    return importlib.util.find_spec("easyocr") is not None
 
 
 def _paddleocr_installed() -> bool:

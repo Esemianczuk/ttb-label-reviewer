@@ -42,6 +42,7 @@ export function ReviewQueue({ title = "Review Queue", compact = false }: { title
   const backendQueueEnabled = mode !== "browser" && !backendUnavailable;
   const fromDashboard = searchParams.get("from") === "dashboard";
   const filterLabel = REVIEWER_QUEUE_FILTERS.find((item) => item.value === filter)?.label || "All";
+  const filtersActive = filter !== "all" || Boolean(search || companyFilter || typeFilter || dateRange || processingFilter !== "all");
 
   useEffect(() => {
     setFilter(queueFilterFromSearch(searchParams.get("filter")));
@@ -55,13 +56,29 @@ export function ReviewQueue({ title = "Review Queue", compact = false }: { title
     setSearchParams(next, { replace: true });
   };
 
+  const clearAllFilters = () => {
+    setSearch("");
+    setCompanyFilter("");
+    setTypeFilter("");
+    setDateRange(null);
+    setProcessingFilter("all");
+    setFilter("all");
+    const next = new URLSearchParams(searchParams);
+    next.delete("filter");
+    setSearchParams(next, { replace: true });
+  };
+
   const refreshRemoteQueue = useCallback(async () => {
     if (!backendQueueEnabled) {
       setRemoteApplications(null);
       return;
     }
-    const response = await dataProvider.getList({ resource: "applications", pagination: { mode: "off" } });
-    setRemoteApplications(response.data.map(normalizeBackendApplication));
+    try {
+      const response = await dataProvider.getList({ resource: "applications", pagination: { mode: "off" } });
+      setRemoteApplications(response.data.map(normalizeBackendApplication));
+    } catch {
+      setRemoteApplications(null);
+    }
   }, [backendQueueEnabled, dataProvider]);
 
   useEffect(() => {
@@ -71,7 +88,9 @@ export function ReviewQueue({ title = "Review Queue", compact = false }: { title
   useSubscription({ channel: "resources/applications", types: ["*"], enabled: backendQueueEnabled, onLiveEvent: () => void refreshRemoteQueue() });
   useSubscription({ channel: "resources/reviews", types: ["*"], enabled: backendQueueEnabled, onLiveEvent: () => void refreshRemoteQueue() });
 
-  const queueApplications = backendQueueEnabled && remoteApplications ? remoteApplications : snapshot.applications;
+  const queueApplications = snapshot.applications.length ? snapshot.applications : backendQueueEnabled && remoteApplications?.length ? remoteApplications : snapshot.applications;
+  const processedCount = queueApplications.filter((application) => application.review).length;
+  const notProcessedCount = queueApplications.length - processedCount;
   const data = useMemo(
     () =>
       reviewerQueueApplications(queueApplications).filter((application) => {
@@ -242,8 +261,9 @@ export function ReviewQueue({ title = "Review Queue", compact = false }: { title
 
         <div className="queue-result-summary">
           <Typography.Text type="secondary">
-            {data.length} shown · {queueApplications.filter((application) => !application.review).length} not processed · open a packet to run automated review
+            {data.length} shown · {queueApplications.length} total · {notProcessedCount} not processed · {processedCount} processed · open a packet to run automation
           </Typography.Text>
+          {filtersActive ? <Button onClick={clearAllFilters}>Clear all filters</Button> : null}
         </div>
 
         <Table

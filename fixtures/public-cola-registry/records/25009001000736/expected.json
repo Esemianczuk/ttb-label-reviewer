@@ -1,0 +1,93 @@
+{
+  "fixture_id": "ttb_25009001000736_rum-bar",
+  "source_type": "official_public_registry",
+  "ttb_id": "25009001000736",
+  "expected_fields": {
+    "brandName": "RUM BAR",
+    "fancifulName": "RUM CREAM",
+    "classType": "RUM SPECIALTIES",
+    "productType": "distilled_spirits",
+    "alcoholContent": null,
+    "netContents": null,
+    "governmentWarningRequired": true,
+    "isImported": null,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": null,
+      "address": null
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_02.jpg",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
+    "Collector note: High-signal expansion; term=rum%; score=84; brand=RUM BAR; label_images=2.",
+    "High-signal expansion score 84 from search term rum%."
+  ],
+  "demo_ready": true,
+  "signal": {
+    "score": 84,
+    "searchTerm": "rum%",
+    "scoreReasons": [
+      "brand",
+      "class/type",
+      "missing alcohol metadata",
+      "alcohol image hint",
+      "missing net contents metadata",
+      "net contents image hint",
+      "missing responsible party name metadata",
+      "missing responsible party address",
+      "domestic/no country-of-origin requirement",
+      "2 label image(s)",
+      "approved"
+    ],
+    "ocrHints": {
+      "available": true,
+      "engines": [
+        "easyocr"
+      ],
+      "textLength": 271,
+      "alcoholHints": [
+        "15% alc"
+      ],
+      "netContentsHints": [
+        "200 ml"
+      ],
+      "warningDetected": false,
+      "warningTermHits": 0,
+      "responsiblePartyHint": false,
+      "sample": "PARK ESTATE NORTHY 3 OF EST 1670 LLUIDAS VALE THE 'UALITY DISTILLEY RunBa SMOOTH PREMIUM RUM WVTD RUM WITH NATURAL FLAVORS MADE 1 CREAM REAL WORTHY PARK ESTAE BLENDED & BOTTLED IN JAMAICA BY WORTHY PARK ESTAE LTD: 15% alc Ivol: 200 ml EWARTON PO. ST CATHERINE JAMAICA WI:",
+      "errors": [
+        "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=Rum-Bar Rum Cream-01.jpg&filetype=l: tesseract: tesseract is not installed or it's not in your PATH. See README file for more information."
+      ]
+    }
+  },
+  "demo_audit": {
+    "status": "ready",
+    "source": "high_signal_ocr_preflight",
+    "reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+    "reviewed_common_fields": [
+      "alcoholContent",
+      "brandName",
+      "classType",
+      "countryOfOrigin",
+      "netContents",
+      "producerName"
+    ]
+  }
+}

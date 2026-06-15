@@ -1,8 +1,9 @@
 import { normalizeWhitespace } from './text-normalize.js';
 
 const ABV_PATTERNS = [
-  /(\d{1,3}(?:\.\d+)?)\s*%\s*(?:ALC(?:OHOL)?\.?\s*(?:BY\s*)?VOL(?:UME)?\.?|ABV)?/gi,
-  /(\d{1,3}(?:\.\d+)?)\s*(?:ALC(?:OHOL)?\.?\s*(?:BY\s*)?VOL(?:UME)?\.?|ABV)/gi,
+  /ALC(?:OHOL)?\.?(?:\s+|[,;:]\s*)([0-9I1|lOBH%]{1,5})\s*(?:%\s*)?(?:(?:BY|B[YV]|RY)\s*)?V[O0C]?[L1I]?/gi,
+  /(\d{1,3}(?:[\.,]\d+)?)\s*%\s*(?:ALC(?:OHOL)?\.?\s*(?:BY\s*)?(?:VOL(?:UME)?\.?|[/I1|]?\s*V[O0]L(?:UME)?\.?)|ABV)?/gi,
+  /(\d{1,3}(?:[\.,]\d+)?)\s*(?:ALC(?:OHOL)?\.?\s*(?:BY\s*)?(?:VOL(?:UME)?\.?|[/I1|]?\s*V[O0]L(?:UME)?\.?)|ALC\s*[/I1|]?\s*V[O0]L|ALCIV[O0]L|ABV)/gi,
 ];
 
 const PROOF_PATTERN = /(\d{1,3}(?:\.\d+)?)\s*PROOF/gi;
@@ -14,7 +15,7 @@ export function parseAlcoholContent(text = '') {
 
   for (const pattern of ABV_PATTERNS) {
     for (const match of source.matchAll(pattern)) {
-      const value = Number.parseFloat(match[1]);
+      const value = normalizeOcrAbvNumber(match[1]);
       if (Number.isFinite(value) && value > 0 && value <= 100) {
         abvValues.push(value);
       }
@@ -38,6 +39,34 @@ export function parseAlcoholContent(text = '') {
     proof: proof ?? (abvPercent !== null ? abvPercent * 2 : null),
     original: source,
   };
+}
+
+function normalizeOcrAbvNumber(value = '') {
+  const source = normalizeWhitespace(String(value).toUpperCase());
+  const cleaned = source
+    .replace(/[I|L]/g, '1')
+    .replace(/[OQ]/g, '0')
+    .replace(/B/g, '3')
+    .replace(/S/g, '5')
+    .replace(/%/g, '')
+    .replace(/[^0-9\.,]/g, '');
+  if (!cleaned) return null;
+  let numeric = Number.parseFloat(cleaned.replace(',', '.'));
+  if (!Number.isFinite(numeric)) return null;
+  if (numeric > 100 && !cleaned.includes('.') && !cleaned.includes(',')) {
+    const suffix = cleaned.slice(-2);
+    if (cleaned.length === 4 && ['60', '66', '68', '69', '80', '86', '88', '89'].includes(suffix)) {
+      numeric = Number.parseFloat(cleaned.slice(0, 2));
+    } else if (numeric <= 999) {
+      const lastDigit = cleaned.at(-1);
+      if (['0', '6', '8', '9'].includes(lastDigit)) {
+        numeric = Number.parseFloat(cleaned.slice(0, -1));
+      } else if (cleaned.length === 3) {
+        numeric /= 10;
+      }
+    }
+  }
+  return numeric;
 }
 
 export function alcoholValuesEquivalent(left, right, tolerance = 0.25) {

@@ -1,0 +1,126 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25051001000047",
+    "retrieved_at": "2026-06-14T02:33:52Z"
+  },
+  "ttb_id": "25051001000047",
+  "status": "APPROVED",
+  "approval_date": "02/21/2025",
+  "serial_number": "25RCB1",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "RUM CARAY",
+    "fanciful_name": null,
+    "class_type": "PUERTO RICAN RUM (GOLD)",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25051001000047",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17646,
+      "sha256": "aeff9c5d38ddb8e1c4eae64dd821cccbce72be87717b3b20c5b9fa0fcc5c8fa3",
+      "downloaded_at": "2026-06-14T02:33:53Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=RCB1-f.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 276811,
+      "sha256": "6dc86de0d232778926935e6ed99b9942be405671655a896e99bc618eb7c77a58",
+      "downloaded_at": "2026-06-14T02:33:53Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=RCB1-b.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 458311,
+      "sha256": "87a16860fbb87fb1148a06c0b54859c663c03b63835610935e9ec260de396406",
+      "downloaded_at": "2026-06-14T02:33:53Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "25051001000047"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "34898"
+    },
+    {
+      "label": "Serial #",
+      "value": "25RCB1"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "PUERTO RICAN RUM (GOLD)"
+    },
+    {
+      "label": "Origin Code",
+      "value": "PUERTO RICO"
+    },
+    {
+      "label": "Brand Name",
+      "value": "RUM CARAY"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "02/21/2025"
+    },
+    {
+      "label": "TTB ID: 25051001000047",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25051001000047",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=RCB1-f.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=RCB1-b.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

@@ -10,8 +10,6 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from urllib.error import URLError
-from urllib.request import Request, urlopen
 
 from ..validation import validate_label_packet
 
@@ -22,7 +20,7 @@ PACKET_MANIFEST = REPO_ROOT / "browser-demo" / "public" / "label-packets" / "man
 PACKET_PUBLIC_ROOT = PACKET_MANIFEST.parent.parent
 DEFAULT_COUNTS = (1, 10, 50)
 DEFAULT_LOCAL_MODES = ("browser", "backend")
-MODE_ALIASES = {"distributed": "cluster", "local-backend": "backend"}
+MODE_ALIASES = {"local-backend": "backend"}
 
 
 def run_benchmark_suite(
@@ -36,7 +34,8 @@ def run_benchmark_suite(
     write: bool = True,
 ) -> dict[str, Any]:
     packets = load_packets()
-    workers = workers if workers is not None else discover_cluster_workers(backend_url)
+    _ = backend_url
+    workers = workers or []
     created_at = utc_now()
     runs = [
         run_single_benchmark(
@@ -83,9 +82,6 @@ def run_single_benchmark(
 ) -> dict[str, Any]:
     if image_count <= 0:
         raise ValueError("image_count must be positive")
-    if mode == "cluster" and not workers:
-        return skipped_run(mode=mode, image_count=image_count, suite_created_at=suite_created_at, label=label)
-
     selected_workers = workers or []
     per_image: list[dict[str, Any]] = []
     failures = 0
@@ -204,37 +200,6 @@ def ocr_fixture_text(fixture: dict[str, Any]) -> str:
     return str(fixture.get("rawText", ""))
 
 
-def discover_cluster_workers(backend_url: str | None) -> list[dict[str, Any]]:
-    if not backend_url:
-        return []
-    base = backend_url.rstrip("/")
-    try:
-        token_response = http_json(f"{base}/api/auth/demo-login", method="POST", payload={"role": "admin"})
-        token = token_response["token"]
-        workers = http_json(f"{base}/api/workers", headers={"Authorization": f"Bearer {token}"})
-    except (OSError, KeyError, ValueError, URLError):
-        return []
-    if not isinstance(workers, list):
-        return []
-    return [worker for worker in workers if worker_available_for_benchmark(worker)]
-
-
-def http_json(url: str, *, method: str = "GET", payload: dict[str, Any] | None = None, headers: dict[str, str] | None = None) -> Any:
-    body = json.dumps(payload).encode("utf-8") if payload is not None else None
-    request = Request(
-        url,
-        data=body,
-        method=method,
-        headers={
-            "Accept": "application/json",
-            **({"Content-Type": "application/json"} if body else {}),
-            **(headers or {}),
-        },
-    )
-    with urlopen(request, timeout=3) as response:
-        return json.loads(response.read().decode("utf-8"))
-
-
 def write_benchmark_suite(suite: dict[str, Any], results_dir: Path) -> Path:
     results_dir.mkdir(parents=True, exist_ok=True)
     filename = f"{suite['createdAt'].replace(':', '').replace('.', '-')}-{suite['id']}.json"
@@ -277,40 +242,8 @@ def summarize_runs(runs: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def skipped_run(*, mode: str, image_count: int, suite_created_at: str, label: str) -> dict[str, Any]:
-    return {
-        "id": f"benchmark-{mode}-{image_count}-{suite_created_at.replace(':', '').replace('.', '-')}",
-        "label": f"{image_count} image {mode} benchmark",
-        "imageCount": image_count,
-        "mode": mode,
-        "status": "skipped",
-        "workerId": "none",
-        "workerChosen": "none",
-        "engineUsed": "none",
-        "concurrency": 0,
-        "totalMs": 0,
-        "wallClockMs": 0,
-        "averageMsPerImage": 0,
-        "p50MsPerImage": 0,
-        "p95MsPerImage": 0,
-        "imagesPerMinute": 0,
-        "ocrMs": 0,
-        "validationMs": 0,
-        "queueMs": 0,
-        "p50OcrMs": 0,
-        "p95OcrMs": 0,
-        "p50ValidationMs": 0,
-        "p95ValidationMs": 0,
-        "failures": 0,
-        "failedValidations": 0,
-        "createdAt": suite_created_at,
-        "samples": [],
-        "notes": f"Skipped {label}: no eligible cluster workers were available.",
-    }
-
-
 def choose_worker(mode: str, workers: list[dict[str, Any]], index: int) -> dict[str, Any] | None:
-    if mode != "cluster" or not workers:
+    if mode != "backend" or not workers:
         return None
     ordered = sorted(workers, key=lambda worker: (worker.get("activeJobs", 0) / max(1, worker.get("maxConcurrency", 1)), worker.get("id", "")))
     return ordered[index % len(ordered)]
@@ -323,12 +256,10 @@ def worker_available_for_benchmark(worker: dict[str, Any]) -> bool:
 
 def worker_id_for(mode: str, worker: dict[str, Any] | None) -> str:
     if worker:
-        return str(worker.get("id") or worker.get("hostname") or "cluster-worker")
+        return str(worker.get("id") or worker.get("hostname") or "backend-worker")
     if mode == "browser":
         return "browser-worker-pool"
-    if mode == "backend":
-        return "backend-local"
-    return "cluster-worker"
+    return "backend-local"
 
 
 def engine_for(mode: str, worker: dict[str, Any] | None) -> str:
@@ -336,15 +267,13 @@ def engine_for(mode: str, worker: dict[str, Any] | None) -> str:
         engines = (worker.get("calibration") or {}).get("engines") or {}
         available = [engine_id for engine_id, meta in engines.items() if not isinstance(meta, dict) or meta.get("available", True)]
         if available:
-            return sorted(available, key=lambda engine_id: 0 if "tesseract" in engine_id else 1)[0]
+            return "paddleocr" if "paddleocr" in available else sorted(available)[0]
         caps_engines = (worker.get("capabilities") or {}).get("engines") or {}
         if isinstance(caps_engines, dict) and caps_engines:
-            return sorted(caps_engines.keys())[0]
+            return "paddleocr" if "paddleocr" in caps_engines else sorted(caps_engines.keys())[0]
     if mode == "browser":
-        return "tesseract-js-fixture"
-    if mode == "backend":
-        return "python-validator-fixture"
-    return "cluster-fixture"
+        return "browser-local-ocr-fixture"
+    return "python-validator-fixture"
 
 
 def queue_estimate_ms(mode: str, worker: dict[str, Any] | None) -> float:
@@ -352,8 +281,6 @@ def queue_estimate_ms(mode: str, worker: dict[str, Any] | None) -> float:
         return 1.0
     if mode == "backend":
         return 8.0
-    if not worker:
-        return 0.0
     active = float(worker.get("activeJobs") or 0)
     capacity = max(1.0, float(worker.get("maxConcurrency") or 1))
     return 12.0 + (active / capacity) * 25.0
@@ -381,14 +308,14 @@ def ocr_estimate_ms(mode: str, packet: dict[str, Any], worker: dict[str, Any] | 
 def concurrency_for(mode: str, workers: list[dict[str, Any]]) -> int:
     if mode == "browser":
         return 4
-    if mode == "backend":
+    if mode == "backend" and not workers:
         return 2
     return max(1, sum(int(worker.get("maxConcurrency") or 1) for worker in workers))
 
 
 def normalize_mode(mode: str) -> str:
     normalized = MODE_ALIASES.get(mode, mode)
-    if normalized not in {"browser", "backend", "cluster"}:
+    if normalized not in {"browser", "backend"}:
         raise ValueError(f"Unsupported benchmark mode {mode!r}.")
     return normalized
 
@@ -411,8 +338,8 @@ def utc_now() -> str:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run local fixture-based TTB label-review benchmarks.")
-    parser.add_argument("--mode", dest="modes", action="append", help="Mode to benchmark: browser, backend, or cluster. Repeatable.")
-    parser.add_argument("--modes", nargs="+", help="Modes to benchmark: browser backend cluster.")
+    parser.add_argument("--mode", dest="modes", action="append", help="Mode to benchmark: browser or backend. Repeatable.")
+    parser.add_argument("--modes", nargs="+", help="Modes to benchmark: browser backend.")
     parser.add_argument("--count", dest="counts", action="append", type=int, help="Image count to benchmark. Repeatable.")
     parser.add_argument("--counts", nargs="+", type=int, help="Image counts to benchmark.")
     parser.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS_DIR)

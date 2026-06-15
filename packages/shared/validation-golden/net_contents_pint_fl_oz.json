@@ -1,0 +1,21 @@
+{
+  "id": "net_contents_pint_fl_oz",
+  "description": "A pint plus fluid-ounce net contents statement should normalize to the same total milliliters.",
+  "expectedFields": {
+    "productType": "malt_beverage",
+    "brandName": "Chloe",
+    "classType": "MALT BEVERAGES SPECIALITIES - FLAVORED",
+    "alcoholContent": "10% ALC/VOL",
+    "netContents": "1 PT 9.36 FL OZ",
+    "governmentWarningRequired": true
+  },
+  "ocrText": "CHLOE RUM BARREL AGED COCONUT BALTIC MALT BEVERAGE WITH NATURAL FLAVORS 10% ALC/VOL 1 PT 9.36 FL OZ GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+  "expectedOverallStatus": "PASS",
+  "expectedStatuses": {
+    "brandName": "PASS",
+    "classType": "PASS",
+    "alcoholContent": "PASS",
+    "netContents": "PASS",
+    "governmentWarningRequired": "PASS"
+  }
+}

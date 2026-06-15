@@ -44,7 +44,7 @@ def iter_regions(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def reviewed_transcript(row: dict[str, Any], *, accept_weak: bool) -> str:
+def reviewed_transcript(row: dict[str, Any], *, accept_weak: bool, accept_all_ocr: bool) -> str:
     for key in ("reviewedText", "transcript", "labelText"):
         text = normalize_space(row.get(key))
         if text:
@@ -54,7 +54,12 @@ def reviewed_transcript(row: dict[str, Any], *, accept_weak: bool) -> str:
         text = normalize_space(review.get(key))
         if text:
             return text
-    if not accept_weak:
+    weak_label = row.get("weakLabel") if isinstance(row.get("weakLabel"), dict) else {}
+    if accept_weak and weak_label.get("accepted") is True:
+        text = normalize_space(weak_label.get("text"))
+        if text:
+            return text
+    if not accept_all_ocr:
         return ""
     region = row.get("region") if isinstance(row.get("region"), dict) else {}
     text = normalize_space(region.get("text"))
@@ -70,13 +75,16 @@ def reviewed_transcript(row: dict[str, Any], *, accept_weak: bool) -> str:
     return max(candidates, key=len) if candidates else ""
 
 
-def is_accepted(row: dict[str, Any], *, accept_weak: bool) -> bool:
-    if accept_weak:
+def is_accepted(row: dict[str, Any], *, accept_weak: bool, accept_all_ocr: bool) -> bool:
+    if accept_all_ocr:
         return True
     if row.get("approved") is True or row.get("reviewed") is True:
         return True
     review = row.get("review") if isinstance(row.get("review"), dict) else {}
-    return bool(review.get("approved") is True or review.get("accepted") is True)
+    if review.get("approved") is True or review.get("accepted") is True:
+        return True
+    weak_label = row.get("weakLabel") if isinstance(row.get("weakLabel"), dict) else {}
+    return bool(accept_weak and weak_label.get("accepted") is True)
 
 
 def crop_path(row: dict[str, Any]) -> str:
@@ -97,15 +105,22 @@ def detection_points(row: dict[str, Any]) -> list[list[float]] | None:
     return output
 
 
-def export(rows: list[dict[str, Any]], record_to_split: dict[str, str], out_dir: Path, *, accept_weak: bool) -> dict[str, Any]:
+def export(
+    rows: list[dict[str, Any]],
+    record_to_split: dict[str, str],
+    out_dir: Path,
+    *,
+    accept_weak: bool,
+    accept_all_ocr: bool,
+) -> dict[str, Any]:
     rec_rows: dict[str, list[str]] = {split: [] for split in SPLITS}
     det_by_split_image: dict[str, dict[str, list[dict[str, Any]]]] = {split: defaultdict(list) for split in SPLITS}
     skipped = 0
     for row in rows:
-        if not is_accepted(row, accept_weak=accept_weak):
+        if not is_accepted(row, accept_weak=accept_weak, accept_all_ocr=accept_all_ocr):
             skipped += 1
             continue
-        transcript = reviewed_transcript(row, accept_weak=accept_weak)
+        transcript = reviewed_transcript(row, accept_weak=accept_weak, accept_all_ocr=accept_all_ocr)
         crop = crop_path(row)
         if not transcript or not crop:
             skipped += 1
@@ -131,6 +146,7 @@ def export(rows: list[dict[str, Any]], record_to_split: dict[str, str], out_dir:
         "regions": len(rows),
         "skipped": skipped,
         "acceptWeak": accept_weak,
+        "acceptAllOcr": accept_all_ocr,
         "recognitionRows": {split: len(lines) for split, lines in rec_rows.items()},
         "detectionImages": {split: len(grouped) for split, grouped in det_by_split_image.items()},
     }
@@ -143,7 +159,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--regions", type=Path, default=Path("artifacts/ocr-lab/oriented-text/regions.jsonl"))
     parser.add_argument("--dataset-manifest", type=Path, default=Path("artifacts/ocr-lab/dataset-expanded/manifest.jsonl"))
     parser.add_argument("--out", type=Path, default=Path("artifacts/ocr-lab/paddleocr"))
-    parser.add_argument("--accept-weak", action="store_true", help="Export OCR-derived transcripts when reviewed labels are not present.")
+    parser.add_argument("--accept-weak", action="store_true", help="Export explicit weakLabel rows created by auto_label_regions.py.")
+    parser.add_argument("--accept-all-ocr", action="store_true", help="Lab-only mode: export every OCR crop transcript even without review or weak-label approval.")
     return parser.parse_args(argv)
 
 
@@ -151,7 +168,13 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     if not args.regions.exists():
         raise SystemExit(f"Missing regions file: {args.regions}")
-    summary = export(iter_regions(args.regions), load_splits(args.dataset_manifest), args.out, accept_weak=args.accept_weak)
+    summary = export(
+        iter_regions(args.regions),
+        load_splits(args.dataset_manifest),
+        args.out,
+        accept_weak=args.accept_weak,
+        accept_all_ocr=args.accept_all_ocr,
+    )
     print(json.dumps(summary, indent=2))
     return 0
 

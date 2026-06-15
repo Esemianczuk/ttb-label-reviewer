@@ -9,14 +9,15 @@ from ..api.deps import get_current_user, get_session_id, require_permission
 from ..api.serializers import application_to_read, asset_to_read, review_to_read
 from ..core.application_numbers import metadata_with_application_number
 from ..core.application_workflow import TransitionError, transition_application
+from ..core.demo_fixtures import ensure_demo_session, resolve_application_for_session
 from ..core.object_store import ObjectStore
+from ..core.rbac import log_audit_event
 from ..db import get_session
 from ..schemas import ApplicationCreate, ApplicationRead, ApplicationTransitionRequest, AssetRead, ReviewCreate, ReviewRead
 
 router = APIRouter(prefix="/api/applications", tags=["applications"])
 
 
-REVIEW_JOB_TYPES = ("ocr", "evidence_crop", "validation")
 REVIEW_FIELD_LABELS = {
     "brandName": "Brand Name",
     "fancifulName": "Fanciful Name",
@@ -38,8 +39,23 @@ def require_application(
     *,
     action: str = "read",
 ) -> models.Application:
-    application = session.get(models.Application, application_id)
+    application = resolve_application_for_session(session, application_id, session_id)
     if not application:
+        hidden_application = session.get(models.Application, application_id)
+        if hidden_application and current_user:
+            log_audit_event(
+                session,
+                actor=current_user,
+                actor_role=current_user.role,
+                event_type="authz.denied",
+                entity_type="applications",
+                entity_id=application_id,
+                summary="Application exists outside the active demo session.",
+                metadata={"resource": "applications", "action": action, "sessionId": session_id},
+            )
+            session.commit()
+        raise HTTPException(status_code=404, detail="Application not found.")
+    if application.session_id != session_id:
         raise HTTPException(status_code=404, detail="Application not found.")
     if current_user:
         require_permission(
@@ -48,90 +64,36 @@ def require_application(
             resource="applications",
             action=action,
             entity=application,
-            entity_id=application_id,
+            entity_id=application.id,
             not_found_for_applicant=True,
         )
-    elif application.session_id != session_id:
-        raise HTTPException(status_code=404, detail="Application not found.")
     return application
 
 
 def create_review_jobs(application: models.Application, review: models.Review, assets: list[models.Asset], payload: ReviewCreate) -> list[models.Job]:
-    jobs: list[models.Job] = []
     field_targets = review_field_targets(application.expected_fields, preferred_engine=payload.primaryEngine)
-    for asset in assets:
-        asset_payload = {
-            "application_id": application.id,
-            "review_id": review.id,
-            "asset_id": asset.id,
-            "filename": asset.original_filename,
-            "mime_type": asset.mime_type,
-            "storage_path": asset.storage_path,
-            "expected_fields": application.expected_fields,
-            "image_pixels": (asset.width or 0) * (asset.height or 0),
-        }
-        jobs.append(
-            models.Job(
-                application_id=application.id,
-                review_id=review.id,
-                session_id=application.session_id,
-                job_type="ocr",
-                status="queued",
-                priority=payload.priority,
-                payload_json={
-                    **asset_payload,
-                    "field_key": "label",
-                    "field_label": "Label evidence",
-                    "field_expected": "",
-                    "field_critical": True,
-                    "field_ocr": False,
-                    "field_targets": field_targets,
-                    "engine": "auto",
-                    "preferred_engine": payload.primaryEngine,
-                    "ocr_strategy": payload.ocrStrategy,
-                    "target_latency_ms": payload.targetLatencyMs,
-                },
-                required_capabilities={"ocr": True},
-            )
-        )
-        jobs.append(
-            models.Job(
-                application_id=application.id,
-                review_id=review.id,
-                session_id=application.session_id,
-                job_type="evidence_crop",
-                status="queued",
-                priority=payload.priority + 10,
-                payload_json={**asset_payload, "depends_on": "ocr"},
-                required_capabilities={"evidence_crop": True},
-            )
-        )
-    jobs.append(
+    return [
         models.Job(
             application_id=application.id,
             review_id=review.id,
             session_id=application.session_id,
             job_type="validation",
             status="queued",
-            priority=payload.priority + 20,
+            priority=payload.priority,
             payload_json={
                 "application_id": application.id,
                 "review_id": review.id,
                 "asset_ids": [asset.id for asset in assets],
                 "field_targets": field_targets,
-                "completed_ocr_results": [],
                 "expected_fields": application.expected_fields,
-                "depends_on": ["ocr", "evidence_crop"],
                 "ocr_strategy": payload.ocrStrategy,
                 "primary_engine": payload.primaryEngine,
-                "fallback_engine": payload.fallbackEngine,
-                "fallback_min_confidence": payload.fallbackMinConfidence,
                 "target_latency_ms": payload.targetLatencyMs,
+                "force_fresh_ocr": payload.forceFreshOcr,
             },
             required_capabilities={"validation": True},
         )
-    )
-    return jobs
+    ]
 
 
 def review_field_targets(expected_fields: dict, *, preferred_engine: str = "paddleocr") -> list[dict]:
@@ -201,11 +163,10 @@ def list_applications(
     current_user: models.User = Depends(get_current_user),
 ):
     require_permission(session, current_user, resource="applications", action="list")
-    query = select(models.Application).order_by(models.Application.created_at.desc())
+    ensure_demo_session(session, session_id)
+    query = select(models.Application).where(models.Application.session_id == session_id).order_by(models.Application.created_at.desc())
     if current_user.role == "applicant":
         query = query.where(models.Application.owner_user_id == current_user.id)
-    elif current_user.role != "admin":
-        query = query.where(models.Application.session_id == session_id)
     applications = session.scalars(query).all()
     return [application_to_read(application) for application in applications]
 

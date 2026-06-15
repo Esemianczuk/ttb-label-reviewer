@@ -2,7 +2,7 @@
 
 The console uses a USWDS-inspired visual language implemented with Ant Design tokens and local CSS. It is not a direct USWDS component migration, and it is not an official government system.
 
-The interface intentionally avoids official seals, agency badges, official website banners, `.gov` trust language, and any claim of affiliation. A persistent prototype notice appears on every route.
+The interface intentionally avoids official seals, agency badges, official website banners, `.gov` trust language, and any claim of affiliation. Assessment-scope language appears in the role entry, evaluator documentation, and page guidance instead of a persistent in-app banner on every route.
 
 ## Palette
 
@@ -32,7 +32,7 @@ Use `GovStatusTag` or `StatusTag` for application and review statuses. Status me
 
 Use `GovAlert` for important workflow state:
 
-- Prototype notice
+- Assessment scope notice
 - Action needed
 - Review required
 - Critical mismatch

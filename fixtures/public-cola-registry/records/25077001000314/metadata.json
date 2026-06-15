@@ -1,0 +1,134 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25077001000314",
+    "retrieved_at": "2026-06-14T02:33:58Z"
+  },
+  "ttb_id": "25077001000314",
+  "status": "APPROVED",
+  "approval_date": "04/07/2025",
+  "serial_number": "25TA02",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "GINREI SHIRO",
+    "fanciful_name": "SHOCHU",
+    "class_type": "OTHER SPECIALTIES & PROPRIETARIES",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": "1160651",
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25077001000314",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16831,
+      "sha256": "73fec082e9b1e1eefa1f0048bf3d50e9661fda56e7cc41e6aaa6b86332980357",
+      "downloaded_at": "2026-06-14T02:33:59Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=FRONT LABEL.png&filetype=l",
+      "local_path": "assets/label_01.png",
+      "content_type": "image/png",
+      "bytes": 150939,
+      "sha256": "87cd0d46b28f660c24bb8b2920152744a66f8da5d0c4b82d8520b49367eb1530",
+      "downloaded_at": "2026-06-14T02:33:59Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=BACK LABEL.png&filetype=l",
+      "local_path": "assets/label_02.png",
+      "content_type": "image/png",
+      "bytes": 140690,
+      "sha256": "80857570c9b8b0adfcf071d14245ecac7ac7d79148106554d7dd5ccf17c886a7",
+      "downloaded_at": "2026-06-14T02:33:59Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "25077001000314"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "28012"
+    },
+    {
+      "label": "Serial #",
+      "value": "25TA02"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "OTHER SPECIALTIES & PROPRIETARIES"
+    },
+    {
+      "label": "Origin Code",
+      "value": "JAPAN"
+    },
+    {
+      "label": "Brand Name",
+      "value": "GINREI SHIRO"
+    },
+    {
+      "label": "Fanciful Name",
+      "value": "SHOCHU"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Formula",
+      "value": "1160651"
+    },
+    {
+      "label": "Approval Date",
+      "value": "04/07/2025"
+    },
+    {
+      "label": "TTB ID: 25077001000314",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25077001000314",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=FRONT LABEL.png&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=BACK LABEL.png&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

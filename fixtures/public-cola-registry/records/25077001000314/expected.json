@@ -1,0 +1,94 @@
+{
+  "fixture_id": "ttb_25077001000314_ginrei-shiro",
+  "source_type": "official_public_registry",
+  "ttb_id": "25077001000314",
+  "expected_fields": {
+    "brandName": "GINREI SHIRO",
+    "fancifulName": "SHOCHU",
+    "classType": "OTHER SPECIALTIES & PROPRIETARIES",
+    "productType": "distilled_spirits",
+    "alcoholContent": null,
+    "netContents": null,
+    "governmentWarningRequired": true,
+    "isImported": null,
+    "countryOfOrigin": null,
+    "responsibleParty": {
+      "name": null,
+      "address": null
+    }
+  },
+  "assets": [
+    {
+      "file": "assets/printable_cola.html",
+      "role": "printable_cola",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_01.png",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    },
+    {
+      "file": "assets/label_02.png",
+      "role": "unknown_label_image",
+      "expected_ocr_targets": []
+    }
+  ],
+  "known_limitations": [
+    "Alcohol content was not available in parsed registry metadata; government warning requirement defaults to true.",
+    "Collector note: High-signal expansion; term=gin%; score=86; brand=GINREI SHIRO; label_images=2.",
+    "High-signal expansion score 86 from search term gin%."
+  ],
+  "demo_ready": true,
+  "signal": {
+    "score": 86,
+    "searchTerm": "gin%",
+    "scoreReasons": [
+      "brand",
+      "class/type",
+      "missing alcohol metadata",
+      "alcohol image hint",
+      "missing net contents metadata",
+      "missing responsible party name metadata",
+      "responsible party image hint",
+      "missing responsible party address",
+      "government warning image hint",
+      "domestic/no country-of-origin requirement",
+      "2 label image(s)",
+      "approved"
+    ],
+    "ocrHints": {
+      "available": true,
+      "engines": [
+        "easyocr"
+      ],
+      "textLength": 826,
+      "alcoholHints": [
+        "100%",
+        "24%"
+      ],
+      "netContentsHints": [],
+      "warningDetected": true,
+      "warningTermHits": 2,
+      "responsiblePartyHint": true,
+      "sample": "#17616 GINREI SHIRO SHOCHU Authentic & Single-Distilled Spirits Made from 100% Rice smooth-drinking Rice Shochu (spirits distilled from resulting rice) fermented at extremely low temperatures; delightfully fruity Ginjo aroma: THE ROCKS WITH SODA WATER MIXED 1 1 Serving Size L Ingredients; 2 Rice Koji Serving Per Container Distilled & Bottled by: Sening m 24%0 (4Sproof) | Takahashi Shuzo Co. Ltd; Alcohol 6y volume Kumamoto. Japan 02 of alcohol [mported by: Calorics Trading ? Mutual Inc; Carbohydr",
+      "errors": [
+        "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=FRONT LABEL.png&filetype=l: tesseract: tesseract is not installed or it's not in your PATH. See README file for more information."
+      ]
+    }
+  },
+  "demo_audit": {
+    "status": "ready",
+    "source": "high_signal_ocr_preflight",
+    "reason": "Public registry metadata plus OCR preflight found the common required label evidence targets.",
+    "reviewed_common_fields": [
+      "alcoholContent",
+      "brandName",
+      "classType",
+      "countryOfOrigin",
+      "governmentWarning",
+      "netContents",
+      "producerName"
+    ]
+  }
+}

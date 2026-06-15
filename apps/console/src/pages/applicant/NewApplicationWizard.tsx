@@ -1,5 +1,5 @@
 import { DeleteOutlined, FileAddOutlined, InboxOutlined, SendOutlined, StopOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Form, Input, Row, Select, Space, Steps, Table, Typography, Upload, message } from "antd";
+import { Button, Card, Col, Form, Input, Row, Select, Space, Steps, Table, Tag, Typography, Upload, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { UploadFile } from "antd/es/upload/interface";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -8,6 +8,7 @@ import { useNavigate, useParams } from "react-router";
 import {
   DEFAULT_APPLICANT_VALUES,
   IMAGE_ROLE_OPTIONS,
+  REQUIRED_APPLICANT_FIELDS,
   applicantFieldLabel,
   type ApplicantFormValues,
   type ApplicantDataImportResult,
@@ -22,8 +23,6 @@ import {
   updateDraftImageRole
 } from "./applicantUtils";
 import { readinessIssues } from "./applicantUtils";
-import { ApplicationProgressTracker } from "../../components/application/ApplicationProgressTracker";
-import { GovProcessTracker } from "../../components/application/GovProcessTracker";
 import { GovAlert } from "../../components/common/GovAlert";
 import { fieldLabels } from "../../domain/application/demoData";
 import type { LabelImage, ReviewApplication } from "../../domain/application/types";
@@ -32,6 +31,21 @@ import { autosaveApplicantDraft, deleteApplicantDraft, resubmitApplicantApplicat
 import { GovPageShell } from "../../layouts/GovPageShell";
 
 const { Dragger } = Upload;
+const FIELD_REVIEW_KEYS: Array<keyof ApplicantFormValues> = [
+  "productType",
+  "brandName",
+  "fancifulName",
+  "classType",
+  "alcoholContent",
+  "netContents",
+  "governmentWarningRequired",
+  "producerName",
+  "countryOfOrigin",
+  "applicationId",
+  "labelId",
+  "submitter"
+];
+const FIELD_REVIEW_REQUIRED_KEYS = new Set<keyof ApplicantFormValues>([...REQUIRED_APPLICANT_FIELDS, "productType"]);
 
 export function NewApplicationWizard() {
   const [form] = Form.useForm<ApplicantFormValues>();
@@ -42,7 +56,7 @@ export function NewApplicationWizard() {
   const isEditing = Boolean(applicationId);
   const correctionFields = editingApplication?.metadata.correctionFields || [];
   const editingDraft = Boolean(editingApplication && isDraftStatus(editingApplication.status));
-  const [current, setCurrent] = useState(isEditing ? 1 : 0);
+  const [current, setCurrent] = useState(0);
   const [uploads, setUploads] = useState<DraftUploadImage[]>([]);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [dataFileList, setDataFileList] = useState<UploadFile[]>([]);
@@ -129,8 +143,9 @@ export function NewApplicationWizard() {
 
       if (currentIssues.length) {
         messageApi.error(`Cannot submit yet: ${currentIssues.join(" ")}`);
-        setAttentionFields(missingApplicantFields(values));
-        setCurrent(images.length ? 1 : 2);
+        const missingFields = missingApplicantFields(values);
+        setAttentionFields(missingFields);
+        setCurrent(missingFields.length ? 0 : 2);
         return;
       }
 
@@ -188,7 +203,6 @@ export function NewApplicationWizard() {
       form.setFieldsValue(mergedValues);
       setImportResult(result);
       setAttentionFields(result.attentionFields);
-      setCurrent(1);
       if (result.detectedFields.length === 0) {
         messageApi.warning("No recognizable application fields were found. You can still fill the form manually.");
       } else if (result.attentionFields.length) {
@@ -254,8 +268,7 @@ export function NewApplicationWizard() {
             </Space>
           </GovAlert>
         ) : null}
-        <Card size="small" title="Application process">
-          <GovProcessTracker status={editingApplication?.status || "DRAFT"} />
+        <Card size="small" title="Application steps">
           <Steps
             current={current}
             responsive
@@ -289,11 +302,22 @@ export function NewApplicationWizard() {
                 </Form.Item>
               </Col>
             </Row>
+            {activeAttentionFields.length ? (
+              <div className="wizard-alert">
+                <GovAlert type="warning" title="Needs attention">
+                  {activeAttentionFields.map((field) => applicantFieldLabel(field)).join(", ")} was not found in the imported application data. Fill the highlighted fields before submitting.
+                </GovAlert>
+              </div>
+            ) : null}
+            <div className="applicant-fields-section">
+              <Typography.Title level={3}>Application fields</Typography.Title>
+              <ApplicationFields highlightFields={correctionFields} attentionFields={activeAttentionFields} />
+            </div>
             <div className="metadata-import-panel">
               <div className="metadata-import-copy">
-                <Typography.Text strong>Import application data</Typography.Text>
+                <Typography.Text strong>Optional auto-fill</Typography.Text>
                 <Typography.Text type="secondary">
-                  Drop a COLA registry JSON, XML, HTML, or text export to fill matching fields. Missing required fields are highlighted on the next step.
+                  Drop a COLA registry JSON, XML, HTML, or text export to fill matching fields. You can ignore this and complete the form manually.
                 </Typography.Text>
               </div>
               <Dragger
@@ -329,14 +353,7 @@ export function NewApplicationWizard() {
           </div>
 
           <div hidden={current !== 1}>
-            {activeAttentionFields.length ? (
-              <div className="wizard-alert">
-                <GovAlert type="warning" title="Needs attention">
-                  {activeAttentionFields.map((field) => applicantFieldLabel(field)).join(", ")} was not found in the imported application data. Fill the highlighted fields before submitting.
-                </GovAlert>
-              </div>
-            ) : null}
-            <ApplicationFields highlightFields={correctionFields} attentionFields={activeAttentionFields} />
+            <FieldReadinessReview values={values} attentionFields={activeAttentionFields} onEdit={() => setCurrent(0)} />
           </div>
 
           <div hidden={current !== 2}>
@@ -385,13 +402,12 @@ export function NewApplicationWizard() {
                   Required application fields and label images are present. {editingApplication && !editingDraft ? "Resubmit this packet for reviewer action." : "Submit this packet for reviewer action."}
                 </GovAlert>
               )}
-              <ApplicationProgressTracker status={editingApplication?.status || "DRAFT"} />
             </Space>
           </div>
         </Form>
       </Card>
 
-      <Card size="small">
+      <Card size="small" className="wizard-action-card">
         <Space wrap>
           <Button disabled={current === 0} onClick={() => setCurrent(current - 1)}>
             Previous
@@ -409,8 +425,9 @@ export function NewApplicationWizard() {
               <Button
                 type="primary"
                 onClick={() => {
-                  setAttentionFields(missingApplicantFields(values));
-                  setCurrent(imagesForSubmission.length ? 1 : 2);
+                  const missingFields = missingApplicantFields(values);
+                  setAttentionFields(missingFields);
+                  setCurrent(missingFields.length ? 0 : 2);
                 }}
               >
                 Fix Issues
@@ -523,6 +540,74 @@ function readableFieldName(field: string): string {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function applicantDisplayLabel(field: keyof ApplicantFormValues): string {
+  const labels: Partial<Record<keyof ApplicantFormValues, string>> = {
+    productType: "Product type",
+    brandName: "Brand name",
+    fancifulName: "Fanciful name",
+    classType: "Class/type",
+    alcoholContent: "Alcohol content",
+    netContents: "Net contents",
+    governmentWarningRequired: "Government health warning",
+    producerName: "Producer / importer",
+    countryOfOrigin: "Country of origin",
+    applicationId: "TTB application ID",
+    labelId: "Label ID",
+    submitter: "Applicant / organization",
+    notes: "Notes"
+  };
+  return labels[field] || applicantFieldLabel(field) || readableFieldName(String(field));
+}
+
+function applicantFieldValue(values: ApplicantFormValues, field: keyof ApplicantFormValues): string {
+  const value = values[field];
+  if (field === "governmentWarningRequired") return value === false ? "Not required" : "Required";
+  if (field === "productType") return String(value || "").replaceAll("_", " ") || "Not supplied";
+  return String(value || "").trim() || "Not supplied";
+}
+
+function FieldReadinessReview({
+  values,
+  attentionFields,
+  onEdit
+}: {
+  values: ApplicantFormValues;
+  attentionFields: Array<keyof ApplicantFormValues>;
+  onEdit: () => void;
+}) {
+  const missingFields = new Set(missingApplicantFields(values));
+  const attentionSet = new Set(attentionFields);
+  return (
+    <Space orientation="vertical" className="full-width" size={12}>
+      <GovAlert type={missingFields.size ? "warning" : "success"} title={missingFields.size ? "Field review needed" : "Required fields complete"}>
+        {missingFields.size
+          ? "Some required application fields still need values. Use Edit fields to return to the full form."
+          : "Required application values are ready for label-image upload."}
+      </GovAlert>
+      <div className="field-readiness-grid">
+        {FIELD_REVIEW_KEYS.map((field) => {
+          const required = FIELD_REVIEW_REQUIRED_KEYS.has(field);
+          const supplied = applicantFieldValue(values, field) !== "Not supplied";
+          const missing = required && !supplied;
+          const attention = attentionSet.has(field);
+          return (
+            <div className={`field-readiness-item ${missing || attention ? "field-readiness-item-attention" : ""}`} key={String(field)}>
+              <Typography.Text type="secondary">{applicantDisplayLabel(field)}</Typography.Text>
+              <Typography.Text>{applicantFieldValue(values, field)}</Typography.Text>
+              <Space size={6} wrap>
+                {required ? <Tag color="blue">Required</Tag> : <Tag>Optional</Tag>}
+                {missing ? <Tag color="orange">Missing</Tag> : supplied ? <Tag color="green">Complete</Tag> : <Tag>Not supplied</Tag>}
+                {attention && !missing ? <Tag color="gold">Check imported value</Tag> : null}
+              </Space>
+            </div>
+          );
+        })}
+      </div>
+      <Button onClick={onEdit}>Edit fields</Button>
+    </Space>
+  );
+}
+
 export function ApplicationFields({ highlightFields = [], attentionFields = [] }: { highlightFields?: string[]; attentionFields?: string[] } = {}) {
   const highlighted = new Set(highlightFields);
   const needsAttention = new Set(attentionFields);
@@ -573,6 +658,21 @@ export function ApplicationFields({ highlightFields = [], attentionFields = [] }
       <Col xs={24} md={12}>
         <Form.Item label="Net contents" name="netContents" className={itemClass("netContents")} help={fieldHelp("netContents")} rules={[{ required: true }]}>
           <Input placeholder="750 mL" />
+        </Form.Item>
+      </Col>
+      <Col xs={24} md={12}>
+        <Form.Item
+          label="Government health warning"
+          name="governmentWarningRequired"
+          className={itemClass("governmentWarningRequired")}
+          help={fieldHelp("governmentWarningRequired", "Most alcohol beverage labels require the government health warning.")}
+        >
+          <Select
+            options={[
+              { value: true, label: "Required" },
+              { value: false, label: "Not required" }
+            ]}
+          />
         </Form.Item>
       </Col>
       <Col xs={24} md={12}>

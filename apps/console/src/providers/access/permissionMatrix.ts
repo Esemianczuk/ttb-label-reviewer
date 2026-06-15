@@ -25,14 +25,13 @@ export const permissionMatrix: Record<UserRole, Rule[]> = {
     { resource: "reports", actions: ["list", "download"] }
   ],
   admin: [
-    { resource: "*", actions: ["*"] },
-    { resource: "users", actions: ["list", "show", "manage"] },
-    { resource: "workers", actions: ["list", "show", "manage", "recalibrate", "drain", "disable"] },
-    { resource: "jobs", actions: ["list", "show", "manage", "retry", "cancel", "raise_priority"] },
-    { resource: "benchmarks", actions: ["list", "show", "manage", "run"] },
-    { resource: "auditEvents", actions: ["list", "show", "manage", "download"] },
-    { resource: "fixtures", actions: ["list", "show", "manage"] },
-    { resource: "settings", actions: ["list", "show", "update", "manage", "purge"] }
+    { resource: "users", actions: ["list", "show"] },
+    { resource: "workers", actions: ["list", "show"] },
+    { resource: "jobs", actions: ["list", "show"] },
+    { resource: "benchmarks", actions: ["list", "show", "run"] },
+    { resource: "auditEvents", actions: ["list", "show", "download"] },
+    { resource: "fixtures", actions: ["list", "show"] },
+    { resource: "settings", actions: ["list", "show"] }
   ]
 };
 

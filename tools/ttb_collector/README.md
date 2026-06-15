@@ -1,6 +1,6 @@
 # TTB Public COLA Registry Fixture Collector
 
-This tool builds a small, legally clean fixture set from public TTB Public COLA Registry records for the local label-review prototype. It fetches known public detail pages, saves raw HTML, extracts field/value metadata, downloads available public label or printable assets, normalizes expected fields, and writes dataset manifests for tests.
+This tool builds a legally clean fixture set from public TTB Public COLA Registry records for the local label-review prototype. It fetches known public detail pages, saves raw HTML, extracts field/value metadata, downloads available public label or printable assets, normalizes expected fields, and writes dataset manifests for tests.
 
 “This collector is intended to build a small test fixture set from public TTB COLA Registry records. It is not intended for bulk scraping. Use low request rates, cache results, and prefer manual capture for small curated samples.”
 
@@ -11,7 +11,7 @@ This tool builds a small, legally clean fixture set from public TTB Public COLA 
 - Official source: [TTB Public COLA Registry](https://www.ttb.gov/regulated-commodities/labeling/cola-public-registry).
 - Use public registry pages and public downloadable/printable resources only.
 - Do not use authenticated systems, private endpoints, or controls bypasses.
-- Keep submitted fixtures small and curated. A practical take-home sample is 25-50 records, not a mirror of the registry.
+- Keep submitted/demo fixtures curated. A practical bundled take-home sample is dozens of records, not a mirror of the registry. Larger training/evaluation pools should stay under ignored `fixtures/public-cola-registry/bulk/`.
 
 ## Install
 
@@ -58,7 +58,7 @@ Data.gov documents the public detail query pattern:
 The default base endpoint is defined in `tools/ttb_collector/config/constants.py`:
 
 ```python
-PUBLIC_DETAIL_BASE_URL = "https://www.ttbonline.gov/colasonline/publicSearchColasBasic.do"
+PUBLIC_DETAIL_BASE_URL = "https://www.ttbonline.gov/colasonline/viewColaDetails.do"
 ```
 
 If TTB changes routing, verify the detail URL manually through the Public COLA Registry, update that constant or pass `--base-url`, and rerun with `--refresh` only for the records you want rebuilt.
@@ -70,7 +70,7 @@ Government sites may use sessions, JavaScript, redirects, or link shapes that st
 ```bash
 python tools/ttb_collector/manual_capture_helper.py \
   --ttb-id XXXXXXXXXXXXXX \
-  --detail-url "https://www.ttbonline.gov/colasonline/publicSearchColasBasic.do?action=publicDisplaySearchBasic&ttbid=XXXXXXXXXXXXXX" \
+  --detail-url "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=XXXXXXXXXXXXXX" \
   --html-file ~/Downloads/cola_detail.html \
   --assets ~/Downloads/front.jpg ~/Downloads/back.jpg \
   --out fixtures/public-cola-registry
@@ -92,6 +92,45 @@ python tools/ttb_collector/discover_ttb_ids.py \
 ```
 
 If the public search form requires JavaScript or session state, try `--use-browser` after installing Playwright browsers. Browser fallback is never used by default. If discovery cannot parse results, provide known IDs or use `manual_capture_helper.py`.
+
+## High-Signal Expansion For OCR Training
+
+For a few hundred candidate records, use the high-signal expansion workflow instead of broad scraping. It posts to the public search form, preflights candidate detail pages, optionally runs lightweight OCR on public label images, and scores records for the fields this project validates: brand, class/type, ABV/proof, net contents, responsible party, country of origin for imports, and the government warning.
+
+```bash
+export REQUESTS_CA_BUNDLE=tools/ttb_collector/cache/certs/ttb-ca-bundle.pem
+
+python tools/ttb_collector/expand_high_signal_pool.py \
+  --target 200 \
+  --detail-limit 260 \
+  --date-from 01/01/2025 \
+  --date-to 06/13/2026 \
+  --ocr-preflight \
+  --out-summary fixtures/public-cola-registry/bulk/high-signal-selection.json \
+  --out-seed fixtures/public-cola-registry/bulk/high-signal-seed.yaml
+```
+
+Collect the selected records into the ignored bulk area:
+
+```bash
+python tools/ttb_collector/collect_by_ttb_ids.py \
+  --input fixtures/public-cola-registry/bulk/high-signal-seed.yaml \
+  --out fixtures/public-cola-registry/bulk/high-signal-records \
+  --limit 200 \
+  --delay-seconds 2.0 \
+  --respect-cache
+```
+
+Promote only a reviewed subset into the bundled demo queue:
+
+```bash
+python tools/ttb_collector/promote_high_signal_records.py \
+  --source-root fixtures/public-cola-registry/bulk/high-signal-records \
+  --selection fixtures/public-cola-registry/bulk/high-signal-selection.json \
+  --limit 25 \
+  --min-score 90 \
+  --apply
+```
 
 ## Caching and Rate Limiting
 

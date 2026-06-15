@@ -91,6 +91,8 @@ def canonical_review_run_status(status: str | None) -> ReviewRunStatus:
         return "RUNNING"
     if normalized in {"QUEUED", "PENDING"}:
         return "QUEUED"
+    if normalized in {"COMPLETE", "REVIEW_COMPLETED"}:
+        return "COMPLETED"
     if normalized in {"QUEUED", "RUNNING", "COMPLETED", "FAILED", "CANCELLED"}:
         return normalized  # type: ignore[return-value]
     return "QUEUED"

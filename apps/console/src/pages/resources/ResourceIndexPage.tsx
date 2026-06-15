@@ -12,7 +12,7 @@ import { consoleResourceNames, isConsoleResourceName, resourceLabels } from "../
 
 export function ResourceIndexPage() {
   const { resourceName } = useParams();
-  const { mode, provider, backendUnavailable, fallbackToBrowser } = useProcessingMode();
+  const { mode, provider, backendUnavailable } = useProcessingMode();
   const { role } = useCurrentRole();
   const validResource = isConsoleResourceName(resourceName) ? resourceName : undefined;
   const allowed = Boolean(validResource && canAccess(role, validResource, "list"));
@@ -49,8 +49,7 @@ export function ResourceIndexPage() {
           type="warning"
           showIcon
           title="Backend coordinator unavailable"
-          description="This resource is registered to the FastAPI provider in Backend and Cluster modes. Switch to Browser Only to keep reviewing offline."
-          action={<Button onClick={fallbackToBrowser}>Use Browser Only</Button>}
+          description="This resource is registered to the FastAPI provider. The console will use browser fallback automatically while the coordinator is offline."
         />
       ) : null}
       {list.query.isError ? (

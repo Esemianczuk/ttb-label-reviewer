@@ -1,0 +1,68 @@
+name: ttb-label-reviewer
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+      args:
+        VITE_TTB_BACKEND_URL: ${VITE_TTB_BACKEND_URL:-http://127.0.0.1:8000}
+    image: ttb-label-reviewer-api:local
+    environment:
+      TTB_API_DATABASE_URL: sqlite:////data/api.sqlite3
+      TTB_API_DATA_DIR: /data
+      TTB_API_STATIC_DIR: /app/apps/console/dist
+      TTB_API_HOST: 0.0.0.0
+      TTB_API_PORT: "8000"
+      TTB_API_LAN_MODE: ${TTB_API_LAN_MODE:-0}
+      TTB_COORDINATOR_URL: http://api:8000
+      TTB_REQUIRE_WORKER_JOIN_TOKEN: "1"
+      TTB_DEMO_TOKEN_SECRET: ${TTB_DEMO_TOKEN_SECRET:-local-compose-demo-token-secret}
+      TTB_SEED_DEMO: ${TTB_SEED_DEMO:-1}
+      TTB_WORKER_STALE_SECONDS: ${TTB_WORKER_STALE_SECONDS:-60}
+    ports:
+      - "127.0.0.1:${TTB_DOCKER_API_PORT:-8000}:8000"
+    volumes:
+      - api-data:/data
+      - ./benchmarks/results:/app/benchmarks/results
+      - ./models:/app/models:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/worker.Dockerfile
+    image: ttb-label-reviewer-worker:local
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      TTB_WORKER_COORDINATOR: http://api:8000
+      TTB_WORKER_DATA_DIR: /worker-cache
+      TTB_WORKER_SECRET_FILE: /worker-cache/worker-secret.txt
+      TTB_WORKER_NAME: compose-paddleocr
+      TTB_WORKER_ENGINES: paddleocr
+      TTB_WORKER_CONCURRENCY: ${TTB_WORKER_CONCURRENCY:-auto}
+      TTB_WORKER_WAIT_SECONDS: "120"
+      TTB_WORKER_JOIN_TTL_SECONDS: "86400"
+      TTB_WORKER_ENABLE_HEAVY_OCR: "1"
+      PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK: "True"
+      TTB_LAYOUTLMV3_REQUIRE_MODEL: ${TTB_LAYOUTLMV3_REQUIRE_MODEL:-0}
+    volumes:
+      - worker-cache:/worker-cache
+      - worker-model-cache:/root/.paddlex
+      - worker-hf-cache:/root/.cache
+      - ./models:/app/models:ro
+    restart: unless-stopped
+
+volumes:
+  api-data:
+  worker-cache:
+  worker-model-cache:
+  worker-hf-cache:

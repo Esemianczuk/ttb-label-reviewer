@@ -56,13 +56,27 @@ def extract_ocr_candidates(ocr_result: dict[str, Any], asset_id: str | None) -> 
 
 
 def normalize_bbox(bbox: Any) -> dict[str, float] | None:
-    if not isinstance(bbox, dict) or not {"x", "y"}.issubset(bbox):
+    if isinstance(bbox, dict) and {"x", "y"}.issubset(bbox):
+        width = bbox.get("width", bbox.get("w"))
+        height = bbox.get("height", bbox.get("h"))
+        if width is None or height is None:
+            return None
+        return {"x": float(bbox["x"]), "y": float(bbox["y"]), "width": float(width), "height": float(height)}
+
+    points: list[tuple[float, float]] = []
+    if isinstance(bbox, (list, tuple)):
+        for point in bbox:
+            if isinstance(point, dict) and {"x", "y"}.issubset(point):
+                points.append((float(point["x"]), float(point["y"])))
+            elif isinstance(point, (list, tuple)) and len(point) >= 2:
+                points.append((float(point[0]), float(point[1])))
+    if not points:
         return None
-    width = bbox.get("width", bbox.get("w"))
-    height = bbox.get("height", bbox.get("h"))
-    if width is None or height is None:
-        return None
-    return {"x": float(bbox["x"]), "y": float(bbox["y"]), "width": float(width), "height": float(height)}
+    xs = [point[0] for point in points]
+    ys = [point[1] for point in points]
+    left = min(xs)
+    top = min(ys)
+    return {"x": left, "y": top, "width": max(xs) - left, "height": max(ys) - top}
 
 
 def expected_matches_candidate(expected: Any, candidate: dict[str, Any]) -> bool:

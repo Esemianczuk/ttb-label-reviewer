@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSubscription } from "@refinedev/core";
 import type { DataProvider } from "@refinedev/core";
-import type { AdminJob, AdminSettings, AuditEvent, BenchmarkRun, ConsoleSnapshot, ProcessingMode, ReviewApplication, WorkerSnapshot } from "../../domain/application/types";
+import type { AdminJob, AdminSettings, AuditEvent, BenchmarkRun, ConsoleSnapshot, OcrModelStatus, ProcessingMode, ReviewApplication, WorkerSnapshot } from "../../domain/application/types";
 import { createDefaultAdminSettings } from "../../domain/application/demoData";
 import { useConsoleStore } from "../../hooks/useConsoleStore";
 import { useProcessingModeContext } from "../../providers/processing/ProcessingModeProvider";
 
 type AdminActionPayload = Record<string, unknown>;
-type AdminAction = "admin/settings" | "admin/worker" | "admin/job" | "admin/benchmark" | "admin/purge-raw-images" | "admin/purge-old-jobs" | "admin/delete-packet" | "admin/purge-all";
+type AdminAction = "admin/benchmark";
 
-const adminResources = ["applications", "workers", "jobs", "auditEvents", "settings", "benchmarks"] as const;
+const adminResources = ["applications", "workers", "jobs", "auditEvents", "settings", "benchmarks", "ocrModelStatus"] as const;
 
 export function useAdminOperations() {
   const { snapshot: localSnapshot, activeApplication } = useConsoleStore();
@@ -66,6 +66,7 @@ export function useAdminOperations() {
       ...localSnapshot,
       ...remoteSnapshot,
       adminSettings: remoteSnapshot.adminSettings || localSnapshot.adminSettings,
+      ocrModelStatus: remoteSnapshot.ocrModelStatus || localSnapshot.ocrModelStatus,
       activeApplicationId: localSnapshot.activeApplicationId,
       processingMode: localSnapshot.processingMode
     }),
@@ -78,11 +79,12 @@ export function useAdminOperations() {
 function normalizeRemoteSnapshot(base: ConsoleSnapshot, resources: Record<string, any[]>): Partial<ConsoleSnapshot> {
   return {
     applications: resources.applications?.map(normalizeApplication).filter((application): application is ReviewApplication => Boolean(application)) || base.applications,
-    workers: resources.workers?.map(normalizeWorker) || base.workers,
+    workers: resources.workers?.map(normalizeWorker).filter(isSupportedBackendWorker) || base.workers,
     jobs: resources.jobs?.map(normalizeJob) || base.jobs,
     auditEvents: resources.auditEvents?.map(normalizeAuditEvent) || base.auditEvents,
     adminSettings: normalizeSettings(resources.settings),
-    benchmarkRuns: resources.benchmarks?.map(normalizeBenchmark) || base.benchmarkRuns
+    benchmarkRuns: resources.benchmarks?.map(normalizeBenchmark) || base.benchmarkRuns,
+    ocrModelStatus: resources.ocrModelStatus?.map(normalizeOcrModelStatus) || base.ocrModelStatus
   };
 }
 
@@ -152,6 +154,10 @@ function normalizeWorker(row: any): WorkerSnapshot {
   return normalizeBackendWorker(row);
 }
 
+function isSupportedBackendWorker(worker: WorkerSnapshot): boolean {
+  return workerEngineNames(worker).some((engine) => engine.includes("paddleocr"));
+}
+
 function engineNames(row: any): string[] {
   const capabilities = row?.capabilities || {};
   const preferredEngine = capabilities.engineProfile?.preferredEngine;
@@ -176,8 +182,7 @@ function capabilityNames(row: any, engines: string[]): string[] {
     ...booleanCapabilityKeys(capabilities),
     ...stringList(capabilities.supportedJobTypes),
     capabilities.accelerators?.cuda?.available ? "cuda" : "",
-    capabilities.accelerators?.appleMps?.available ? "mps" : "",
-    capabilities.onnxRuntime?.available ? "onnx-runtime" : ""
+    capabilities.accelerators?.appleMps?.available ? "mps" : ""
   ];
   return uniqueStrings(names);
 }
@@ -222,43 +227,32 @@ function numberValue(value: unknown): number | undefined {
 
 function publicEngineNames(names: string[], capabilities: any): string[] {
   const normalized = uniqueStrings(names.map(normalizeEngineName).filter(Boolean));
-  const production = normalized.filter((engine) => !fixtureEngineNames.has(engine));
+  const production = normalized.filter((engine) => engine === "paddleocr");
   if (production.length) return sortEngineNames(production, capabilities);
-  return normalized.some((engine) => fixtureEngineNames.has(engine)) ? ["fixture fallback only"] : [];
+  return [];
 }
 
 function normalizeEngineName(value: string): string {
   const engine = String(value || "").trim().toLowerCase();
-  if (engine === "null" || engine === "null-engine") return "fixture fallback";
-  if (engine === "easyocr") return "easyocr";
-  if (engine === "tesseract-js" || engine === "browser-tesseract") return "tesseract-js";
+  if (engine === "null" || engine === "null-engine") return "";
   if (engine === "paddleocr") return "paddleocr";
-  if (engine === "onnx") return "onnx";
   return engine;
 }
 
-const fixtureEngineNames = new Set(["fixture fallback", "fixture fallback only"]);
+function workerEngineNames(worker: WorkerSnapshot): string[] {
+  return [...(worker.engines || []), ...worker.capabilities].map((value) => value.toLowerCase());
+}
 
 function sortEngineNames(engines: string[], capabilities: any): string[] {
   const cuda = capabilities?.accelerators?.cuda?.available;
-  const mps = capabilities?.accelerators?.appleMps?.available;
   const labels = engines.map((engine) => {
     if (engine === "paddleocr" && cuda) return "PaddleOCR COLA (CUDA preferred)";
     if (engine === "paddleocr") return "PaddleOCR COLA";
-    if (engine === "easyocr" && cuda) return "EasyOCR (CUDA preferred)";
-    if (engine === "easyocr" && mps) return "EasyOCR (Metal detected)";
-    if (engine === "easyocr") return "EasyOCR";
-    if (engine === "tesseract-js") return "Tesseract.js";
-    if (engine === "tesseract") return "Tesseract";
-    if (engine === "onnx") return "ONNX OCR";
     return engine;
   });
   const rank = (label: string) => {
     const lower = label.toLowerCase();
     if (lower.includes("paddle")) return 0;
-    if (lower.includes("easyocr")) return 1;
-    if (lower.includes("onnx")) return 2;
-    if (lower.includes("tesseract")) return 3;
     return 10;
   };
   return uniqueStrings(labels).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
@@ -321,4 +315,18 @@ function normalizeSettings(rows?: any[]): AdminSettings {
 
 function normalizeBenchmark(row: any): BenchmarkRun {
   return row as BenchmarkRun;
+}
+
+function normalizeOcrModelStatus(row: any): OcrModelStatus {
+  return {
+    id: row?.id || "layoutlmv3-cola",
+    status: row?.status || "baseline",
+    trainedModelLoaded: Boolean(row?.trainedModelLoaded),
+    mode: row?.mode || "paddleocr-baseline-weak-alignment",
+    modelDir: row?.modelDir || "models/field-extractor/layoutlmv3-cola/current",
+    message: row?.message || "Field extractor status unavailable.",
+    modelCard: row?.modelCard || null,
+    metrics: row?.metrics || null,
+    failureReport: row?.failureReport || null
+  };
 }

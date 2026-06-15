@@ -3,7 +3,7 @@ import { alcoholValuesEquivalent, parseAlcoholContent } from '../normalization/a
 import { makeReview, SEVERITY, STATUS } from './status.js';
 
 const ALCOHOL_CANDIDATE_PATTERN =
-  /(?:\d{1,3}(?:\.\d+)?\s*%\s*(?:ALC(?:OHOL)?\.?\s*(?:BY\s*)?VOL(?:UME)?\.?|ABV)?|\d{1,3}(?:\.\d+)?\s*(?:ALC(?:OHOL)?\.?\s*(?:BY\s*)?VOL(?:UME)?\.?|ABV)|\d{2,3}(?:\.\d+)?\s*PROOF)/gi;
+  /(?:ALC(?:OHOL)?\.?(?:\s+|[,;:]\s*)[0-9I1|lOBH%]{1,5}\s*(?:%\s*)?(?:(?:BY|B[YV]|RY)\s*)?V[O0C]?[L1I]?|\d{1,3}(?:[\.,]\d+)?\s*%\s*(?:ALC(?:OHOL)?\.?\s*(?:BY\s*)?(?:VOL(?:UME)?\.?|[/I1|]?\s*V[O0]L(?:UME)?\.?)|ABV)?|\d{1,3}(?:[\.,]\d+)?\s*(?:ALC(?:OHOL)?\.?\s*(?:BY\s*)?(?:VOL(?:UME)?\.?|[/I1|]?\s*V[O0]L(?:UME)?\.?)|ALC\s*[/I1|]?\s*V[O0]L|ALCIV[O0]L|ABV)|\d{2,3}(?:\.\d+)?\s*PROOF)/gi;
 
 export function validateAlcohol(expected, ocrResult) {
   const field = 'Alcohol Content';
@@ -21,7 +21,7 @@ export function validateAlcohol(expected, ocrResult) {
   const candidates = findRegexCandidates(ALCOHOL_CANDIDATE_PATTERN, ocrResult, {
     method: 'regex-alcohol-candidate',
   })
-    .map((candidate) => ({ ...candidate, parsed: parseAlcoholContent(candidate.evidence) }))
+    .map((candidate) => ({ ...candidate, parsed: parseAlcoholContent(candidate.value) || parseAlcoholContent(candidate.evidence) }))
     .filter((candidate) => candidate.parsed);
 
   if (!candidates.length) {

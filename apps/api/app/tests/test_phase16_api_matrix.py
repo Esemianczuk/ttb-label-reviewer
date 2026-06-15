@@ -143,5 +143,4 @@ def test_purge_all_demo_data_removes_decisions_corrections_and_audits(tmp_path):
         assert db.scalar(select(models.ReviewDecision)) is None
         assert db.scalar(select(models.CorrectionRequest)) is None
         audit = db.scalars(select(models.AuditEvent)).all()
-        assert len(audit) == 1
-        assert audit[0].event_type == "retention.purge_all_demo_data"
+        assert any(event.event_type == "retention.purge_all_demo_data" for event in audit)

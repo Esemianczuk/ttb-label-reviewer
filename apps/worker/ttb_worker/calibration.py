@@ -41,6 +41,8 @@ def calibrate_engines(engines: list[OcrEngine], data_dir: Path, capabilities: di
     }
     results: dict[str, Any] = {
         "version": CALIBRATION_VERSION,
+        "configuredEngines": [engine.id for engine in engines],
+        "engineProfile": capabilities.get("engineProfile") or {},
         "engines": {},
     }
     for engine in engines:

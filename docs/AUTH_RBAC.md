@@ -10,7 +10,7 @@ Fresh databases and Alembic-upgraded databases seed:
 | --- | --- | --- |
 | applicant | `applicant@example.local` | Create/upload/submit/resubmit own applications and view own review reports. |
 | reviewer | `reviewer@example.local` | Review submitted or in-progress work, create reviews, request corrections, override decisions, and export reviewed reports. |
-| admin | `admin@example.local` | Manage users, workers, cluster settings, audit, purge/benchmark operations, and view all applications. |
+| admin | `admin@example.local` | Manage users, workers, backend settings, audit, purge/benchmark operations, and view all applications. |
 
 `Base.metadata.create_all` paths call the same seeding helper that the `0005_seed_demo_auth_users` Alembic migration uses, so evaluator SQLite databases and migrated databases converge on the same identities.
 

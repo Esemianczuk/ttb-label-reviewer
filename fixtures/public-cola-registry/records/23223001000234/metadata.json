@@ -1,0 +1,126 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=23223001000234",
+    "retrieved_at": "2026-06-14T02:34:02Z"
+  },
+  "ttb_id": "23223001000234",
+  "status": "SURRENDERED",
+  "approval_date": "08/15/2023",
+  "serial_number": "230805",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "WHISKEY THIEF",
+    "fanciful_name": null,
+    "class_type": "STRAIGHT BOURBON WHISKY",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=23223001000234",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16810,
+      "sha256": "1d288539851f54832e2a561a6e32b9328a2de41320bcef09a31e6b668f2c513b",
+      "downloaded_at": "2026-06-14T02:34:02Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=WTWHPTTBProofsback275x325.png&filetype=l",
+      "local_path": "assets/label_01.png",
+      "content_type": "image/png",
+      "bytes": 85948,
+      "sha256": "9ada09ede5a3f122ab0592372eb2d0ac2d6ca2d0d32315646bd20593989a54c3",
+      "downloaded_at": "2026-06-14T02:34:02Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=WTWHPTTBProofsfront3x425.png&filetype=l",
+      "local_path": "assets/label_02.png",
+      "content_type": "image/png",
+      "bytes": 280499,
+      "sha256": "c112696b4f0ef25205070c00b2c11f2676dad75136bd3a7cba3149f56aca1d70",
+      "downloaded_at": "2026-06-14T02:34:03Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "23223001000234"
+    },
+    {
+      "label": "Status",
+      "value": "SURRENDERED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "51317"
+    },
+    {
+      "label": "Serial #",
+      "value": "230805"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "STRAIGHT BOURBON WHISKY"
+    },
+    {
+      "label": "Origin Code",
+      "value": "KENTUCKY"
+    },
+    {
+      "label": "Brand Name",
+      "value": "WHISKEY THIEF"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "08/15/2023"
+    },
+    {
+      "label": "TTB ID: 23223001000234",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=23223001000234",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=WTWHPTTBProofsback275x325.png&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=WTWHPTTBProofsfront3x425.png&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

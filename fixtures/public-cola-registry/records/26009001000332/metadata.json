@@ -1,0 +1,111 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=26009001000332",
+    "retrieved_at": "2026-06-14T02:33:49Z"
+  },
+  "ttb_id": "26009001000332",
+  "status": "APPROVED",
+  "approval_date": "01/15/2026",
+  "serial_number": "26KVJY",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "VODKA KANGAROO JOEYS",
+    "fanciful_name": null,
+    "class_type": "VODKA 80-89 PROOF",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=26009001000332",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 17267,
+      "sha256": "7d8a50cf182f461c682e2b21f766d23c69e6f80ad24394dd4889a7624500a526",
+      "downloaded_at": "2026-06-14T02:33:49Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=KangarooVodka200mLSticker.png&filetype=l",
+      "local_path": "assets/label_01.png",
+      "content_type": "image/png",
+      "bytes": 304925,
+      "sha256": "5b8f75ec7a39b980d2dbc29ae10b48a1b84e42e610856f26bcec835c0f7846e3",
+      "downloaded_at": "2026-06-14T02:33:49Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "26009001000332"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "44644"
+    },
+    {
+      "label": "Serial #",
+      "value": "26KVJY"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "VODKA 80-89 PROOF"
+    },
+    {
+      "label": "Origin Code",
+      "value": "GEORGIA"
+    },
+    {
+      "label": "Brand Name",
+      "value": "VODKA KANGAROO JOEYS"
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "01/15/2026"
+    },
+    {
+      "label": "TTB ID: 26009001000332",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=26009001000332",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=KangarooVodka200mLSticker.png&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    }
+  ]
+}

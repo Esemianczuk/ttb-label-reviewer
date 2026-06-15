@@ -9,20 +9,20 @@ This file is intentionally explicit so evaluators can tell prototype scope from 
 - It is an assessment prototype for workflow, architecture, OCR evidence, deterministic validation, and review operations.
 - No cloud AI is required.
 
-## Browser Only
+## Browser Fallback
 
-- Browser OCR quality depends on image quality, browser performance, and local hardware.
-- Uploaded Browser Only images stay in that browser session and are not persisted across a full browser data reset.
+- Browser fallback OCR quality depends on image quality, browser performance, and local hardware.
+- Uploaded browser-fallback images stay in that browser session and are not persisted across a full browser data reset.
 - Bundled samples often use OCR fixtures so the evaluator path is fast and repeatable.
 - The browser worker pool supports multi-image packets and CSV manifests, but the main console reviewer queue is optimized around one-image applications.
 
-## Backend And Cluster
+## Backend
 
-- Backend mode persists core applications, assets, jobs, workers, reviews, settings, audit, retention, and benchmark data, but the richest applicant/reviewer workflow remains Browser Only first.
+- Backend mode is the primary evaluator path and persists core applications, assets, jobs, workers, reviews, settings, audit, retention, and benchmark data.
 - Some browser-snapshot conveniences do not yet have complete persisted backend parity, especially every draft/correction/reviewer field-decision detail.
 - WebSocket live updates are derived from polling/database snapshots, not database triggers.
 - SQLite is the default no-Docker evaluator database; Postgres is supported by configuration but not required for the demo.
-- Cluster benchmarks mark runs skipped when no eligible workers are available.
+- Multi-host cluster mode is intentionally out of scope for the hardened shippable demo.
 
 ## OCR And Validation
 
@@ -41,7 +41,7 @@ This file is intentionally explicit so evaluators can tell prototype scope from 
 ## Documentation Artifacts
 
 - Screenshots in `docs/screenshots` are captured from the local console and should be refreshed after major UI changes.
-- Host-specific cluster instructions for `bigbertha`, `thevault`, and `mac` are optional lab notes. They assume those hosts are reachable from the evaluator's network and have the repo/dependencies installed or synced.
+- Multi-host worker setup is intentionally out of scope for the shippable demo. Use the local backend worker path.
 
 ## Performance
 

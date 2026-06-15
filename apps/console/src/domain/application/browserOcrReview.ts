@@ -8,6 +8,7 @@ export type BrowserReviewProgressEvent = {
   stage: "queued" | "segmenting" | "ocr" | "validating" | "field" | "complete";
   message: string;
   percent: number;
+  scanIndex?: number;
   imageId?: string;
   imageName?: string;
   field?: ReviewField;
@@ -37,6 +38,16 @@ type BrowserValidationField = {
 type BrowserImageResult = LabelImage & {
   ocrResult: any;
   ocrSource: "sample-fixture" | "browser-ocr";
+};
+
+type BrowserOcrProgressMeta = {
+  phase?: string;
+  variantLabel?: string;
+  variantIndex?: number;
+  variantTotal?: number;
+  variantProgress?: number;
+  overallProgress?: number;
+  crop?: EvidenceCrop;
 };
 
 const fieldKeysByLabel: Record<string, ReviewField["fieldKey"]> = {
@@ -73,38 +84,40 @@ export async function createBrowserOcrReview(
   await emitReviewProgress(options, {
     stage: "queued",
     message: `Queued ${application.images.length} image${application.images.length === 1 ? "" : "s"} for local OCR.`,
-    percent: 8,
+    percent: 0,
+    scanIndex: 0,
     imageId: application.images[0]?.id,
     imageName: application.images[0]?.name,
     workerLabel: `${workerCount} browser worker${workerCount === 1 ? "" : "s"}`
   });
   await emitReviewProgress(options, {
     stage: "segmenting",
-    message: "Segmenting label regions and preparing OCR views.",
-    percent: 18,
+    message: "Preparing full-image and regional OCR views.",
+    percent: 0,
+    scanIndex: 1,
     imageId: application.images[0]?.id,
     imageName: application.images[0]?.name,
     workerLabel: `${workerCount} browser worker${workerCount === 1 ? "" : "s"}`
   });
-  await pauseForReviewAnimation(90);
   options.onProgress?.("Reading label text with local OCR.");
-  const imageResults = await recognizeApplicationImages(application, workerCount, options.onProgress);
+  const imageResults = await recognizeApplicationImages(application, workerCount, options);
   const fixtureCount = imageResults.filter((image) => image.ocrSource === "sample-fixture").length;
   const liveCount = imageResults.length - fixtureCount;
   await emitReviewProgress(options, {
     stage: "ocr",
-    message: liveCount ? "OCR text captured from browser workers." : "Bundled OCR fixture loaded for this public COLA sample.",
-    percent: 38,
+    message: liveCount ? "OCR text captured from browser workers; field scoring is starting." : "Bundled OCR fixture loaded; field scoring is starting.",
+    percent: 0,
+    scanIndex: 4,
     imageId: imageResults[0]?.id,
     imageName: imageResults[0]?.name,
     workerLabel: liveCount ? `${workerCount} browser worker${workerCount === 1 ? "" : "s"}` : "Fixture OCR cache"
   });
-  await pauseForReviewAnimation(liveCount ? 70 : 120);
   options.onProgress?.("Validating detected label evidence against expected TTB fields.");
   await emitReviewProgress(options, {
     stage: "validating",
     message: "Classifying extracted evidence against required TTB fields.",
-    percent: 48,
+    percent: 0,
+    scanIndex: 5,
     imageId: imageResults[0]?.id,
     imageName: imageResults[0]?.name,
     workerLabel: "Deterministic validators"
@@ -118,7 +131,8 @@ export async function createBrowserOcrReview(
     await emitReviewProgress(options, {
       stage: "field",
       message: `${mapped.label}: ${statusLabel(mapped.status)} at ${Math.round(mapped.confidence * 100)}% confidence.`,
-      percent: Math.min(94, 54 + Math.round(((index + 1) / Math.max(validationFields.length, 1)) * 36)),
+      percent: fieldCompletionPercent(index, validationFields.length),
+      scanIndex: index + 6,
       imageId: mapped.evidence[0]?.sourceImageId,
       imageName: application.images.find((image) => image.id === mapped.evidence[0]?.sourceImageId)?.name,
       field: mapped,
@@ -127,7 +141,6 @@ export async function createBrowserOcrReview(
       crop: mapped.evidence[0]?.crop,
       workerLabel: mapped.evidence[0]?.pageAnchor || "Evidence scorer"
     });
-    await pauseForReviewAnimation(liveCount ? 30 : 75);
   }
   const status = normalizeReviewStatus(validation.overallStatus);
   const completedAt = new Date();
@@ -135,6 +148,7 @@ export async function createBrowserOcrReview(
     stage: "complete",
     message: "Evidence review complete.",
     percent: 100,
+    scanIndex: validationFields.length + 6,
     imageId: imageResults[0]?.id,
     imageName: imageResults[0]?.name,
     workerLabel: "Review package ready"
@@ -163,12 +177,15 @@ export async function createBrowserOcrReview(
 
 async function emitReviewProgress(options: BrowserReviewOptions, event: BrowserReviewProgressEvent): Promise<void> {
   options.onProgress?.(event.message);
-  await options.onProgressEvent?.(event);
-}
-
-async function pauseForReviewAnimation(ms: number): Promise<void> {
-  if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-  await new Promise((resolve) => globalThis.setTimeout(resolve, ms));
+  try {
+    const maybePromise = options.onProgressEvent?.(event);
+    if (maybePromise && typeof (maybePromise as Promise<void>).catch === "function") {
+      void (maybePromise as Promise<void>).catch(() => undefined);
+    }
+  } catch {
+    // Progress reporting is intentionally best-effort; OCR and validation must stay on the fast path.
+  }
+  return Promise.resolve();
 }
 
 function statusLabel(status: FieldStatus): string {
@@ -177,20 +194,57 @@ function statusLabel(status: FieldStatus): string {
   return "review";
 }
 
+function fieldCompletionPercent(index: number, total: number): number {
+  return Math.max(0, Math.min(100, Math.round(((index + 1) / Math.max(total, 1)) * 100)));
+}
+
 async function recognizeApplicationImages(
   application: ReviewApplication,
   workerCount: number,
-  onProgress?: (message: string) => void
+  options: BrowserReviewOptions
 ): Promise<BrowserImageResult[]> {
   const images = application.images;
   const imageResults = new Array<BrowserImageResult>(images.length);
   const liveImages: Array<{ image: LabelImage; index: number }> = [];
+  const imageOcrProgress = new Array<number>(images.length).fill(0);
+  let progressTick = 0;
+  let lastOcrProgressEmitAt = 0;
+
+  const emitImageProgress = (
+    image: LabelImage,
+    index: number,
+    message: string,
+    imageProgress?: number,
+    force = false,
+    meta: BrowserOcrProgressMeta | null = null
+  ) => {
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    if (!force && now - lastOcrProgressEmitAt < 140) return;
+    lastOcrProgressEmitAt = now;
+    progressTick += 1;
+    if (typeof imageProgress === "number" && Number.isFinite(imageProgress)) {
+      imageOcrProgress[index] = Math.max(imageOcrProgress[index] || 0, Math.max(0, Math.min(1, imageProgress)));
+    }
+    const variantLabel = meta?.variantLabel
+      ? `${meta.variantLabel}${meta.variantIndex && meta.variantTotal ? ` ${meta.variantIndex}/${meta.variantTotal}` : ""}`
+      : undefined;
+    void emitReviewProgress(options, {
+      stage: "ocr",
+      message,
+      percent: 0,
+      scanIndex: progressTick,
+      imageId: image.id,
+      imageName: image.name,
+      crop: meta?.crop,
+      workerLabel: variantLabel || `${workerCount} browser worker${workerCount === 1 ? "" : "s"}`
+    });
+  };
 
   await Promise.all(
     images.map(async (image, index) => {
       const fixture = await loadLocalOcrFixture(image, application);
       if (fixture) {
-        onProgress?.(`${image.name}: Sample fixture OCR loaded`);
+        emitImageProgress(image, index, `${image.name}: bundled OCR fixture loaded.`, 1, true);
         imageResults[index] = { ...image, ocrResult: fixture, ocrSource: "sample-fixture" };
       } else {
         liveImages.push({ image, index });
@@ -212,9 +266,24 @@ async function recognizeApplicationImages(
   try {
     const results = await (pool.run as any)(tasks, {
       workerCount: Math.min(workerCount, liveImages.length),
-      onTaskStatus: (task: { name: string }, _status: string, message: string) => onProgress?.(`${task.name}: ${message}`),
-      onTaskProgress: (task: { name: string }, message: string) => onProgress?.(`${task.name}: ${message}`),
-      onTaskComplete: (task: { name: string }) => onProgress?.(`${task.name}: OCR complete`)
+      onTaskStatus: (task: { id: string; name: string; index: number }, _status: string, message: string) => {
+        emitImageProgress(images[task.index], task.index, `${task.name}: ${message}`, 0.02, true);
+      },
+      onTaskProgress: (task: { id: string; name: string; index: number }, message: string, meta?: BrowserOcrProgressMeta | null) => {
+        const tesseractPercent = tesseractPercentFromMessage(message);
+        const variantProgress = variantProgressFromMessage(message);
+        emitImageProgress(
+          images[task.index],
+          task.index,
+          `${task.name}: ${message}`,
+          meta?.overallProgress ?? variantProgress ?? (0.18 + tesseractPercent * 0.72),
+          false,
+          meta || null
+        );
+      },
+      onTaskComplete: (task: { id: string; name: string; index: number }) => {
+        emitImageProgress(images[task.index], task.index, `${task.name}: OCR complete.`, 1, true);
+      }
     });
     tasks.forEach((task, resultIndex) => {
       imageResults[task.index] = { ...images[task.index], ocrResult: results[resultIndex], ocrSource: "browser-ocr" };
@@ -223,6 +292,24 @@ async function recognizeApplicationImages(
   } finally {
     pool.terminate();
   }
+}
+
+function tesseractPercentFromMessage(message: string): number {
+  const match = String(message || "").match(/(\d{1,3})\s*%/);
+  if (!match) return 0.35;
+  const value = Number.parseInt(match[1], 10);
+  if (!Number.isFinite(value)) return 0.35;
+  return Math.max(0, Math.min(1, value / 100));
+}
+
+function variantProgressFromMessage(message: string): number | null {
+  const match = String(message || "").match(/\((\d+)\/(\d+)\).*?(\d{1,3})\s*%/);
+  if (!match) return null;
+  const index = Number.parseInt(match[1], 10);
+  const total = Number.parseInt(match[2], 10);
+  const percent = Number.parseInt(match[3], 10);
+  if (!Number.isFinite(index) || !Number.isFinite(total) || !Number.isFinite(percent) || total <= 0) return null;
+  return Math.max(0, Math.min(1, ((index - 1) + Math.max(0, Math.min(100, percent)) / 100) / total));
 }
 
 export async function loadLocalOcrFixture(image: LabelImage, _application: ReviewApplication): Promise<any | null> {
@@ -294,7 +381,7 @@ function mapBrowserField(application: ReviewApplication, field: BrowserValidatio
 }
 
 function mapEvidence(application: ReviewApplication, field: BrowserValidationField, confidence: number): ReviewEvidence {
-  const block = field.evidence?.block || {};
+  const block = field.evidence?.block || field.evidence || {};
   const fallbackImage = application.images[0];
   const excerpt = field.extracted || field.evidence?.evidence || field.evidence?.value || field.evidence?.text || field.reason;
   return {

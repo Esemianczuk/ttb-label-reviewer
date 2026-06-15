@@ -6,6 +6,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy.orm import sessionmaker
 
 from .api import (
@@ -13,7 +14,6 @@ from .api import (
     routes_admin,
     routes_auth,
     routes_assets,
-    routes_cluster,
     routes_health,
     routes_jobs,
     routes_reports,
@@ -24,6 +24,16 @@ from .api import (
 from .config import Settings, get_settings
 from .core.mdns import MdnsAdvertiser
 from .db import init_db, make_session_factory
+
+
+class SPAStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope):
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as error:
+            if error.status_code != 404:
+                raise
+            return await super().get_response("index.html", scope)
 
 
 def create_app(settings: Settings | None = None, session_factory: sessionmaker | None = None, init_database: bool = True) -> FastAPI:
@@ -74,7 +84,6 @@ def create_app(settings: Settings | None = None, session_factory: sessionmaker |
     app.include_router(routes_admin.router)
     app.include_router(routes_auth.router)
     app.include_router(routes_auth.authz_router)
-    app.include_router(routes_cluster.router)
     app.include_router(routes_applications.router)
     app.include_router(routes_jobs.router)
     app.include_router(routes_reviews.router)
@@ -84,7 +93,7 @@ def create_app(settings: Settings | None = None, session_factory: sessionmaker |
     app.include_router(ws_progress.router)
 
     if settings.static_dir.exists() and (settings.static_dir / "index.html").exists():
-        app.mount("/", StaticFiles(directory=settings.static_dir, html=True), name="frontend")
+        app.mount("/", SPAStaticFiles(directory=settings.static_dir, html=True), name="frontend")
 
     return app
 

@@ -1,0 +1,25 @@
+{
+  "id": "abv_noisy_by_vol",
+  "description": "A tight OCR crop may read 13% BY VOL as 1386 BYVOL; alcohol normalization should recover the intended ABV candidate without broad guessing.",
+  "expectedFields": {
+    "productType": "wine",
+    "brandName": "WHAT THE PHOQUE",
+    "fancifulName": "CABERNET SAUVIGNON",
+    "classType": "TABLE RED WINE",
+    "alcoholContent": "13% BY VOL",
+    "netContents": "750 ML",
+    "governmentWarningRequired": true,
+    "countryOfOrigin": "FRANCE"
+  },
+  "ocrText": "WHAT THE PHOQUE CABERNET SAUVIGNON RED WINE ALC, 1386 BYVOL NET CONTENT: 750 ML PRODUCT OF FRANCE GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.",
+  "expectedOverallStatus": "PASS",
+  "expectedStatuses": {
+    "brandName": "PASS",
+    "fancifulName": "PASS",
+    "classType": "PASS",
+    "alcoholContent": "PASS",
+    "netContents": "PASS",
+    "governmentWarningRequired": "PASS",
+    "countryOfOrigin": "PASS"
+  }
+}

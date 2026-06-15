@@ -10,7 +10,7 @@ from .. import models
 from ..api.deps import get_current_user, require_permission
 from ..api.serializers import job_to_read, worker_event_to_read, worker_to_read
 from ..core.auth import generate_secret, hash_secret, verify_secret
-from ..core.join_tokens import consume_join_token, token_expired
+from ..core.join_tokens import consume_join_token, create_join_token, token_expired
 from ..core.scheduler import claim_next_job
 from ..db import get_session
 from ..schemas import (
@@ -19,6 +19,8 @@ from ..schemas import (
     JobCompleteRequest,
     JobFailRequest,
     JobRead,
+    JoinTokenCreate,
+    JoinTokenRead,
     WorkerEventRead,
     WorkerHeartbeat,
     WorkerRead,
@@ -105,6 +107,30 @@ def list_worker_events(limit: int = 25, session: Session = Depends(get_session),
     safe_limit = max(1, min(limit, 100))
     events = session.scalars(select(models.WorkerEvent).order_by(models.WorkerEvent.created_at.desc()).limit(safe_limit)).all()
     return [worker_event_to_read(event) for event in events]
+
+
+@router.post("/join-token", response_model=JoinTokenRead, status_code=201)
+def issue_worker_join_token(
+    payload: JoinTokenCreate,
+    request: Request,
+    session: Session = Depends(get_session),
+    current_user: models.User = Depends(get_current_user),
+):
+    require_permission(session, current_user, resource="workers", action="manage")
+    settings = request.app.state.settings
+    ttl_seconds = payload.ttlSeconds or settings.join_token_ttl_seconds
+    coordinator_url = payload.coordinatorUrl or coordinator_url_for(request)
+    token, record = create_join_token(session, ttl_seconds)
+    session.commit()
+    command = f"python -m ttb_worker --coordinator {coordinator_url} --join-token {token}"
+    return {
+        "token": token,
+        "expiresAt": record.expires_at,
+        "coordinatorUrl": coordinator_url,
+        "command": command,
+        "mdnsService": None,
+        "warning": settings.lan_warning,
+    }
 
 
 @router.get("/{worker_id}", response_model=WorkerRead)
@@ -353,6 +379,8 @@ def complete(worker_id: str, payload: JobCompleteRequest, request: Request, sess
     job.completed_at = now
     job.lease_expires_at = None
     job.result_json = payload.result
+    if job.job_type == "ocr" and job.review_id:
+        append_ocr_result_to_validation_jobs(session, job, payload.result)
     worker.active_jobs = max(0, worker.active_jobs - 1)
     worker.last_seen_at = now
     if job.review_id:
@@ -372,6 +400,38 @@ def complete(worker_id: str, payload: JobCompleteRequest, request: Request, sess
     session.commit()
     session.refresh(job)
     return job_to_read(job)
+
+
+def append_ocr_result_to_validation_jobs(session: Session, job: models.Job, result: dict) -> None:
+    if not job.review_id:
+        return
+    payload = job.payload_json or {}
+    result_entry = {
+        "jobId": job.id,
+        "assetId": result.get("assetId") or payload.get("asset_id") or payload.get("assetId"),
+        "fieldKey": payload.get("field_key") or payload.get("fieldKey"),
+        "fieldLabel": payload.get("field_label") or payload.get("fieldLabel"),
+        "fieldExpected": payload.get("field_expected") or payload.get("fieldExpected"),
+        "engine": result.get("engine"),
+        "workerId": job.assigned_worker_id,
+        "result": result,
+    }
+    validation_jobs = session.scalars(
+        select(models.Job).where(
+            models.Job.review_id == job.review_id,
+            models.Job.job_type == "validation",
+            models.Job.status.in_(["queued", "leased", "running"]),
+        )
+    ).all()
+    for validation_job in validation_jobs:
+        validation_payload = dict(validation_job.payload_json or {})
+        completed_results = list(validation_payload.get("completed_ocr_results") or validation_payload.get("completedOcrResults") or [])
+        if any(existing.get("jobId") == job.id for existing in completed_results if isinstance(existing, dict)):
+            continue
+        completed_results.append(result_entry)
+        validation_payload["completed_ocr_results"] = completed_results
+        validation_job.payload_json = validation_payload
+        validation_job.updated_at = models.now_utc()
 
 
 @router.post("/{worker_id}/fail", response_model=JobRead)
@@ -438,3 +498,10 @@ def bearer_token(request: Request) -> str | None:
     if scheme.lower() != "bearer" or not token:
         return None
     return token.strip()
+
+
+def coordinator_url_for(request: Request) -> str:
+    settings = request.app.state.settings
+    if settings.coordinator_public_url:
+        return settings.coordinator_public_url.rstrip("/")
+    return str(request.base_url).rstrip("/")

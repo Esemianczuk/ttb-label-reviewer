@@ -1,0 +1,126 @@
+{
+  "source": {
+    "system": "TTB Public COLA Registry",
+    "detail_url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25117001000065",
+    "retrieved_at": "2026-06-14T02:34:07Z"
+  },
+  "ttb_id": "25117001000065",
+  "status": "APPROVED",
+  "approval_date": "04/29/2025",
+  "serial_number": "25BWC1",
+  "registry_number": null,
+  "permit_number": null,
+  "applicant_name": null,
+  "applicant_address": null,
+  "application": {
+    "brand_name": "VODKA BROOKLYN WINE CO.",
+    "fanciful_name": null,
+    "class_type": "VODKA 80-89 PROOF",
+    "product_type": null,
+    "alcohol_content": null,
+    "net_contents": null,
+    "formula_id": null,
+    "origin": null,
+    "permit_number": null,
+    "applicant_name": null,
+    "applicant_address": null,
+    "vintage": null,
+    "appellation": null
+  },
+  "assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25117001000065",
+      "local_path": "assets/printable_cola.html",
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 16758,
+      "sha256": "05cdc158ceecdbafcce14eb7def1d51fb299d7bad3d77c4666391e7624b52d0a",
+      "downloaded_at": "2026-06-14T02:34:07Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=BWC VODKA-Front.jpg&filetype=l",
+      "local_path": "assets/label_01.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 348370,
+      "sha256": "e93347723a8fe5a08753afbe210482d1cbf92f6b3746d00b4a53ce2b5e040af5",
+      "downloaded_at": "2026-06-14T02:34:07Z"
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=BWC VODKA-Back.jpg&filetype=l",
+      "local_path": "assets/label_02.jpg",
+      "content_type": "image/jpeg",
+      "bytes": 318070,
+      "sha256": "1e22a56642e94d5b1762a8e741d0d3165073198bf76dd01b5a2784cac1ba25ad",
+      "downloaded_at": "2026-06-14T02:34:07Z"
+    }
+  ],
+  "raw_fields": [
+    {
+      "label": "TTB ID",
+      "value": "25117001000065"
+    },
+    {
+      "label": "Status",
+      "value": "APPROVED"
+    },
+    {
+      "label": "Vendor Code",
+      "value": "21712"
+    },
+    {
+      "label": "Serial #",
+      "value": "25BWC1"
+    },
+    {
+      "label": "Class/Type Code",
+      "value": "VODKA 80-89 PROOF"
+    },
+    {
+      "label": "Origin Code",
+      "value": "NEW YORK"
+    },
+    {
+      "label": "Brand Name",
+      "value": "VODKA BROOKLYN WINE CO."
+    },
+    {
+      "label": "Type of Application",
+      "value": "LABEL APPROVAL"
+    },
+    {
+      "label": "Approval Date",
+      "value": "04/29/2025"
+    },
+    {
+      "label": "TTB ID: 25117001000065",
+      "value": "Printable Version"
+    },
+    {
+      "label": "TTB F 5100.31",
+      "value": "Application For and Certification/ Exemption of Label/Bottle Approval"
+    }
+  ],
+  "parse_warnings": [],
+  "discovered_assets": [
+    {
+      "kind": "printable_cola",
+      "url": "https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25117001000065",
+      "local_path": "assets/printable_cola.html",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=BWC VODKA-Front.jpg&filetype=l",
+      "local_path": "assets/label_01.bin",
+      "content_type": null
+    },
+    {
+      "kind": "label_image",
+      "url": "https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=BWC VODKA-Back.jpg&filetype=l",
+      "local_path": "assets/label_02.bin",
+      "content_type": null
+    }
+  ]
+}

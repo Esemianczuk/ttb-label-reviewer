@@ -1,29 +1,28 @@
-import { Button, Layout } from "antd";
-import { useEffect } from "react";
-import { Outlet, useNavigate } from "react-router";
+import { Button, Layout, Modal, Space, Typography } from "antd";
+import { useState } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router";
 import type { UserRole } from "../domain/application/types";
 import { useCurrentRole } from "../hooks/useCurrentRole";
 import { resetSnapshot } from "../providers/data/browserStore";
 import { useProcessingMode } from "../hooks/useProcessingMode";
 import { GovAlert } from "../components/common/GovAlert";
 import { GovAppHeader } from "./GovAppHeader";
-import { GovSidebar } from "./GovSidebar";
+import { GovSidebar, GuidanceModalContent } from "./GovSidebar";
+import { guidanceForPath } from "./pageGuidance";
 import { roleHomePath } from "../providers/auth/authProvider";
 
 export function AppLayout() {
   const { Content } = Layout;
   const navigate = useNavigate();
+  const location = useLocation();
+  const [mobileGuidanceOpen, setMobileGuidanceOpen] = useState(false);
   const { role, identity, setRole } = useCurrentRole();
   const {
     mode,
-    setMode,
     provider,
     health,
     backendUrl,
-    setBackendUrl,
-    backendUnavailable,
-    fallbackToBrowser,
-    clusterDashboardActive
+    backendUnavailable
   } = useProcessingMode();
 
   const selectRole = (nextRole: UserRole) => {
@@ -31,21 +30,28 @@ export function AppLayout() {
     navigate(roleHomePath(nextRole), { replace: true });
   };
 
-  useEffect(() => {
-    if (role !== "admin" && mode !== "browser") setMode("browser");
-  }, [mode, role, setMode]);
+  const resetDemo = () => {
+    const snapshot = resetSnapshot();
+    if (role === "reviewer" && snapshot.activeApplicationId) {
+      navigate(`/reviewer/applications/${snapshot.activeApplicationId}`, { replace: true });
+      return;
+    }
+    navigate(roleHomePath(role), { replace: true });
+  };
+
+  const guidance = guidanceForPath(location.pathname, role);
 
   return (
     <Layout className="app-shell">
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <GovAppHeader
         mode={mode}
-        onModeChange={setMode}
         health={health}
         role={role}
         identity={identity}
         onRoleChange={selectRole}
-        onReset={() => resetSnapshot()}
+        onGuidanceOpen={() => setMobileGuidanceOpen(true)}
+        onReset={resetDemo}
       />
       <Layout>
         <GovSidebar
@@ -56,8 +62,6 @@ export function AppLayout() {
           providerLabel={provider.label}
           healthMessage={health.message}
           backendUrl={backendUrl}
-          onBackendUrlChange={setBackendUrl}
-          clusterDashboardActive={clusterDashboardActive}
         />
         <Content id="main-content" className="app-content">
           {role === "admin" && health.warning ? (
@@ -67,13 +71,28 @@ export function AppLayout() {
           ) : null}
           {role === "admin" && backendUnavailable ? (
             <div className="backend-fallback-alert">
-              <GovAlert type="warning" title="Backend coordinator unavailable" action={<Button onClick={fallbackToBrowser}>Use Browser Only</Button>}>
-                Backend and Cluster modes use the FastAPI provider. Browser Only keeps the queue, review tools, uploads, and PDF export available offline.
+              <GovAlert type="warning" title="Backend coordinator unavailable">
+                The console has fallen back to browser-local OCR. Start the local FastAPI/PaddleOCR runner to return to the primary backend path automatically.
               </GovAlert>
             </div>
           ) : null}
           <Outlet />
         </Content>
+        <Modal
+          title={(
+            <Space orientation="vertical" size={0} className="page-guidance-title">
+              <Typography.Text type="secondary">{guidance.scope} guidance</Typography.Text>
+              <Typography.Text strong>{guidance.title}</Typography.Text>
+            </Space>
+          )}
+          className="page-guidance-modal"
+          width={760}
+          open={mobileGuidanceOpen}
+          onCancel={() => setMobileGuidanceOpen(false)}
+          footer={<Button onClick={() => setMobileGuidanceOpen(false)}>Close</Button>}
+        >
+          <GuidanceModalContent guidance={guidance} />
+        </Modal>
       </Layout>
     </Layout>
   );

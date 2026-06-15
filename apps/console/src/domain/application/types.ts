@@ -1,6 +1,6 @@
 export type UserRole = "applicant" | "reviewer" | "admin";
 
-export type ProcessingMode = "browser" | "backend" | "cluster";
+export type ProcessingMode = "browser" | "backend";
 
 export type ApplicationStatus =
   | "DRAFT"
@@ -187,7 +187,6 @@ export type AdminSettings = {
   browserOcrAllowed: boolean;
   backendCpuOcrAllowed: boolean;
   gpuOcrAllowed: boolean;
-  distributedWorkersAllowed: boolean;
   maxConcurrency: number;
   validatorThreshold: number;
   warningStrictness: "lenient" | "standard" | "strict";
@@ -225,6 +224,18 @@ export type BenchmarkRun = {
   createdAt: string;
 };
 
+export type OcrModelStatus = {
+  id: string;
+  status: "trained" | "baseline" | "unavailable";
+  trainedModelLoaded: boolean;
+  mode: string;
+  modelDir: string;
+  message: string;
+  modelCard?: Record<string, unknown> | null;
+  metrics?: Record<string, unknown> | null;
+  failureReport?: Record<string, unknown> | null;
+};
+
 export type AuditEvent = {
   id: string;
   createdAt: string;
@@ -242,6 +253,7 @@ export type ConsoleSnapshot = {
   jobs: AdminJob[];
   adminSettings: AdminSettings;
   benchmarkRuns: BenchmarkRun[];
+  ocrModelStatus: OcrModelStatus[];
   auditEvents: AuditEvent[];
   activeApplicationId: string;
   processingMode: ProcessingMode;

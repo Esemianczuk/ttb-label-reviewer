@@ -2,7 +2,7 @@
 
 The applicant portal demonstrates how a submitter can prepare a local label application packet, attach label images, submit it for reviewer action, and resubmit updates when a reviewer requests changes.
 
-Browser Only mode is the smoothest evaluator path. Backend mode supports core application/upload/review APIs, but the richest applicant wizard experience is browser-snapshot first.
+Backend mode is the primary evaluator path. Browser fallback remains available when the coordinator is absent and keeps uploads local to the browser session.
 
 ## What To Click
 
@@ -19,8 +19,8 @@ Browser Only mode is the smoothest evaluator path. Backend mode supports core ap
 Expected outcome:
 
 - Required application fields and at least one image are enforced.
-- Browser Only mode keeps uploaded images in the browser session.
-- OCR and deterministic validation are reviewer tools; applicant uploads remain local in Browser Only mode.
+- Browser fallback keeps uploaded images in the browser session.
+- OCR and deterministic validation are reviewer tools; applicant uploads remain local in browser fallback mode.
 - The application moves through draft, submitted, correction, resubmission, and decision states.
 
 ## Fields
@@ -41,7 +41,7 @@ The wizard captures the TTB-facing fields used by the validators:
 
 ## Images
 
-The UI accepts JPG/JPEG, PNG, and WebP for local testing. Each uploaded file is converted into a local browser object URL in Browser Only mode.
+The UI accepts JPG/JPEG, PNG, and WebP for local testing. Each uploaded file is converted into a local browser object URL in browser fallback mode.
 
 Supported role labels:
 

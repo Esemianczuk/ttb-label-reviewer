@@ -280,10 +280,19 @@ function inferProductType(classType: string): string {
 
 export function applicantFieldLabel(field: keyof ApplicantFormValues): string {
   const labels: Partial<Record<keyof ApplicantFormValues, string>> = {
+    productType: "Product type",
     brandName: "Brand name",
+    fancifulName: "Fanciful name",
     classType: "Class/type",
     alcoholContent: "Alcohol content",
-    netContents: "Net contents"
+    netContents: "Net contents",
+    governmentWarningRequired: "Government health warning",
+    producerName: "Producer / importer",
+    countryOfOrigin: "Country of origin",
+    applicationId: "TTB application ID",
+    labelId: "Label ID",
+    submitter: "Applicant / organization",
+    notes: "Notes"
   };
   return labels[field] || String(field);
 }

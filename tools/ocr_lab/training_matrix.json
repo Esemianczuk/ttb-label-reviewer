@@ -12,11 +12,19 @@
   "models": [
     {
       "name": "PaddleOCR PP-OCR",
-      "role": "primary backend detector/recognizer candidate",
+      "role": "primary backend full-image detector/recognizer",
       "train": ["text_detection", "text_recognition", "angle_classifier"],
-      "use_when": "We have reviewed quadrilateral text boxes plus line transcripts.",
-      "expected_value": "Best long-term path for arbitrary orientation, dense label layouts, and GPU/CPU production deployment.",
+      "use_when": "We need one fast full-image OCR pass with text geometry preserved for field extraction.",
+      "expected_value": "Reads arbitrary label layouts and supplies line/token boxes for LayoutLMv3 evidence extraction.",
       "risk": "Requires the most annotation discipline and package/runtime management."
+    },
+    {
+      "name": "LayoutLMv3 token classifier",
+      "role": "primary backend field extractor",
+      "train": ["token_classification_bio"],
+      "use_when": "PaddleOCR has produced full-image text tokens and bounding boxes.",
+      "expected_value": "Learns which source OCR tokens correspond to brand, class/type, ABV, net contents, producer, country, and government warning fields.",
+      "risk": "Only extracts spans from OCR output; it cannot recover text PaddleOCR failed to read. Synthetic labels must not contaminate final test metrics."
     },
     {
       "name": "EasyOCR",
@@ -59,5 +67,17 @@
     "reviewer_override_rate",
     "false_pass_rate_on_intentional_mismatches"
   ],
-  "promotion_rule": "Only promote a trained model when it improves validation-set field recall without increasing false passes on the untouched test set."
+  "promotion_rule": "Only promote a trained model when it improves validation-set field recall without increasing false passes on the untouched test set.",
+  "tooling": {
+    "paddle_full_image_pipeline": "tools/ocr_lab/paddle_full_image_pipeline.py",
+    "layoutlmv3_dataset_builder": "tools/ocr_lab/build_layoutlmv3_ner_dataset.py",
+    "layoutlmv3_trainer": "tools/ocr_lab/train_layoutlmv3_token_classifier.py",
+    "layoutlmv3_synthetic_generator": "tools/ocr_lab/generate_layoutlm_synthetic_corpus.py",
+    "weak_labeler": "tools/ocr_lab/auto_label_regions.py",
+    "region_ranker": "tools/ocr_lab/train_region_ranker.py",
+    "paddleocr_exporter": "tools/ocr_lab/export_paddleocr_manifests.py",
+    "promotion_guard": "tools/ocr_lab/promote_paddleocr_model.py",
+    "default_paddleocr_model_slot": "models/ocr/paddle-cola/current",
+    "default_layoutlmv3_model_slot": "models/field-extractor/layoutlmv3-cola/current"
+  }
 }

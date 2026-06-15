@@ -1,0 +1,10 @@
+retrieved_at: 2026-06-14T02:34:08Z
+system: TTB Public COLA Registry
+ttb_id: 25156001000242
+source_kind: public_registry
+detail_url: https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25156001000242
+final_url: https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicDisplaySearchBasic&ttbid=25156001000242
+asset_urls:
+  - https://www.ttbonline.gov/colasonline/viewColaDetails.do?action=publicFormDisplay&ttbid=25156001000242
+  - https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=rum4u front label.jpg&filetype=l
+  - https://www.ttbonline.gov/colasonline/publicViewAttachment.do?filename=rum4u back label.jpg&filetype=l

@@ -7,6 +7,7 @@ import type {
   ExpectedFields,
   FieldStatus,
   LabelImage,
+  OcrModelStatus,
   ProcessingMode,
   ReviewApplication,
   ReviewField,
@@ -59,13 +60,30 @@ export function createDemoSnapshot(): ConsoleSnapshot {
     jobs: createAdminJobsForApplications(applications),
     adminSettings: createDefaultAdminSettings(),
     benchmarkRuns: createDemoBenchmarkRuns(),
+    ocrModelStatus: createDemoOcrModelStatus(),
     auditEvents: [
       createAudit("audit-001", "System", "admin", "demo.reset", "applications", "Demo queue initialized from bundled public COLA registry records."),
       createAudit("audit-002", "Review Agent", "reviewer", "queue.ready", "reviews", "First application is ready for automatic review.")
     ],
     activeApplicationId: applications[0]?.id || "",
-    processingMode: "browser"
+    processingMode: "backend"
   };
+}
+
+export function createDemoOcrModelStatus(): OcrModelStatus[] {
+  return [
+    {
+      id: "layoutlmv3-cola",
+      status: "baseline",
+      trainedModelLoaded: false,
+      mode: "paddleocr-baseline-weak-alignment",
+      modelDir: "models/field-extractor/layoutlmv3-cola/current",
+      message: "Backend review uses PaddleOCR full-image OCR with conservative weak field alignment unless a promoted LayoutLMv3 model passes the runtime gate.",
+      modelCard: null,
+      metrics: null,
+      failureReport: null
+    }
+  ];
 }
 
 export function createDefaultAdminSettings(): AdminSettings {
@@ -74,7 +92,6 @@ export function createDefaultAdminSettings(): AdminSettings {
     browserOcrAllowed: true,
     backendCpuOcrAllowed: true,
     gpuOcrAllowed: false,
-    distributedWorkersAllowed: true,
     maxConcurrency: 4,
     validatorThreshold: 0.86,
     warningStrictness: "standard",
@@ -130,7 +147,7 @@ export function createReviewForApplication(application: ReviewApplication, mode:
           : "The automated review found low-confidence evidence requiring an agent decision.",
     rawOcrText: createDemoRawOcrText(application, fields),
     engineTrace: [
-      mode === "browser" ? "Browser Tesseract OCR" : mode === "backend" ? "FastAPI PaddleOCR COLA review with deterministic validators" : "Distributed PaddleOCR-first workers with deterministic validator rollup",
+      mode === "browser" ? "Browser Tesseract OCR" : "FastAPI PaddleOCR COLA review with deterministic validators",
       "Deterministic field normalizers",
       "Field-level evidence scorer",
       "Reviewer override audit layer"
@@ -252,103 +269,12 @@ function createDemoRawOcrText(application: ReviewApplication, fields: ReviewFiel
 }
 
 function createDemoWorkers(): WorkerSnapshot[] {
-  return [
-    {
-      id: "worker-local-browser",
-      hostname: "browser-session",
-      platform: "Chromium",
-      os: "Browser",
-      arch: "wasm",
-      cpu: "Navigator worker pool",
-      ramGb: 0,
-      gpu: "WebGL/WebGPU if available",
-      status: "online",
-      activeJobs: 1,
-      maxConcurrency: 2,
-      capabilities: ["browser_ocr", "validation", "pdf_export"],
-      engines: ["tesseract-js"],
-      latencyMs: 0,
-      throughput: "local",
-      avgMsPerImage: 720,
-      lastSeenAt: new Date().toISOString()
-    },
-    {
-      id: "worker-fastapi-01",
-      hostname: "bigbertha.sherpa-map.internal",
-      platform: "Linux x64",
-      os: "Linux",
-      arch: "x64",
-      cpu: "16 vCPU",
-      ramGb: 64,
-      gpu: "CUDA unavailable",
-      status: "busy",
-      activeJobs: 2,
-      maxConcurrency: 4,
-      capabilities: ["ocr", "evidence_crop", "validation"],
-      engines: ["paddleocr", "easyocr", "tesseract"],
-      latencyMs: 18,
-      throughput: "24 pages/min",
-      avgMsPerImage: 410,
-      lastSeenAt: new Date(Date.now() - 9_000).toISOString()
-    },
-    {
-      id: "worker-mac-01",
-      hostname: "mac",
-      platform: "macOS arm64",
-      os: "macOS",
-      arch: "arm64",
-      cpu: "Apple Silicon",
-      ramGb: 16,
-      gpu: "MPS available",
-      status: "online",
-      activeJobs: 0,
-      maxConcurrency: 2,
-      capabilities: ["ocr", "evidence_crop"],
-      engines: ["tesseract", "vision-precheck"],
-      latencyMs: 26,
-      throughput: "11 pages/min",
-      avgMsPerImage: 580,
-      lastSeenAt: new Date(Date.now() - 22_000).toISOString()
-    }
-  ];
+  return [];
 }
 
 export function createAdminJobsForApplications(applications: ReviewApplication[]): AdminJob[] {
-  const now = Date.now();
-  return applications.flatMap((application, index) => {
-    const workerId = index % 2 === 0 ? "worker-fastapi-01" : "worker-local-browser";
-    const base = {
-      applicationId: application.id,
-      workerId,
-      engine: workerId === "worker-local-browser" ? "tesseract-js" : "paddleocr",
-      attempts: index === 2 ? 2 : 1,
-      createdAt: new Date(now - (index + 3) * 60_000).toISOString(),
-      schedulerReason: index % 2 === 0 ? "Warm OCR engine and low active job count." : "Browser-only session affinity."
-    };
-    return [
-      {
-        ...base,
-        id: `job-${application.id}-ocr`,
-        type: "ocr" as const,
-        status: index === 2 ? "failed" as const : index === 3 ? "running" as const : "completed" as const,
-        priority: 100 - index * 6,
-        startedAt: new Date(now - (index + 2) * 60_000).toISOString(),
-        completedAt: index === 3 ? undefined : new Date(now - (index + 1) * 60_000).toISOString(),
-        durationMs: index === 3 ? undefined : 540 + index * 90
-      },
-      {
-        ...base,
-        id: `job-${application.id}-validation`,
-        type: "validation" as const,
-        status: index < 2 ? "completed" as const : "queued" as const,
-        priority: 90 - index * 5,
-        createdAt: new Date(now - (index + 2) * 45_000).toISOString(),
-        startedAt: index < 2 ? new Date(now - (index + 1) * 45_000).toISOString() : undefined,
-        completedAt: index < 2 ? new Date(now - index * 45_000).toISOString() : undefined,
-        durationMs: index < 2 ? 180 + index * 32 : undefined
-      }
-    ];
-  });
+  void applications;
+  return [];
 }
 
 export function createDemoBenchmarkRuns(): BenchmarkRun[] {

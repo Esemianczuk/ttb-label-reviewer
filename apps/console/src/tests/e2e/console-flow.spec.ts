@@ -11,13 +11,26 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => window.localStorage.clear());
   await page.goto("/");
-  await page.getByRole("button", { name: "Continue as Reviewer" }).click();
+  await expect(page).toHaveURL(new RegExp(`/reviewer/applications/${firstRealApplicationId}$`));
+  await expect(page.getByRole("checkbox", { name: "Auto-run automation" })).toBeChecked();
 });
 
 async function switchAccount(page: Page, accountLabel: string) {
   await page.locator(".account-switcher:visible").click();
   const dropdown = page.locator(".ant-select-dropdown:not(.ant-select-dropdown-hidden)").last();
   await dropdown.getByText(accountLabel).click();
+}
+
+async function expectStoredProcessingMode(page: Page, expectedMode: string) {
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const raw = window.localStorage.getItem("ttb-console-snapshot-v1");
+        if (!raw) return null;
+        return JSON.parse(raw).processingMode || null;
+      })
+    )
+    .toBe(expectedMode);
 }
 
 async function injectCriticalFieldFailures(page: Page, applicationId: string, fieldKeys = ["alcoholContent", "netContents"]) {
@@ -55,23 +68,93 @@ async function injectCriticalFieldFailures(page: Page, applicationId: string, fi
 }
 
 async function waitForWorkbenchReview(page: Page) {
+  const automationButton = page.getByRole("button", { name: /Run automation|Rerun automation/i }).first();
+  if ((await automationButton.count()) > 0 && await automationButton.isVisible().catch(() => false)) {
+    await automationButton.click();
+  }
   await expect(page.getByRole("button", { name: "Raw OCR" })).toBeEnabled({ timeout: 15000 });
 }
 
-test("public role entry opens the stored role workspace", async ({ page }) => {
+async function openPageGuidance(page: Page) {
+  const mobileGuidance = page.getByRole("button", { name: "Guidance" });
+  if (await mobileGuidance.isVisible().catch(() => false)) {
+    await mobileGuidance.click();
+    return;
+  }
+  await page.locator(".gov-sidebar").getByText("Guidance", { exact: true }).click();
+}
+
+async function closePageGuidance(page: Page) {
+  const modal = page.locator(".page-guidance-modal:visible").last();
+  const closeButton = modal.locator(".ant-modal-footer").getByRole("button", { name: "Close" });
+  const box = await closeButton.boundingBox();
+  if (box) {
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  } else {
+    await closeButton.click();
+  }
+  const closed = await modal.waitFor({ state: "hidden", timeout: 1500 }).then(() => true).catch(() => false);
+  if (!closed) {
+    await page.keyboard.press("Escape");
+    await modal.waitFor({ state: "hidden", timeout: 3000 });
+  }
+}
+
+test("initial site entry opens reviewer work at the next unclassified packet", async ({ page }) => {
   await page.evaluate(() => window.localStorage.clear());
   await page.goto("/");
-  await expect(page.getByRole("button", { name: "Continue as Reviewer" })).toBeVisible();
-  await page.getByRole("button", { name: "Continue as Reviewer" }).click();
-  await expect(page.getByText("Reviewer Dashboard")).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`/reviewer/applications/${firstRealApplicationId}$`));
+  await expect(page.getByText("Application # TTB-2026-0001")).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: "Auto-run automation" })).toBeChecked();
+  await expect(page.getByRole("button", { name: "Run automation" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Run automation" })).toHaveClass(/automation-run-callout/);
 
   await page.evaluate(() => window.localStorage.setItem("ttb-console-role", "applicant"));
   await page.goto("/");
-  await expect(page.getByText("Applicant Workspace")).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`/reviewer/applications/${firstRealApplicationId}$`));
 
   await page.evaluate(() => window.localStorage.setItem("ttb-console-role", "admin"));
   await page.goto("/");
-  await expect(page.getByText("Admin Operations")).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`/reviewer/applications/${firstRealApplicationId}$`));
+});
+
+test("reset demo clears reviews and returns reviewer to the first packet", async ({ page }) => {
+  await page.goto(`/reviewer/applications/${thirdRealApplicationId}`);
+  await expect(page.getByRole("heading", { name: /DEVILS BACKBONE/i })).toBeVisible();
+  await waitForWorkbenchReview(page);
+  await page.getByRole("textbox", { name: /Brand Name reasoning/i }).fill("Temporary reviewer note before reset.");
+  await expect
+    .poll(() =>
+      page.evaluate((applicationId) => {
+        const raw = window.localStorage.getItem("ttb-console-snapshot-v1");
+        if (!raw) return false;
+        const snapshot = JSON.parse(raw);
+        const application = snapshot.applications?.find((candidate: any) => candidate.id === applicationId);
+        return Boolean(application?.review);
+      }, thirdRealApplicationId)
+    )
+    .toBe(true);
+
+  await page.getByRole("button", { name: "Reset Demo" }).click();
+  await expect(page).toHaveURL(new RegExp(`/reviewer/applications/${firstRealApplicationId}$`));
+  await expect(page.getByRole("heading", { name: /TRANSCONTINENTAL/i })).toBeVisible();
+  await expect(page.getByText("Application # TTB-2026-0001")).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: "Auto-run automation" })).toBeChecked();
+  await expect(page.getByRole("button", { name: "Run automation" })).toBeVisible();
+
+  const resetState = await page.evaluate((firstApplicationId) => {
+    const snapshot = JSON.parse(window.localStorage.getItem("ttb-console-snapshot-v1") || "{}");
+    return {
+      activeApplicationId: snapshot.activeApplicationId,
+      reviewedCount: snapshot.applications?.filter((application: any) => Boolean(application.review)).length || 0,
+      firstReviewExists: Boolean(snapshot.applications?.find((application: any) => application.id === firstApplicationId)?.review)
+    };
+  }, firstRealApplicationId);
+  expect(resetState).toEqual({
+    activeApplicationId: firstRealApplicationId,
+    reviewedCount: 0,
+    firstReviewExists: false
+  });
 });
 
 test("reviewer queue processes first sample and advances without losing decisions", async ({ page }) => {
@@ -81,8 +164,11 @@ test("reviewer queue processes first sample and advances without losing decision
   await expect(page.getByText("Expected vs Extracted Field Comparison")).toBeVisible();
   await expect(page.getByText("Label Images")).toBeVisible();
   await expect(page.getByRole("checkbox", { name: "Auto-run automation" })).toBeChecked();
+  await expect(page.getByRole("button", { name: "Run automation" })).toBeVisible();
+  await expect(page.getByText("Review in progress")).toHaveCount(0);
+  await page.getByRole("button", { name: "Run automation" }).click();
   await waitForWorkbenchReview(page);
-  await expect(page.getByRole("button", { name: /Run automated review|Rerun automated review/i })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Run automation|Rerun automation/i })).toHaveCount(0);
   const brandField = page.locator('[aria-label="Brand Name field review"]:visible').first();
   await expect(brandField.getByText("Pass").first()).toBeVisible();
   await expect(page.getByText("Warning Segment Checklist")).toHaveCount(0);
@@ -137,9 +223,16 @@ test("reviewer queue is informational, sortable, and expandable", async ({ page 
   await page.goto("/reviewer/queue");
   await expect(page.getByText("Submitted applications")).toBeVisible();
   await expect(page.getByRole("button", { name: /^Process$/ })).toHaveCount(0);
+  await expect(page.getByText(/open a packet to run automation/i)).toBeVisible();
   await expect(page.getByLabel("Search review queue")).toBeVisible();
   await expect(page.getByLabel("Filter queue by company")).toBeVisible();
   await expect(page.getByLabel("Review queue date range").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Clear all filters" })).toHaveCount(0);
+  await page.getByLabel("Search review queue").fill("zzzz-no-queue-match");
+  await expect(page.locator(".queue-mobile-list:visible, .review-queue-table:visible").getByText("No applications match the current queue filters.")).toBeVisible();
+  await page.getByRole("button", { name: "Clear all filters" }).click();
+  await expect(page.getByLabel("Search review queue")).toHaveValue("");
+  await expect(page.getByText(/open a packet to run automation/i)).toBeVisible();
   if (await page.locator(".review-queue-table").isVisible()) {
     await expect(page.getByRole("columnheader", { name: "Application" })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Submitted" })).toBeVisible();
@@ -155,6 +248,8 @@ test("reviewer queue is informational, sortable, and expandable", async ({ page 
   await visibleOverview.getByRole("button", { name: "Open workbench" }).click();
   await expect(page).toHaveURL(/\/reviewer\/applications\/app-ttb-/);
   await expect(page.getByRole("checkbox", { name: "Auto-run automation" })).toBeChecked();
+  const directRunButton = page.getByRole("button", { name: "Run automation" });
+  if (await directRunButton.isVisible()) await directRunButton.click();
   await waitForWorkbenchReview(page);
 });
 
@@ -253,25 +348,30 @@ test("reviewer fails an application with an audit-visible message", async ({ pag
   await expect(page.locator(".final-disposition-bar").getByRole("button", { name: "Fail application" })).toHaveCount(0);
 });
 
-test("reviewer auto-run checkbox runs current and next automation", async ({ page }) => {
+test("reviewer auto-run checkbox leaves direct entry manual and runs next automation", async ({ page }) => {
   await page.goto(`/reviewer/applications/${firstRealApplicationId}`);
   await expect(page.getByRole("heading", { name: /TRANSCONTINENTAL/i })).toBeVisible();
   await expect(page.getByRole("checkbox", { name: "Auto-run automation" })).toBeChecked();
+  await expect(page.getByRole("button", { name: "Run automation" })).toBeVisible();
+  await expect(page.getByText("Review in progress")).toHaveCount(0);
+  await page.getByRole("button", { name: "Run automation" }).click();
   await expect(page.getByText("Review in progress")).toBeVisible({ timeout: 5000 });
   await expect(page.locator(".image-processing-overlay")).toBeVisible();
   await expect(page.locator(".live-review-pill")).toBeVisible();
   await expect(page.getByRole("button", { name: "Expand image viewer" })).toBeDisabled();
   await waitForWorkbenchReview(page);
-  await expect(page.getByRole("button", { name: /Run automated review|Rerun automated review/i })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Run automation|Rerun automation/i })).toHaveCount(0);
 
   await page.getByRole("button", { name: "Next Application" }).first().click();
   await expect(page).toHaveURL(new RegExp(thirdRealApplicationId));
   await expect(page.getByRole("checkbox", { name: "Auto-run automation" })).toBeChecked();
+  await expect(page.getByRole("button", { name: /Run automation|Rerun automation/i })).toHaveCount(0);
+  await expect(page.getByText("Review in progress")).toBeVisible({ timeout: 5000 });
   await waitForWorkbenchReview(page);
-  await expect(page.getByRole("button", { name: /Run automated review|Rerun automated review/i })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Run automation|Rerun automation/i })).toHaveCount(0);
 
   await page.getByRole("checkbox", { name: "Auto-run automation" }).uncheck();
-  await expect(page.getByRole("button", { name: "Rerun automated review" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Rerun automation" })).toBeVisible();
 });
 
 test("reviewer dashboard scrolls issue summary to highlighted remediation rows", async ({ page }) => {
@@ -319,14 +419,19 @@ test("reviewer keyboard shortcut accepts the automated result", async ({ page })
   await expect(page.getByRole("textbox", { name: "Reviewer decision note" })).toHaveValue(/local OCR/i);
 });
 
-test("reviewer batch page filters, selects, processes, and downloads a PDF", async ({ page }) => {
+test("reviewer batch page filters, selects, processes without PDF flood, and leaves reports on reviewed packets", async ({ page }) => {
   await page.goto("/reviewer/batches");
-  await expect(page.getByText("Batch Review").first()).toBeVisible();
+  await expect(page.getByRole("main").getByText("Batch Review").first()).toBeVisible();
   await expect(page.getByText("Processing mode")).toHaveCount(0);
   await expect(page.getByText("Browser Only")).toHaveCount(0);
   await expect(page.getByText("Backend")).toHaveCount(0);
   await expect(page.getByText("Cluster")).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Process open batch/ })).toBeDisabled();
+
+  await page.getByLabel("Search batch applications").fill("zzzz-no-batch-match");
+  await expect(page.locator(".batch-mobile-list:visible, .batch-review-table:visible").getByText("No applications match the current batch filters.")).toBeVisible();
+  await page.getByRole("button", { name: "Clear filters" }).click();
+  await expect(page.getByLabel("Search batch applications")).toHaveValue("");
 
   await page.getByLabel("Filter by company").fill("Broken Bow");
   const mobileBatchCards = page.locator(".batch-mobile-list");
@@ -340,12 +445,44 @@ test("reviewer batch page filters, selects, processes, and downloads a PDF", asy
   }
 
   await expect(page.getByRole("button", { name: /Process open batch/ })).toBeEnabled();
-  const downloadPromise = page.waitForEvent("download");
+  let downloadCount = 0;
+  page.on("download", () => {
+    downloadCount += 1;
+  });
   await page.getByRole("button", { name: /Process open batch/ }).click();
   await expect(page.getByText(/Processing 1 of 1/)).toBeVisible();
-  const download = await downloadPromise;
-  expect(download.suggestedFilename()).toContain("batch-review");
-  await expect(page.getByText("Processed 1 application and downloaded PDFs.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Stop" })).toBeVisible();
+  await page.getByRole("button", { name: "Pause" }).click();
+  await expect(page.getByRole("button", { name: "Resume" })).toBeVisible();
+  await page.getByRole("button", { name: "Resume" }).click();
+  await expect(page.getByText(/Processed 1 application\. Open a reviewed application to download its PDF report\./)).toBeVisible({ timeout: 30000 });
+  await page.waitForTimeout(500);
+  expect(downloadCount).toBe(0);
+
+  await page.goto(`/reviewer/applications/${correctionRealApplicationId}`);
+  await expect(page.getByRole("button", { name: "PDF" }).first()).toBeVisible();
+});
+
+test("reviewer batch pause and stop controls end cleanly in browser demo mode", async ({ page }) => {
+  await page.goto("/reviewer");
+  await page.evaluate(() => {
+    const raw = window.localStorage.getItem("ttb-console-snapshot-v1");
+    if (!raw) throw new Error("Demo snapshot missing.");
+    const snapshot = JSON.parse(raw);
+    snapshot.processingMode = "browser";
+    window.localStorage.setItem("ttb-console-snapshot-v1", JSON.stringify(snapshot));
+  });
+  await page.goto("/reviewer/batches");
+  await expect(page.getByRole("main").getByText("Batch Review").first()).toBeVisible();
+  await page.getByLabel("Select all visible unprocessed applications").check();
+  await expect(page.getByRole("button", { name: /Process open batch/ })).toBeEnabled();
+  await page.getByRole("button", { name: /Process open batch/ }).click();
+  await expect(page.getByText(/(Browser|Backend) review queued/)).toBeVisible();
+  await page.getByRole("button", { name: "Pause" }).click();
+  await expect(page.getByRole("button", { name: "Resume" })).toBeVisible();
+  await page.getByRole("button", { name: "Stop" }).click();
+  await expect(page.getByText(/Batch stopped after \d+ application/)).toBeVisible({ timeout: 15000 });
 });
 
 test("applicant happy path creates a multi-image packet and submits it", async ({ page }) => {
@@ -357,7 +494,7 @@ test("applicant happy path creates a multi-image packet and submits it", async (
   await page
     .locator('input[type="file"][accept=".json,.xml,.html,.htm,.txt,.md,application/json,application/xml,text/xml,text/html,text/plain"]')
     .setInputFiles(path.resolve(process.cwd(), "../../fixtures/public-cola-registry/records/19337001000251/metadata.json"));
-  await expect(page.getByText("Needs attention").first()).toBeVisible();
+  await expect(page.locator(".wizard-alert").getByRole("alert").filter({ hasText: "Needs attention" })).toBeVisible();
   await expect(page.getByLabel("Brand name")).toHaveValue("TRANSCONTINENTAL");
   await expect(page.getByLabel("Class / type")).toHaveValue("OTHER FOREIGN RUM");
   await page.getByLabel("Alcohol content").fill("40% Alc./Vol. (80 Proof)");
@@ -379,14 +516,14 @@ test("applicant happy path creates a multi-image packet and submits it", async (
   await expect(page.getByRole("heading", { name: "TRANSCONTINENTAL application" })).toBeVisible({ timeout: 60000 });
   await expect(page.getByText("Application #")).toBeVisible();
   await expect(page.getByText(/TTB-2026-\d{4}/).first()).toBeVisible();
-  await expect(page.getByText("Submitted").first()).toBeVisible();
+  await expect(page.getByRole("main").getByText("Submitted").first()).toBeVisible();
 });
 
 test("applicant folders route, autosave drafts, and allow draft edit deletion", async ({ page }) => {
   await page.evaluate(() => window.localStorage.setItem("ttb-console-role", "applicant"));
   await page.goto("/applicant/drafts");
   await expect(page).toHaveURL(/\/applicant\/drafts$/);
-  await expect(page.getByText("Drafts").first()).toBeVisible();
+  await expect(page.getByRole("main").getByText("Drafts").first()).toBeVisible();
   await expect(page.getByText("No drafts")).toBeVisible();
 
   await page.goto("/applicant/submitted");
@@ -396,12 +533,14 @@ test("applicant folders route, autosave drafts, and allow draft edit deletion", 
 
   await page.goto("/applicant/attention");
   await expect(page).toHaveURL(/\/applicant\/attention$/);
-  await expect(page.getByText("Needs attention").first()).toBeVisible();
+  await expect(page.getByRole("main").getByText("Needs attention").first()).toBeVisible();
   await expect(page.getByRole("row", { name: /CHLOE/i })).toBeVisible();
   await expect(page.getByRole("button", { name: "Update Packet" })).toBeVisible();
 
   await page.goto("/applicant/applications/new");
-  await page.getByRole("button", { name: "Next" }).click();
+  const nextStep = page.getByRole("button", { name: "Next" });
+  await nextStep.scrollIntoViewIfNeeded();
+  await nextStep.click({ force: true });
   await page.getByLabel("Brand name").fill("AUTOSAVED DRAFT");
   await page.getByLabel("Class / type").fill("Distilled Spirits Specialty");
   await expect.poll(async () =>
@@ -502,38 +641,110 @@ test("unauthorized workspace URLs redirect to the active account home", async ({
 
 test("account switching scopes navigation and redirects away from stale workspaces", async ({ page }) => {
   const sidebar = page.locator(".gov-sidebar");
-  await expect(page.getByText("Reviewer Dashboard")).toBeVisible();
-  await expect(sidebar.getByText("Review Queue")).toBeVisible();
-  await expect(sidebar.getByText("New Application")).toHaveCount(0);
-  await expect(sidebar.getByText("Users")).toHaveCount(0);
+  const desktopSidebar = await sidebar.isVisible().catch(() => false);
+  await expect(page.getByRole("main").getByText("Reviewer Dashboard")).toBeVisible();
+  if (desktopSidebar) {
+    await expect(sidebar.getByText("Review Queue")).toBeVisible();
+    await expect(sidebar.getByText("New Application")).toHaveCount(0);
+    await expect(sidebar.getByText("Users")).toHaveCount(0);
+  }
 
   await page.goto(`/reviewer/applications/${firstRealApplicationId}`);
   await expect(page.getByRole("heading", { name: /TRANSCONTINENTAL/i })).toBeVisible();
   await switchAccount(page, "Applicant - applicant@example.local");
   await expect(page).toHaveURL(/\/applicant$/);
-  await expect(page.getByText("Applicant Workspace")).toBeVisible();
-  await expect(sidebar.getByText("New Application")).toBeVisible();
-  await expect(sidebar.getByText("Review Queue")).toHaveCount(0);
-  await expect(sidebar.getByText("Workers")).toHaveCount(0);
+  await expect(page.getByRole("main").getByText("Applicant Workspace")).toBeVisible();
+  if (desktopSidebar) {
+    await expect(sidebar.getByText("New Application")).toBeVisible();
+    await expect(sidebar.getByText("Review Queue")).toHaveCount(0);
+    await expect(sidebar.getByText("Workers")).toHaveCount(0);
+  }
   await page.getByRole("button", { name: /Create application packet/i }).first().click();
   await expect(page.getByRole("heading", { name: "New Application" })).toBeVisible();
 
   await switchAccount(page, "Reviewer - reviewer@example.local");
   await expect(page).toHaveURL(/\/reviewer$/);
-  await expect(page.getByText("Reviewer Dashboard")).toBeVisible();
-  await expect(sidebar.getByText("Review Queue")).toBeVisible();
-  await expect(sidebar.getByText("New Application")).toHaveCount(0);
+  await expect(page.getByRole("main").getByText("Reviewer Dashboard")).toBeVisible();
+  if (desktopSidebar) {
+    await expect(sidebar.getByText("Review Queue")).toBeVisible();
+    await expect(sidebar.getByText("New Application")).toHaveCount(0);
+  }
 
   await switchAccount(page, "Admin - admin@example.local");
   await expect(page).toHaveURL(/\/admin$/);
-  await expect(page.getByText("Admin Operations")).toBeVisible();
-  await expect(sidebar.getByText("Workers")).toBeVisible();
-  await expect(sidebar.getByText("Review Queue")).toHaveCount(0);
-  await expect(sidebar.getByText("New Application")).toHaveCount(0);
+  await expect(page.getByRole("main").getByText("Admin Operations")).toBeVisible();
+  if (desktopSidebar) {
+    await expect(sidebar.getByText("Workers")).toBeVisible();
+    await expect(sidebar.getByText("Review Queue")).toHaveCount(0);
+    await expect(sidebar.getByText("New Application")).toHaveCount(0);
+  }
   await expect(page.getByText("Access denied")).toHaveCount(0);
 });
 
-test("admin operations pages expose worker, job, benchmark, and settings actions", async ({ page }) => {
+test("runtime mode is automatic and hidden from applicant and reviewer workflows", async ({ page }) => {
+  await switchAccount(page, "Admin - admin@example.local");
+  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page.getByRole("main").getByText("Admin Operations")).toBeVisible();
+  await expect(page.getByLabel("Processing mode")).toHaveCount(0);
+  await expect(page.getByText("Runtime path")).toBeVisible();
+
+  await switchAccount(page, "Reviewer - reviewer@example.local");
+  await expect(page).toHaveURL(/\/reviewer$/);
+  await expect(page.getByRole("main").getByText("Reviewer Dashboard")).toBeVisible();
+  await expect(page.getByLabel("Processing mode")).toHaveCount(0);
+  await expect(page.getByText("Backend coordinator URL")).toHaveCount(0);
+
+  await page.goto(`/reviewer/applications/${firstRealApplicationId}`);
+  await expect(page.getByRole("heading", { name: /TRANSCONTINENTAL/i })).toBeVisible();
+  await expect(page.getByLabel("Processing mode")).toHaveCount(0);
+
+  await switchAccount(page, "Applicant - applicant@example.local");
+  await expect(page).toHaveURL(/\/applicant$/);
+  await expect(page.getByRole("main").getByText("Applicant Workspace")).toBeVisible();
+  await expect(page.getByLabel("Processing mode")).toHaveCount(0);
+
+  await switchAccount(page, "Admin - admin@example.local");
+  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page.getByLabel("Processing mode")).toHaveCount(0);
+  await expect(page.getByLabel("Backend coordinator URL")).toBeVisible();
+});
+
+test("mobile header omits redundant page dropdown", async ({ page }, testInfo) => {
+  test.skip(!testInfo.project.name.includes("mobile"), "Mobile header layout is only checked on mobile.");
+
+  await expect(page.locator(".mobile-page-nav")).toHaveCount(0);
+  await expect(page.locator(".mobile-account-switcher:visible")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Guidance" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reset Demo" })).toBeVisible();
+
+  await switchAccount(page, "Applicant - applicant@example.local");
+  await expect(page).toHaveURL(/\/applicant$/);
+  await expect(page.locator(".mobile-page-nav")).toHaveCount(0);
+  await expect(page.getByRole("main").getByText("Applicant Workspace")).toBeVisible();
+});
+
+test("page guidance is targeted to the active page", async ({ page }) => {
+  await page.goto(`/reviewer/applications/${firstRealApplicationId}`);
+  await openPageGuidance(page);
+  await expect(page.getByText("Reviewer workbench")).toBeVisible();
+  await expect(page.getByText("Auto-run automation should be checked")).toBeVisible();
+  await closePageGuidance(page);
+
+  await switchAccount(page, "Applicant - applicant@example.local");
+  await page.goto("/applicant/applications/new");
+  await openPageGuidance(page);
+  await expect(page.getByText("New application packet")).toBeVisible();
+  await expect(page.getByText("Drag in a JSON, XML, CSV manifest")).toBeVisible();
+  await closePageGuidance(page);
+
+  await switchAccount(page, "Admin - admin@example.local");
+  await page.goto("/admin/workers");
+  await openPageGuidance(page);
+  await expect(page.getByText("Worker operations")).toBeVisible();
+  await expect(page.getByText("Check heartbeat age")).toBeVisible();
+});
+
+test("admin operations pages expose worker, job, benchmark, and read-only policy views", async ({ page }) => {
   await page.evaluate(() => window.localStorage.setItem("ttb-console-role", "admin"));
   await page.goto("/admin");
   await expect(page.getByText("Applications today")).toBeVisible();
@@ -541,14 +752,15 @@ test("admin operations pages expose worker, job, benchmark, and settings actions
   await expect(page.getByRole("button", { name: /Workers/ })).toBeVisible();
 
   await page.goto("/admin/workers");
-  await expect(page.getByText("bigbertha.sherpa-map.internal")).toBeVisible();
-  await page.getByRole("button", { name: /Drain/ }).first().click();
-  await expect(page.getByText("Worker drain requested.")).toBeVisible();
+  await expect(page.getByText("Read-only assessment posture")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Drain/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Disable/ })).toHaveCount(0);
 
   await page.goto("/admin/jobs");
-  await expect(page.getByRole("columnheader", { name: "Scheduler Reason" })).toBeVisible();
-  await page.getByRole("button", { name: "Raise" }).first().click();
-  await expect(page.getByText("Job raise priority requested.")).toBeVisible();
+  await expect(page.locator("#main-content").getByText("Jobs", { exact: true })).toBeVisible();
+  await expect(page.getByText("No backend jobs are queued")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Raise" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Cancel" })).toHaveCount(0);
 
   await page.goto("/admin/benchmarks");
   await page.getByRole("button", { name: "10 image run" }).click();
@@ -556,13 +768,12 @@ test("admin operations pages expose worker, job, benchmark, and settings actions
   await expect(page.getByText("10 image admin run")).toBeVisible();
 
   await page.goto("/admin/engines");
-  await page.getByRole("spinbutton", { name: "Max Concurrency" }).fill("6");
-  await expect(page.getByText("Unsaved changes")).toBeVisible();
-  await page.getByRole("button", { name: "Save Settings" }).click();
-  await expect(page.getByText("Settings saved.")).toBeVisible();
+  await expect(page.getByText("Authoritative Runtime Policy")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "PaddleOCR" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Save Settings" })).toHaveCount(0);
   await page.goto("/admin/settings");
-  await page.goto("/admin/engines");
-  await expect(page.getByRole("spinbutton", { name: "Max Concurrency" })).toHaveValue("6");
+  await expect(page.getByText("Assessment console is locked down")).toBeVisible();
+  await expect(page.locator("#main-content").getByText("Policy Values", { exact: true })).toBeVisible();
 });
 
 test("admin audit and retention pages use real events and confirmations", async ({ page }) => {
@@ -573,10 +784,9 @@ test("admin audit and retention pages use real events and confirmations", async 
   await expect(page.getByRole("button", { name: /Export CSV/ })).toBeVisible();
 
   await page.goto("/admin/retention");
-  await expect(page.getByText("Retention Actions")).toBeVisible();
-  await page.getByRole("button", { name: "Purge Old Jobs" }).click();
-  await page.getByRole("button", { name: "OK" }).click();
-  await expect(page.getByText("Old jobs purged.")).toBeVisible();
+  await expect(page.getByText("Retention actions are disabled")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Purge Old Jobs" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Purge All Demo Data" })).toHaveCount(0);
 });
 
 test("core role pages have no critical axe accessibility violations", async ({ page }) => {
@@ -599,7 +809,7 @@ test("registered resources render through the active browser provider", async ({
   await page.evaluate(() => window.localStorage.setItem("ttb-console-role", "admin"));
   await page.goto("/resources/applications");
   await expect(page.getByText("Applications").first()).toBeVisible();
-  await expect(page.getByRole("main").getByText("Browser Only")).toBeVisible();
+  await expect(page.getByRole("main").getByText("Browser Fallback")).toBeVisible();
   await expect(page.getByText("TRANSCONTINENTAL").first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Application Versions" })).toBeVisible();
   await expect(page.locator("#main-content").getByRole("link", { name: "Benchmarks" })).toBeVisible();
@@ -624,18 +834,16 @@ test("backend LAN mode warning is prominent", async ({ page }) => {
 
   await page.evaluate(() => window.localStorage.setItem("ttb-console-role", "admin"));
   await page.goto("/admin");
-  await page.getByLabel("Processing mode").getByText("Backend").click();
   await expect(page.getByText("LAN mode enabled", { exact: true })).toBeVisible();
   await expect(page.getByText(/LAN MODE ENABLED/)).toBeVisible();
-  await expect(page.getByText(/Backend connected - LAN/)).toBeVisible();
+  await expect(page.getByText(/Backend primary - LAN/)).toBeVisible();
 });
 
-test("backend mode warns and falls back when coordinator is unavailable", async ({ page }) => {
+test("backend runtime falls back automatically when coordinator is unavailable", async ({ page }) => {
   await page.evaluate(() => window.localStorage.setItem("ttb-console-role", "admin"));
   await page.evaluate(() => window.localStorage.setItem("ttb-console-backend-url", "http://127.0.0.1:59999"));
   await page.goto("/admin");
-  await page.getByLabel("Processing mode").getByText("Backend").click();
-  await expect(page.getByText("Backend coordinator unavailable").first()).toBeVisible({ timeout: 5000 });
-  await page.getByRole("button", { name: "Use Browser Only" }).first().click();
-  await expect(page.getByRole("radio", { name: "Browser Only" })).toBeChecked();
+  await expect(page.getByText("Browser fallback active")).toBeVisible({ timeout: 6000 });
+  await expect(page.getByText(/The FastAPI\/PaddleOCR backend is not reachable/)).toBeVisible();
+  await expect(page.getByLabel("Processing mode")).toHaveCount(0);
 });
