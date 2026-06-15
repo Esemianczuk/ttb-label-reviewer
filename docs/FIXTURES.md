@@ -16,7 +16,7 @@ The collector is intentionally small and curated rather than a bulk scraper. Can
 
 ## Loaded Public Records
 
-The checked fixture corpus includes 75 public records. The console demo loads the 66 records whose common reviewer criteria could be supported from the downloaded label image(s) or official COLA form metadata. The remaining 9 records are retained in the corpus for provenance and collector testing, but are marked `demo_ready: false` and excluded from the active reviewer queue.
+The checked fixture corpus includes 75 public records. The console demo seeds 66 records whose common reviewer criteria could be supported from the downloaded label image(s) or official COLA form metadata. Of those seeded records, 65 start as submitted reviewer work and 1 starts in a correction-needed applicant workflow for resubmission testing. The remaining 9 records are retained in the corpus for provenance and collector testing, but are marked `demo_ready: false` and excluded from the active demo workflow.
 
 Representative loaded examples:
 

@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_ROOT = ROOT / "fixtures" / "public-cola-registry" / "records"
 BENCHMARK_PATH = ROOT / "benchmarks" / "results" / "latest.json"
+CORRECTION_RECORD_ID = "19350001000429"
 
 
 def expected_field_present(fields: dict, key: str) -> bool:
@@ -61,6 +62,12 @@ def fixture_summary() -> dict:
     return {
         "storedRecords": len(records),
         "demoReadyRecords": sum(1 for record in records if record["demoReady"]),
+        "initialReviewerSubmittedRecords": sum(
+            1 for record in records if record["demoReady"] and record["id"] != CORRECTION_RECORD_ID
+        ),
+        "initialCorrectionWorkflowRecords": sum(
+            1 for record in records if record["demoReady"] and record["id"] == CORRECTION_RECORD_ID
+        ),
         "retainedNotDemoReady": sum(1 for record in records if not record["demoReady"]),
         "labelAssets": label_assets,
         "averageLabelAssetsPerRecord": round(label_assets / len(records), 2) if records else 0,

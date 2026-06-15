@@ -39,7 +39,9 @@ Current checked fixture corpus:
 | Metric | Value |
 |---|---:|
 | Stored public COLA records | 75 |
-| Demo-ready records loaded into review queue | 66 |
+| Demo-ready records seeded into each session | 66 |
+| Initial submitted reviewer-workbench records | 65 |
+| Initial correction workflow record | 1 |
 | Retained but excluded records | 9 |
 | Label image assets | 126 |
 | Average label assets per record | 1.68 |
