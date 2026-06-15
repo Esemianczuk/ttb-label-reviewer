@@ -55,6 +55,14 @@ fi
 source "$VENV_DIR/bin/activate"
 python -m pip install --upgrade pip
 python -m pip install -r requirements-dev.txt
+if [[ "${TTB_INSTALL_OCR:-0}" == "1" ]]; then
+  PADDLE_REQUIREMENTS="${TTB_PADDLE_REQUIREMENTS:-requirements.txt}"
+  if [[ "${TTB_PADDLE_RUNTIME:-cpu}" == "cuda" ]]; then
+    PADDLE_REQUIREMENTS="${TTB_PADDLE_REQUIREMENTS:-requirements-cuda-cu126.txt}"
+  fi
+  echo "Installing OCR runtime dependencies from $PADDLE_REQUIREMENTS..."
+  python -m pip install -r "$PADDLE_REQUIREMENTS"
+fi
 
 npm install --prefix browser-demo
 npm install --prefix apps/console
@@ -67,6 +75,7 @@ Development setup complete.
 Next commands:
   . .venv/bin/activate
   python -m pytest -q
+  TTB_INSTALL_OCR=1 ./scripts/setup-dev.sh
   npm run console:dev
   ./scripts/dev-local-backend.sh
   ./scripts/dev-worker.sh

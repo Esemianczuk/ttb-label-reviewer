@@ -29,26 +29,41 @@ source "$VENV_DIR/bin/activate"
 python -m pip install --upgrade pip >/dev/null
 
 if ! python - <<'PY' >/dev/null 2>&1
-import fastapi, sqlalchemy, uvicorn, httpx
+import fastapi, sqlalchemy, uvicorn, httpx, ttb_worker, ttb_validation
 PY
 then
-  echo "Installing backend and test support dependencies..."
-  python -m pip install -r requirements-dev.txt
+  echo "Installing backend runtime dependencies..."
+  python -m pip install -r requirements-base.txt
 fi
 
+PADDLE_REQUIREMENTS="${TTB_PADDLE_REQUIREMENTS:-requirements.txt}"
+if [[ "${TTB_PADDLE_RUNTIME:-cpu}" == "cuda" ]]; then
+  PADDLE_REQUIREMENTS="${TTB_PADDLE_REQUIREMENTS:-requirements-cuda-cu126.txt}"
+fi
+
+install_paddle_runtime() {
+  echo "Installing PaddleOCR runtime dependencies from $PADDLE_REQUIREMENTS..."
+  if ! python -m pip install -r "$PADDLE_REQUIREMENTS"; then
+    cat >&2 <<EOF
+smart-demo: PaddleOCR runtime installation failed.
+
+Recommended fixes:
+  - Linux/macOS CPU: python -m pip install -r requirements.txt
+  - Linux CUDA 12.6: TTB_PADDLE_RUNTIME=cuda ./scripts/smart-demo.sh
+  - Reproducible Docker path: ./scripts/docker-demo.sh
+
+If you are on macOS and a Paddle wheel is unavailable for your Python version,
+install Python 3.11 or 3.12 and rerun this script.
+EOF
+    exit 2
+  fi
+}
+
 if ! python - <<'PY' >/dev/null 2>&1
-import paddleocr, PIL
+import paddleocr, paddle, PIL
 PY
 then
-  echo "Installing PaddleOCR runtime dependencies..."
-  python -m pip install -e "apps/worker[ocr,paddleocr]"
-  if ! python - <<'PY' >/dev/null 2>&1
-import paddle
-PY
-  then
-    echo "Installing CPU PaddlePaddle runtime..."
-    python -m pip install paddlepaddle
-  fi
+  install_paddle_runtime
 fi
 
 if [[ ! -d "$ROOT_DIR/apps/console/node_modules" ]]; then

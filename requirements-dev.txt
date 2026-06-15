@@ -5,6 +5,9 @@
 #   alembic, pydantic, httpx, pytest.
 # - Worker deps and test extras without optional OCR/CUDA packages.
 # - Root collector package deps and tests.
+#
+# For the full runtime OCR stack, install requirements.txt after this file or
+# run ./scripts/smart-demo.sh.
 -e ./apps/api[test]
 -e ./apps/worker[test]
 -e .[test]

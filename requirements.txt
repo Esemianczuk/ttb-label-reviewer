@@ -1,0 +1,9 @@
+# Default local runtime for the backend-served demo.
+#
+# This is the easiest non-Docker path:
+#   python -m pip install -r requirements.txt
+#
+# It installs FastAPI, the worker, PaddleOCR, and the CPU PaddlePaddle runtime.
+# Linux CUDA users should use requirements-cuda-cu126.txt instead.
+-r requirements-base.txt
+paddlepaddle==3.2.2

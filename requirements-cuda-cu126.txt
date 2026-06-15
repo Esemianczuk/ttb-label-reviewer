@@ -1,0 +1,8 @@
+# Native Linux CUDA runtime for hosts with NVIDIA drivers and CUDA 12.6
+# compatible PaddlePaddle wheels.
+#
+# Prefer ./scripts/docker-demo.sh for CUDA unless you specifically need a
+# non-Docker native worker. The Docker CUDA path is easier to reproduce.
+-r requirements-base.txt
+--extra-index-url https://www.paddlepaddle.org.cn/packages/stable/cu126/
+paddlepaddle-gpu==3.2.2

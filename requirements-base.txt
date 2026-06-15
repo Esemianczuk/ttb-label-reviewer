@@ -1,0 +1,9 @@
+# Runtime Python dependencies that are shared by local CPU and CUDA installs.
+#
+# This file intentionally does not install the PaddlePaddle runtime itself.
+# Use requirements.txt for the default CPU runtime, or
+# requirements-cuda-cu126.txt on Linux hosts where you want the native CUDA
+# Paddle wheel. Docker users do not need to install these manually.
+-e ./apps/api
+-e ./apps/worker[ocr,paddleocr]
+-e .

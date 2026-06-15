@@ -4,7 +4,6 @@ FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04
 
 ARG PADDLEPADDLE_VERSION=3.2.2
 ARG PADDLE_GPU_INDEX=https://www.paddlepaddle.org.cn/packages/stable/cu126/
-ARG TORCH_CPU_PACKAGE=torch==2.4.1
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -34,15 +33,13 @@ RUN apt-get update \
 
 WORKDIR /app
 
-RUN python3 -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu "${TORCH_CPU_PACKAGE}" \
-    && python3 -m pip install --no-cache-dir \
+RUN python3 -m pip install --no-cache-dir \
       "beautifulsoup4>=4.12,<5" \
       "requests>=2.31,<3" \
       "httpx>=0.27,<1" \
       "Pillow>=10,<12" \
       "paddleocr==3.2.0" \
       "paddlex==3.2.0" \
-      "transformers>=4.40,<6" \
     && python3 -m pip install --no-cache-dir "paddlepaddle-gpu==${PADDLEPADDLE_VERSION}" -i "${PADDLE_GPU_INDEX}"
 
 COPY pyproject.toml README.md ./

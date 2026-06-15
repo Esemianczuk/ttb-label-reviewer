@@ -88,7 +88,7 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-echo "Starting Docker API container for macOS Metal mode..."
+echo "Starting Docker API container for macOS native-worker mode..."
 "${COMPOSE[@]}" up --build -d api
 "${COMPOSE[@]}" logs -f api &
 API_LOG_PID="$!"
@@ -126,12 +126,20 @@ import paddleocr, paddle
 PY
 then
   echo "Installing Mac native PaddleOCR runtime dependencies..."
-  python -m pip install -e "apps/worker[ocr,paddleocr]"
-  if ! python - <<'PY' >/dev/null 2>&1
-import paddle
-PY
-  then
-    python -m pip install paddlepaddle
+  if ! python -m pip install -r requirements.txt; then
+    cat >&2 <<'EOF'
+Mac native PaddleOCR installation failed.
+
+Recommended fixes:
+  - Install Python 3.11 or 3.12 with Homebrew: brew install python@3.12
+  - Remove the old virtualenv: rm -rf .venv
+  - Rerun: ./scripts/docker-mac-metal.sh
+
+Docker Desktop on macOS runs Linux containers, so this script keeps the OCR
+worker native and lets PaddleOCR fall back to CPU when no compatible local
+accelerator is available.
+EOF
+    exit 2
   fi
 fi
 
@@ -174,7 +182,7 @@ fi
 
 cat <<EOF
 
-TTB Label Reviewer is running in macOS Metal-capable mode.
+TTB Label Reviewer is running in macOS native-worker mode.
 
 Console: http://127.0.0.1:$PORT/
 API:     Docker Compose service

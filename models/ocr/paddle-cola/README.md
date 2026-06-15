@@ -1,6 +1,9 @@
 # PaddleOCR COLA Model Directory
 
-Backend and cluster workers prefer PaddleOCR for authoritative OCR. Trained exported PaddleOCR inference models should be staged under:
+The shipped backend uses PaddleOCR's pretrained English OCR models. No custom
+model weights are required for the evaluator demo.
+
+Optional exported PaddleOCR inference models can be staged under:
 
 ```text
 models/ocr/paddle-cola/current/
@@ -9,7 +12,9 @@ models/ocr/paddle-cola/current/
   cls/
 ```
 
-The worker automatically passes any existing `det`, `rec`, or `cls` directory to PaddleOCR. If no custom dirs are present, it uses PaddleOCR's pretrained baseline.
+The worker automatically passes any existing `det`, `rec`, or `cls` directory
+to PaddleOCR. If no custom dirs are present, it uses PaddleOCR's pretrained
+baseline.
 
 Useful environment overrides:
 
@@ -21,4 +26,6 @@ TTB_PADDLEOCR_CLS_MODEL_DIR=/path/to/cls
 TTB_PADDLEOCR_REQUIRE_CUSTOM=1
 ```
 
-Do not commit large model weights to the public repo. Commit a model card and reproduction notes, then distribute weights through the chosen release artifact path.
+Do not commit large model weights to the public repo. Commit a model card and
+reproduction notes, then distribute weights through the chosen release artifact
+path.
