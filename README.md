@@ -15,6 +15,24 @@ Live Demo Link https://demo.sherpa-map.com/ttb-review-demo.html
 5. Leave **Auto-run automation** checked to process the next application automatically when moving forward.
 6. Use **Batch Review** to select multiple applications and run batch OCR, extraction, and matching.
 
+## Demo Scope
+
+The demo includes a complete role-based access control flow:
+
+- **Reviewer** users process submitted COLA applications, run OCR-backed automation, inspect evidence, override field outcomes, download reports, and close decisions.
+- **Applicant** users can create and edit application packets, upload label images, import COLA registry data when available, submit packets, archive records, and respond to correction requests by updating the packet.
+- **Admin** users can inspect worker health, OCR engine status, jobs, audit events, benchmarks, settings, and retained fixture state without destructive controls.
+
+The current demo data is built from real public COLA registry records. Collector scripts under `tools/ttb_collector/` were used to pull public detail pages from `ttbonline.gov/colasonline/viewColaDetails.do`, save raw detail HTML, parse application metadata, download printable COLA forms and public label image assets, normalize expected fields, and write the bundled fixture manifests. Earlier prototypes used synthetic AI-generated packets; the current reviewer demo is seeded from the public COLA fixture set.
+
+The repository stores **75 public COLA record directories**, with **66 demo-ready application examples** loaded into the active reviewer queue. The remaining records are retained for provenance and collector validation when their label or metadata evidence is not strong enough for the main demo. Each browser session receives its own seeded demo state, so multiple evaluators can test at the same time. **Reset Demo** clears applications, matches, notes, and review progress for that session only.
+
+Custom examples can be added from the **Applicant** role with **Create application packet**. The applicant form supports manual entry, label-image upload, and optional drag-and-drop import of COLA registry JSON, XML, HTML, or text exports.
+
+<img src="Applicant_Create_Packet.png" alt="Applicant dashboard with Create application packet action highlighted" width="700">
+
+<img src="Applicant_Application_Form.png" alt="Applicant application form with product fields, label image step, submit step, and optional auto-fill upload area" width="900">
+
 TTB Label Reviewer is a local-first assessment project for reviewing alcohol label applications against label-image evidence. It is not an official TTB, Treasury, or legal determination system.
 
 The primary demo path runs everything on the evaluator machine:
