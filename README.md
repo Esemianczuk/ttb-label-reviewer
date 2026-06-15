@@ -49,6 +49,27 @@ FastAPI coordinator -> local PaddleOCR worker -> deterministic TTB validators ->
 
 If the backend is not reachable, the console falls back to the packaged browser OCR path. No cloud AI service is required.
 
+## Benchmark Snapshot
+
+Hosted reviewer demo, seeded public COLA fixture set. Measured on June 15, 2026 against `https://demo.sherpa-map.com` with isolated benchmark sessions.
+
+| Run mode | Applications | Median review time | p95 review time | Max review time | Backend OCR path | Browser fallback |
+|---|---:|---:|---:|---:|---|---:|
+| Single reviewer automation | 5 | 4.15 sec | 4.43 sec | 4.43 sec | PaddleOCR CUDA worker | 0 |
+| Batch review workflow | 5 | 3.57 sec/app | 4.73 sec/app | 4.73 sec/app | PaddleOCR CUDA worker | 0 |
+
+This hosted run exercised 10 backend review POSTs, 50 evaluated fields, and 26 evidence crops. The active worker reported `paddleocr_cuda_pretrained` on an NVIDIA GeForce RTX 4090. The benchmark measures the reviewer automation path from backend review request to stored review result; browser-only fallback remained available but was not used. These numbers apply to the tested seeded examples, not every possible COLA label.
+
+Reproduce the hosted snapshot with:
+
+```bash
+source ~/.nvm/nvm.sh 2>/dev/null || true
+nvm use 20 2>/dev/null || true
+node scripts/benchmark-hosted-reviewer.mjs --singleCount 5 --batchCount 5
+```
+
+The take-home prompt describes a prior pilot at roughly 30 to 40 seconds per label. The tested hosted path completes these seeded reviewer automation runs under five seconds at p95 while keeping OCR as evidence only. Deterministic validators and reviewer decisions remain the pass/fail authority.
+
 ## What Runs
 
 - **Console**: React/Refine reviewer, applicant, and admin UI served by FastAPI in backend mode.
@@ -309,6 +330,8 @@ models/ocr/paddle-cola/current/
 ```
 
 The current production path does not depend on those directories. If they are absent, the worker uses the pretrained PaddleOCR baseline. See [models/ocr/paddle-cola/README.md](models/ocr/paddle-cola/README.md).
+
+The model/method comparison and current fixture statistics are documented in [docs/ML_APPROACH_EVALUATION.md](docs/ML_APPROACH_EVALUATION.md). In short, earlier Tesseract crop, EasyOCR, docTR, TrOCR, CLIP-style ranking, and LayoutLMv3 experiments were evaluated, but the shipped path is PaddleOCR full-image OCR plus conservative field alignment because it provides auditable evidence boxes while deterministic validators remain the pass/fail authority.
 
 ## Browser-Only Fallback
 
