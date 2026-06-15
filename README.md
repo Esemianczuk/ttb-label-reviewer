@@ -2,7 +2,9 @@
 
 <img src="Treasury_Take_Home.gif" alt="Treasury Take Home demo" width="900">
 
-Live Demo Link https://demo.sherpa-map.com/ttb-review-demo.html
+## **Live Demo Link**
+
+**[https://demo.sherpa-map.com/ttb-review-demo.html](https://demo.sherpa-map.com/ttb-review-demo.html)**
 
 ## Quickstart Guide
 
