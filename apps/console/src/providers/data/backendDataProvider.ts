@@ -7,7 +7,15 @@ const SHARED_DEMO_SESSION_ID = "console-demo-session";
 const authCache = new Map<string, { token: string; expiresAt: string }>();
 
 export function getBackendUrl(): string {
-  return window.localStorage.getItem("ttb-console-backend-url") || import.meta.env.VITE_TTB_BACKEND_URL || "http://127.0.0.1:8000";
+  return window.localStorage.getItem("ttb-console-backend-url") || defaultBackendUrl();
+}
+
+function defaultBackendUrl(): string {
+  const configured = import.meta.env.VITE_TTB_BACKEND_URL;
+  if (configured) return configured;
+  const origin = window.location.origin;
+  if (origin && !/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)) return origin;
+  return "http://127.0.0.1:8000";
 }
 
 export function setBackendUrl(url: string): void {

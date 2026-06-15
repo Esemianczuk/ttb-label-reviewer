@@ -1,7 +1,6 @@
 const BACKEND_URL_KEY = "ttb-console-backend-url";
 const ROLE_STORAGE_KEY = "ttb-console-role";
 const SESSION_KEY = "ttb-console-session-id";
-const DEFAULT_BACKEND_URL = import.meta.env.VITE_TTB_BACKEND_URL || "http://127.0.0.1:8000";
 const SHARED_DEMO_SESSION_ID = "console-demo-session";
 const authCache = new Map<string, { token: string; expiresAt: string }>();
 
@@ -35,7 +34,15 @@ function absoluteUrl(url: string): URL {
 }
 
 function getClientBackendUrl(): string {
-  return window.localStorage.getItem(BACKEND_URL_KEY) || DEFAULT_BACKEND_URL;
+  return window.localStorage.getItem(BACKEND_URL_KEY) || defaultBackendUrl();
+}
+
+function defaultBackendUrl(): string {
+  const configured = import.meta.env.VITE_TTB_BACKEND_URL;
+  if (configured) return configured;
+  const origin = window.location.origin;
+  if (origin && !/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)) return origin;
+  return "http://127.0.0.1:8000";
 }
 
 function getClientSessionId(): string {

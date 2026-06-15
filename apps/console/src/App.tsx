@@ -26,6 +26,7 @@ import { ReviewerBatchesPage } from "./pages/reviewer/ReviewerBatchesPage";
 import { ReviewerPortal } from "./pages/reviewer/ReviewerPortal";
 import { ReviewerReportsPage } from "./pages/reviewer/ReviewerReportsPage";
 import { ReviewWorkbenchPage } from "./pages/reviewer/ReviewWorkbenchPage";
+import { ReviewWorkbench } from "./components/review/ReviewWorkbench";
 import { ResourceIndexPage } from "./pages/resources/ResourceIndexPage";
 import { AppLayout } from "./layouts/AppLayout";
 import { accessControlProvider } from "./providers/access/permissionMatrix";
@@ -86,6 +87,7 @@ function ConsoleRefineShell() {
       <Routes>
         <Route path="/" element={<AppLayout />}>
           <Route index element={<ReviewerEntryRedirect />} />
+          <Route path="ttb-review-demo.html" element={<ReviewerDemoEntry />} />
           <Route path="reviewer" element={<RequireAccess resource="reviews" action="list" roles={["reviewer"]}><ReviewerPortal /></RequireAccess>} />
           <Route path="reviewer/queue" element={<RequireAccess resource="reviews" action="list" roles={["reviewer"]}><ReviewQueuePage /></RequireAccess>} />
           <Route path="reviewer/applications/:applicationId" element={<RequireAccess resource="reviews" action="show" roles={["reviewer"]}><ReviewWorkbenchPage /></RequireAccess>} />
@@ -127,6 +129,34 @@ function ConsoleRefineShell() {
 function ApplicantCorrectionRedirect() {
   const { applicationId } = useParams();
   return <Navigate to={`/applicant/applications/${applicationId}/edit`} replace />;
+}
+
+function ReviewerDemoEntry() {
+  const { snapshot } = useConsoleStore();
+  const { setRole } = useCurrentRole();
+  const [ready, setReady] = useState(false);
+  const targetApplication = useMemo(
+    () => reviewerEntryApplication(snapshot.applications, snapshot.activeApplicationId),
+    [snapshot.activeApplicationId, snapshot.applications]
+  );
+
+  useEffect(() => {
+    setRole("reviewer");
+    writeReviewerAutoRunPreference(true);
+    if (targetApplication) {
+      setActiveApplication(targetApplication.id, "Demo Reviewer", "reviewer");
+    }
+    const readyTimer = window.setTimeout(() => setReady(true), 0);
+    return () => window.clearTimeout(readyTimer);
+  }, [targetApplication?.id]);
+
+  if (!ready) return null;
+
+  return (
+    <div className="gov-page-shell">
+      {targetApplication ? <ReviewWorkbench applicationId={targetApplication.id} titleLevel={1} /> : <ReviewerPortal />}
+    </div>
+  );
 }
 
 function ReviewerEntryRedirect() {
