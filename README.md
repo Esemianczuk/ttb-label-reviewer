@@ -6,6 +6,14 @@
 
 **[https://demo.sherpa-map.com/ttb-review-demo.html](https://demo.sherpa-map.com/ttb-review-demo.html)**
 
+## Take-Home Submission Contents
+
+This repository includes the full source code for the console, API, worker, validation package, fixture collector, Docker setup, tests, and deployment helpers. The setup and run paths are documented below for Docker, native Linux, native macOS, CUDA Linux, and hosted evaluation.
+
+Brief approach: the reviewer workflow uses full-image PaddleOCR on the backend to read COLA label images, aligns recognized text and OCR boxes to expected TTB fields, generates evidence crops from those boxes, and then applies deterministic validation rules. OCR output is evidence only; deterministic validators and reviewer action remain the pass/fail authority.
+
+Primary tools used: React/Refine, FastAPI, SQLite, PaddleOCR/PaddlePaddle, packaged browser Tesseract fallback, Docker Compose, Playwright, pytest, and GitHub Actions. Key assumptions: bundled examples are derived from public approved COLA records, no cloud AI service is required, and the demo is not an official TTB, Treasury, or legal determination system.
+
 ## Quickstart Guide
 
 <img src="Reviewer_Quickstart.png" alt="Annotated reviewer quickstart showing the role switcher, reset demo button, reviewer dashboard navigation, batch review, and run automation controls" width="900">
