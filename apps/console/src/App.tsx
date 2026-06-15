@@ -81,6 +81,7 @@ function ConsoleRefineShell() {
         liveMode: "auto",
         syncWithLocation: true,
         warnWhenUnsavedChanges: false,
+        disableTelemetry: true,
         projectId: "ttb-label-reviewer-console"
       }}
     >
