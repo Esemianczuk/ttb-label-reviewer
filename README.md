@@ -1,5 +1,7 @@
 # TTB Label Reviewer
 
+Live Demo Link https://demo.sherpa-map.com/ttb-review-demo.html
+
 TTB Label Reviewer is a local-first assessment project for reviewing alcohol label applications against label-image evidence. It is not an official TTB, Treasury, or legal determination system.
 
 The primary demo path runs everything on the evaluator machine:
