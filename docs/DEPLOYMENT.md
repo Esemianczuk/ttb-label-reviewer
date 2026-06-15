@@ -59,10 +59,17 @@ One-time repository setup, if Pages is not already enabled:
 After `gh auth login`, this can also be attempted from the repo:
 
 ```bash
-gh api -X POST repos/Esemianczuk/ttb-label-reviewer/pages -f build_type=workflow
+./scripts/configure-github-hosting.sh
 ```
 
-If Pages already exists but is not set to Actions, use the GitHub UI. GitHub's Pages API support varies by repository state, and the UI is clearer for the one-time source switch.
+The script sets `TTB_PROD_BACKEND_URL`, enables workflow-based Pages when the
+GitHub API allows it, and triggers the Pages workflow. If GitHub rejects the
+Pages API update, use the UI once:
+
+1. Open GitHub repository settings.
+2. Go to **Pages**.
+3. Set **Build and deployment** source to **GitHub Actions**.
+4. Save.
 
 Optional repository variable:
 
