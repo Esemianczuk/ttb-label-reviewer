@@ -155,7 +155,7 @@ function normalizeWorker(row: any): WorkerSnapshot {
 }
 
 function isSupportedBackendWorker(worker: WorkerSnapshot): boolean {
-  return workerEngineNames(worker).some((engine) => engine.includes("paddleocr"));
+  return ["online", "busy", "calibrating"].includes(worker.status) && workerEngineNames(worker).some((engine) => engine.includes("paddleocr"));
 }
 
 function engineNames(row: any): string[] {
