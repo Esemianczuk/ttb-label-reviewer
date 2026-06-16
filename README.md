@@ -61,14 +61,17 @@ If the backend is not reachable, the console falls back to the packaged browser 
 
 ## Benchmark Snapshot
 
-Hosted reviewer demo, seeded public COLA sample set. Measured on June 15, 2026 against `https://demo.sherpa-map.com` with isolated benchmark sessions.
+Hosted reviewer demo, seeded public COLA sample set. Measured against `https://demo.sherpa-map.com` with isolated benchmark sessions. The single-reviewer row is from the June 15 hosted snapshot; the batch comparison rows are from the June 16 concurrent-batch run.
 
-| Run mode | Applications | Median review time | p95 review time | Max review time | Backend OCR path | Browser fallback |
-|---|---:|---:|---:|---:|---|---:|
-| Single reviewer automation | 5 | 4.15 sec | 4.43 sec | 4.43 sec | PaddleOCR CUDA worker | 0 |
-| Batch review workflow | 5 | 3.57 sec/app | 4.73 sec/app | 4.73 sec/app | PaddleOCR CUDA worker | 0 |
+| Run mode | Applications | Concurrency | Total wall time | Median app completion | p95 app completion | Backend OCR path | Browser fallback |
+|---|---:|---:|---:|---:|---:|---|---:|
+| Single reviewer automation | 5 | 1 | n/a | 4.15 sec | 4.43 sec | PaddleOCR CUDA worker | 0 |
+| Sequential batch baseline | 10 | 1 | 35.37 sec | 3.00 sec | 5.61 sec | PaddleOCR CUDA worker | 0 |
+| Concurrent batch review | 10 | 2 | 23.57 sec | 4.95 sec | 6.33 sec | PaddleOCR CUDA worker | 0 |
 
-This hosted run exercised 10 backend review POSTs, 50 evaluated fields, and 26 evidence crops. The active worker reported `paddleocr_cuda_pretrained` on an NVIDIA GeForce RTX 4090. The benchmark measures the full backend automation run from reviewer request to stored review result, including queue/scheduler overhead, worker claim, asset loading, PaddleOCR, field alignment, deterministic validation, evidence box generation, database write, and polling until the completed result is returned. It does not include PDF export time or manual reviewer decision time. Browser-only fallback remained available but was not used. These numbers apply to the tested seeded examples, not every possible COLA label.
+The concurrent batch run saved **11.80 seconds** versus the sequential baseline, a **1.50x hosted wall-clock throughput gain** for the tested 10-application batch. The implementation uses two bounded worker slots, so the ideal upper bound is 2x; the measured result is lower because real label packets have uneven processing times and the final slot cannot always stay full.
+
+The latest concurrent hosted run exercised 20 backend review POSTs, 104 evaluated fields, and 58 evidence crops across the sequential and parallel comparison runs. The active worker reported `paddleocr_cuda_pretrained` on an NVIDIA GeForce RTX 4090. The benchmark measures the full backend automation run from reviewer request to stored review result, including queue/scheduler overhead, worker claim, asset loading, PaddleOCR, field alignment, deterministic validation, evidence box generation, database write, and polling until the completed result is returned. It does not include PDF export time or manual reviewer decision time. Browser-only fallback remained available but was not used. Field-status comparison reported 0 mismatches between sequential and concurrent output. These numbers apply to the tested seeded examples, not every possible COLA label.
 
 The benchmark above is the short evaluator-facing snapshot. The full ML approach, including OCR engine comparisons, corpus coverage, LayoutLMv3 trial results, false-pass gating, and reproduction commands, is documented in [`docs/ML_APPROACH_EVALUATION.md`](docs/ML_APPROACH_EVALUATION.md).
 
@@ -78,9 +81,10 @@ Reproduce the hosted snapshot with:
 source ~/.nvm/nvm.sh 2>/dev/null || true
 nvm use 20 2>/dev/null || true
 node scripts/benchmark-hosted-reviewer.mjs --singleCount 5 --batchCount 5
+node scripts/benchmark-parallel-batch.mjs --base https://demo.sherpa-map.com --count 10 --parallelConcurrency 2
 ```
 
-The take-home prompt describes a prior pilot at roughly 30 to 40 seconds per label. The tested hosted path completes these seeded reviewer automation runs under five seconds at p95 while keeping OCR as evidence only. Deterministic validators and reviewer decisions remain the pass/fail authority.
+The take-home prompt describes a prior pilot at roughly 30 to 40 seconds per label. The tested hosted single-reviewer automation path is near the five-second p95 target, and concurrent batch review reduces total queue wall time while keeping OCR as evidence only. Deterministic validators and reviewer decisions remain the pass/fail authority.
 
 ## What Runs
 

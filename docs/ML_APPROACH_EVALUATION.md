@@ -65,19 +65,23 @@ The active queue intentionally excludes records where the public image/form evid
 
 ## Hosted Reviewer Benchmark Snapshot
 
-Measured on June 15, 2026 against `https://demo.sherpa-map.com` with isolated `console-*` benchmark sessions:
+Measured against `https://demo.sherpa-map.com` with isolated `console-*` benchmark sessions. The single-reviewer row is from the June 15 hosted snapshot; the batch comparison rows are from the June 16 concurrent-batch run.
 
-| Run mode | Applications | Median review time | p95 review time | Max review time | Backend OCR path | Browser fallback | Fields | Evidence crops |
-|---|---:|---:|---:|---:|---|---:|---:|---:|
-| Single reviewer automation | 5 | 4.15 sec | 4.43 sec | 4.43 sec | `paddleocr` / `compose-paddleocr-cuda` | 0 | 25 | 13 |
-| Batch review workflow | 5 | 3.57 sec/app | 4.73 sec/app | 4.73 sec/app | `paddleocr` / `compose-paddleocr-cuda` | 0 | 25 | 13 |
+| Run mode | Applications | Concurrency | Total wall time | Median app completion | p95 app completion | Backend OCR path | Browser fallback | Fields | Evidence crops |
+|---|---:|---:|---:|---:|---:|---|---:|---:|---:|
+| Single reviewer automation | 5 | 1 | n/a | 4.15 sec | 4.43 sec | `paddleocr` / `compose-paddleocr-cuda` | 0 | 25 | 13 |
+| Sequential batch baseline | 10 | 1 | 35.37 sec | 3.00 sec | 5.61 sec | `paddleocr` / `compose-paddleocr-cuda` | 0 | 52 | 29 |
+| Concurrent batch review | 10 | 2 | 23.57 sec | 4.95 sec | 6.33 sec | `paddleocr` / `compose-paddleocr-cuda` | 0 | 52 | 29 |
 
-The worker reported `paddleocr_cuda_pretrained` on an NVIDIA GeForce RTX 4090. The script measured API wall-clock time from backend review POST until a stored review result was returned. It counted 10 backend review POSTs and 0 browser fallback requests.
+The concurrent batch run saved 11.80 seconds versus the sequential baseline, a 1.50x hosted wall-clock throughput gain. The implementation uses two bounded worker slots, so the ideal upper bound is 2x; the measured result is lower because real label packets have uneven processing times and the final slot cannot always stay full.
+
+The worker reported `paddleocr_cuda_pretrained` on an NVIDIA GeForce RTX 4090. The parallel benchmark measured API wall-clock time from backend review POST until a stored review result was returned, completed 10 of 10 applications, used 0 browser fallback requests, and reported 0 field-status mismatches against the sequential baseline.
 
 Reproduce with:
 
 ```bash
 node scripts/benchmark-hosted-reviewer.mjs --singleCount 5 --batchCount 5
+node scripts/benchmark-parallel-batch.mjs --base https://demo.sherpa-map.com --count 10 --parallelConcurrency 2
 ```
 
 These numbers measure the hosted demo path for tested seeded examples. They should not be described as a guarantee for all possible COLA labels.

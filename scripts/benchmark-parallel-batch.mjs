@@ -38,7 +38,8 @@ try {
   output.health = await publicRequest("/api/health");
   const admin = await login("admin", `console-parallel-benchmark-admin-${Date.now()}`);
   try {
-    output.workers = await authedRequest("/api/workers", admin);
+    const workers = await authedRequest("/api/workers", admin);
+    output.workers = workers.map(summarizeWorker);
   } catch (error) {
     output.workersError = error.message;
   }
@@ -216,6 +217,26 @@ function compareRuns(sequential, parallel, sequentialSummary, parallelSummary) {
     incomplete,
     fieldStatusMismatchCount: mismatches.length,
     mismatches
+  };
+}
+
+function summarizeWorker(worker) {
+  const profile = worker.capabilities?.engineProfile || worker.calibration?.engineProfile || {};
+  const accelerators = worker.capabilities?.accelerators || {};
+  return {
+    id: worker.id,
+    hostname: worker.hostname,
+    platform: worker.platform,
+    arch: worker.arch,
+    status: worker.status,
+    maxConcurrency: worker.maxConcurrency,
+    activeJobs: worker.activeJobs,
+    lastSeenAt: worker.lastSeenAt,
+    engineTier: profile.tier || null,
+    preferredEngine: profile.preferredEngine || null,
+    cuda: Boolean(profile.cuda || accelerators.cuda?.available),
+    appleMps: Boolean(profile.appleMps || accelerators.appleMps?.available),
+    configuredEngines: worker.calibration?.configuredEngines || Object.keys(worker.capabilities?.engines || {})
   };
 }
 

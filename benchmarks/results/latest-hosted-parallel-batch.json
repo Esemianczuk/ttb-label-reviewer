@@ -1,0 +1,624 @@
+{
+  "createdAt": "2026-06-16T17:10:39.283Z",
+  "baseUrl": "https://demo.sherpa-map.com",
+  "count": 10,
+  "parallelConcurrency": 2,
+  "notes": [
+    "Runs sequential and bounded-parallel backend reviews against isolated benchmark sessions.",
+    "Compares field statuses for the same application ids to catch accuracy regressions.",
+    "Samples NVIDIA GPU memory through nvidia-smi when available."
+  ],
+  "health": {
+    "ok": true,
+    "database": "sqlite",
+    "assetRoot": "/data/assets",
+    "staticDir": "/app/apps/console/dist",
+    "staticReady": true,
+    "lanMode": true,
+    "warning": "LAN MODE ENABLED: coordinator APIs are reachable from the local network. Use only on a trusted network with explicit CORS origins and short-lived worker join tokens."
+  },
+  "workers": [
+    {
+      "id": "compose-paddleocr-cuda",
+      "hostname": "bfdaa1634f20",
+      "platform": "linux",
+      "arch": "x86_64",
+      "status": "online",
+      "maxConcurrency": 2,
+      "activeJobs": 0,
+      "lastSeenAt": "2026-06-16T17:10:39.385601",
+      "engineTier": "paddleocr_cuda_pretrained",
+      "preferredEngine": "paddleocr",
+      "cuda": true,
+      "appleMps": false,
+      "configuredEngines": [
+        "paddleocr"
+      ]
+    },
+    {
+      "id": "compose-paddleocr",
+      "hostname": "0013496222d5",
+      "platform": "linux",
+      "arch": "x86_64",
+      "status": "lost",
+      "maxConcurrency": 2,
+      "activeJobs": 0,
+      "lastSeenAt": "2026-06-15T03:31:44.816288",
+      "engineTier": "paddleocr_cpu_pretrained",
+      "preferredEngine": "paddleocr",
+      "cuda": false,
+      "appleMps": false,
+      "configuredEngines": [
+        "paddleocr"
+      ]
+    }
+  ],
+  "gpu": {
+    "available": true,
+    "maxMemoryUsedMiB": 11363,
+    "maxUtilizationPercent": 67,
+    "sampleCount": 20
+  },
+  "runs": [
+    {
+      "name": "Sequential baseline",
+      "sessionId": "console-parallel-benchmark-sequential-1781629839820",
+      "applications": 10,
+      "completed": 10,
+      "concurrency": 1,
+      "totalWallTimeSec": 35.37,
+      "medianReviewTimeSec": 3,
+      "p95ReviewTimeSec": 5.61,
+      "maxReviewTimeSec": 5.61,
+      "medianBackendProcessingSec": 2.17,
+      "p95BackendProcessingSec": 4.44,
+      "browserFallbackRequestCount": 0,
+      "fieldsEvaluated": 52,
+      "evidenceCropsGenerated": 29,
+      "engineIds": [
+        "paddleocr"
+      ],
+      "workerIds": [
+        "compose-paddleocr-cuda"
+      ],
+      "samples": [
+        {
+          "applicationNumber": "TTB-2026-0066",
+          "title": "WHISKY OF BLOOD",
+          "completed": true,
+          "status": "fail",
+          "wallMs": 4325,
+          "backendTimingMs": 3749,
+          "ocrMs": 226,
+          "fieldsEvaluated": 5,
+          "evidenceCropsGenerated": 3,
+          "fieldStatuses": {
+            "Brand Name": "PASS",
+            "Class/Type": "FAIL",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "PASS"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0065",
+          "title": "VODKA KANGAROO JOEYS",
+          "completed": true,
+          "status": "fail",
+          "wallMs": 3004,
+          "backendTimingMs": 2166,
+          "ocrMs": 827,
+          "fieldsEvaluated": 5,
+          "evidenceCropsGenerated": 1,
+          "fieldStatuses": {
+            "Brand Name": "FAIL",
+            "Class/Type": "NOT_FOUND",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "PASS"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0064",
+          "title": "RUMCAST RESERVE MAURITINUS MLMO",
+          "completed": true,
+          "status": "fail",
+          "wallMs": 3844,
+          "backendTimingMs": 2651,
+          "ocrMs": 121,
+          "fieldsEvaluated": 5,
+          "evidenceCropsGenerated": 3,
+          "fieldStatuses": {
+            "Brand Name": "NEEDS_REVIEW",
+            "Class/Type": "FAIL",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "NEEDS_REVIEW"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0063",
+          "title": "BOURBON BASE",
+          "completed": true,
+          "status": "fail",
+          "wallMs": 4914,
+          "backendTimingMs": 4012,
+          "ocrMs": 2105,
+          "fieldsEvaluated": 5,
+          "evidenceCropsGenerated": 3,
+          "fieldStatuses": {
+            "Brand Name": "PASS",
+            "Class/Type": "PASS",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "FAIL"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0062",
+          "title": "VODKA SOUTHEASTERN",
+          "completed": true,
+          "status": "needs_review",
+          "wallMs": 2662,
+          "backendTimingMs": 1275,
+          "ocrMs": 57,
+          "fieldsEvaluated": 5,
+          "evidenceCropsGenerated": 3,
+          "fieldStatuses": {
+            "Brand Name": "NEEDS_REVIEW",
+            "Class/Type": "NEEDS_REVIEW",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "NEEDS_REVIEW"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0061",
+          "title": "RUM4U",
+          "completed": true,
+          "status": "fail",
+          "wallMs": 1280,
+          "backendTimingMs": 358,
+          "ocrMs": 218,
+          "fieldsEvaluated": 5,
+          "evidenceCropsGenerated": 3,
+          "fieldStatuses": {
+            "Brand Name": "NEEDS_REVIEW",
+            "Class/Type": "FAIL",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "PASS"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0060",
+          "title": "BOURBON BARREL AGED BIG PUMPKIN",
+          "completed": true,
+          "status": "fail",
+          "wallMs": 5528,
+          "backendTimingMs": 4441,
+          "ocrMs": 173,
+          "fieldsEvaluated": 5,
+          "evidenceCropsGenerated": 3,
+          "fieldStatuses": {
+            "Brand Name": "PASS",
+            "Class/Type": "FAIL",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "NEEDS_REVIEW"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0058",
+          "title": "VODKA BROOKLYN WINE CO.",
+          "completed": true,
+          "status": "needs_review",
+          "wallMs": 1522,
+          "backendTimingMs": 539,
+          "ocrMs": 216,
+          "fieldsEvaluated": 5,
+          "evidenceCropsGenerated": 3,
+          "fieldStatuses": {
+            "Brand Name": "PASS",
+            "Class/Type": "NEEDS_REVIEW",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "PASS"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0059",
+          "title": "BOURBON 30",
+          "completed": true,
+          "status": "pass_with_warnings",
+          "wallMs": 5614,
+          "backendTimingMs": 4356,
+          "ocrMs": 518,
+          "fieldsEvaluated": 6,
+          "evidenceCropsGenerated": 3,
+          "fieldStatuses": {
+            "Brand Name": "PASS",
+            "Class/Type": "PASS",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "PASS",
+            "Fanciful Name": "PASS"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0057",
+          "title": "GINKOUBAI",
+          "completed": true,
+          "status": "pass_with_warnings",
+          "wallMs": 2678,
+          "backendTimingMs": 1630,
+          "ocrMs": 1339,
+          "fieldsEvaluated": 6,
+          "evidenceCropsGenerated": 4,
+          "fieldStatuses": {
+            "Brand Name": "PASS",
+            "Class/Type": "PASS",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "PASS",
+            "Fanciful Name": "PASS"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        }
+      ]
+    },
+    {
+      "name": "Parallel batch x2",
+      "sessionId": "console-parallel-benchmark-parallel-1781629875654",
+      "applications": 10,
+      "completed": 10,
+      "concurrency": 2,
+      "totalWallTimeSec": 23.57,
+      "medianReviewTimeSec": 4.95,
+      "p95ReviewTimeSec": 6.33,
+      "maxReviewTimeSec": 6.33,
+      "medianBackendProcessingSec": 1.56,
+      "p95BackendProcessingSec": 4.41,
+      "browserFallbackRequestCount": 0,
+      "fieldsEvaluated": 52,
+      "evidenceCropsGenerated": 29,
+      "engineIds": [
+        "paddleocr"
+      ],
+      "workerIds": [
+        "compose-paddleocr-cuda"
+      ],
+      "samples": [
+        {
+          "applicationNumber": "TTB-2026-0066",
+          "title": "WHISKY OF BLOOD",
+          "completed": true,
+          "status": "fail",
+          "wallMs": 5938,
+          "backendTimingMs": 3617,
+          "ocrMs": 198,
+          "fieldsEvaluated": 5,
+          "evidenceCropsGenerated": 3,
+          "fieldStatuses": {
+            "Brand Name": "PASS",
+            "Class/Type": "FAIL",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "PASS"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0065",
+          "title": "VODKA KANGAROO JOEYS",
+          "completed": true,
+          "status": "fail",
+          "wallMs": 2026,
+          "backendTimingMs": 1562,
+          "ocrMs": 276,
+          "fieldsEvaluated": 5,
+          "evidenceCropsGenerated": 1,
+          "fieldStatuses": {
+            "Brand Name": "FAIL",
+            "Class/Type": "NOT_FOUND",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "PASS"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0064",
+          "title": "RUMCAST RESERVE MAURITINUS MLMO",
+          "completed": true,
+          "status": "fail",
+          "wallMs": 6327,
+          "backendTimingMs": 2588,
+          "ocrMs": 120,
+          "fieldsEvaluated": 5,
+          "evidenceCropsGenerated": 3,
+          "fieldStatuses": {
+            "Brand Name": "NEEDS_REVIEW",
+            "Class/Type": "FAIL",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "NEEDS_REVIEW"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0063",
+          "title": "BOURBON BASE",
+          "completed": true,
+          "status": "fail",
+          "wallMs": 5265,
+          "backendTimingMs": 2771,
+          "ocrMs": 898,
+          "fieldsEvaluated": 5,
+          "evidenceCropsGenerated": 3,
+          "fieldStatuses": {
+            "Brand Name": "PASS",
+            "Class/Type": "PASS",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "FAIL"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0062",
+          "title": "VODKA SOUTHEASTERN",
+          "completed": true,
+          "status": "needs_review",
+          "wallMs": 4202,
+          "backendTimingMs": 1258,
+          "ocrMs": 57,
+          "fieldsEvaluated": 5,
+          "evidenceCropsGenerated": 3,
+          "fieldStatuses": {
+            "Brand Name": "NEEDS_REVIEW",
+            "Class/Type": "NEEDS_REVIEW",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "NEEDS_REVIEW"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0061",
+          "title": "RUM4U",
+          "completed": true,
+          "status": "fail",
+          "wallMs": 1583,
+          "backendTimingMs": 327,
+          "ocrMs": 156,
+          "fieldsEvaluated": 5,
+          "evidenceCropsGenerated": 3,
+          "fieldStatuses": {
+            "Brand Name": "NEEDS_REVIEW",
+            "Class/Type": "FAIL",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "PASS"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0060",
+          "title": "BOURBON BARREL AGED BIG PUMPKIN",
+          "completed": true,
+          "status": "fail",
+          "wallMs": 4832,
+          "backendTimingMs": 4411,
+          "ocrMs": 146,
+          "fieldsEvaluated": 5,
+          "evidenceCropsGenerated": 3,
+          "fieldStatuses": {
+            "Brand Name": "PASS",
+            "Class/Type": "FAIL",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "NEEDS_REVIEW"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0058",
+          "title": "VODKA BROOKLYN WINE CO.",
+          "completed": true,
+          "status": "needs_review",
+          "wallMs": 5236,
+          "backendTimingMs": 538,
+          "ocrMs": 164,
+          "fieldsEvaluated": 5,
+          "evidenceCropsGenerated": 3,
+          "fieldStatuses": {
+            "Brand Name": "PASS",
+            "Class/Type": "NEEDS_REVIEW",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "PASS"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0059",
+          "title": "BOURBON 30",
+          "completed": true,
+          "status": "pass_with_warnings",
+          "wallMs": 4952,
+          "backendTimingMs": 4215,
+          "ocrMs": 457,
+          "fieldsEvaluated": 6,
+          "evidenceCropsGenerated": 3,
+          "fieldStatuses": {
+            "Brand Name": "PASS",
+            "Class/Type": "PASS",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "PASS",
+            "Fanciful Name": "PASS"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        },
+        {
+          "applicationNumber": "TTB-2026-0057",
+          "title": "GINKOUBAI",
+          "completed": true,
+          "status": "pass_with_warnings",
+          "wallMs": 5550,
+          "backendTimingMs": 1231,
+          "ocrMs": 952,
+          "fieldsEvaluated": 6,
+          "evidenceCropsGenerated": 4,
+          "fieldStatuses": {
+            "Brand Name": "PASS",
+            "Class/Type": "PASS",
+            "Alcohol Content": "WARNING",
+            "Net Contents": "WARNING",
+            "Government Warning": "PASS",
+            "Fanciful Name": "PASS"
+          },
+          "engineIds": [
+            "paddleocr"
+          ],
+          "workerIds": [
+            "compose-paddleocr-cuda"
+          ],
+          "browserFallbackUsed": false
+        }
+      ]
+    }
+  ],
+  "comparison": {
+    "speedup": 1.5,
+    "totalWallTimeDeltaSec": 11.8,
+    "incompleteReviewCount": 0,
+    "incomplete": [],
+    "fieldStatusMismatchCount": 0,
+    "mismatches": []
+  }
+}

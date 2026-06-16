@@ -38,7 +38,7 @@ try {
     output.runs.push(await runSequentialReviewSet("Single reviewer automation", singleCount, "single"));
   }
   if (batchCount > 0) {
-    output.runs.push(await runSequentialReviewSet("Batch review workflow", batchCount, "batch"));
+    output.runs.push(await runSequentialReviewSet("Sequential batch baseline", batchCount, "batch"));
   }
   printOutput(output);
 } catch (error) {
