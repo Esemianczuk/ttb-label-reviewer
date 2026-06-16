@@ -23,13 +23,13 @@ Primary tools used: React/Refine, FastAPI, SQLite, PaddleOCR/PaddlePaddle, packa
 3. Use **Reset Demo** to reset applications, decisions, notes, and review progress for your session.
 4. Click **Run automation** on the first application to run OCR, field extraction, matching, and evidence generation.
 5. Leave **Auto-run automation** checked to process the next application automatically when moving forward.
-6. Use **Batch Review** to select multiple applications and run batch OCR, extraction, and matching.
+6. Use **Batch Review** to select multiple applications and run concurrent batch OCR, extraction, matching, and evidence generation.
 
 ## Demo Scope
 
 The demo includes a complete role-based access control flow:
 
-- **Reviewer** users process submitted COLA applications, run OCR-backed automation, inspect evidence, override field outcomes, download reports, and close decisions.
+- **Reviewer** users process submitted COLA applications, run OCR-backed automation, inspect evidence, run concurrent batch review, override field outcomes, download reports, and close decisions.
 - **Applicant** users can create and edit application packets, upload label images, import COLA registry data when available, submit packets, archive records, and respond to correction requests by updating the packet.
 - **Admin** users can inspect worker health, OCR engine status, jobs, audit events, benchmarks, settings, and retained sample-record state without destructive controls.
 
