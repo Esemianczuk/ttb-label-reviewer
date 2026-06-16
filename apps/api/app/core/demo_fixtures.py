@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from sqlalchemy import delete, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .. import models
@@ -58,7 +59,23 @@ def ensure_demo_session(session: Session, session_id: str, *, reset_review_state
     asset_root.mkdir(parents=True, exist_ok=True)
     for index, record in enumerate(records):
         seed_record(session, asset_root, session_id, record, index)
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError:
+        if reset_review_state:
+            raise
+        session.rollback()
+        seeded_by_parallel_request = session.scalar(
+            select(models.Application.id)
+            .where(
+                models.Application.session_id == session_id,
+                models.Application.source == "public_cola_registry",
+            )
+            .limit(1)
+        )
+        if seeded_by_parallel_request:
+            return
+        raise
 
 
 def should_seed_demo_session(session_id: str) -> bool:

@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
+from sqlalchemy import func, select
 
+from apps.api.app import models
 from apps.api.app.config import Settings
+from apps.api.app.db import init_db, make_session_factory
 from apps.api.app.main import create_app
 from apps.api.app.tests.helpers import PNG_1X1_BYTES, auth_headers
 
@@ -166,6 +171,58 @@ def test_public_demo_fixtures_are_private_per_console_session(client: TestClient
     assert client.get("/api/jobs", headers=auth_headers(client, "admin", "console-alpha")).json()
     assert client.get("/api/jobs", headers=auth_headers(client, "admin", "console-beta")).json() == []
     assert client.get(f"/api/reviews/{alpha_review.json()['id']}", headers=beta_headers).status_code == 404
+
+
+def test_parallel_first_demo_fixture_request_reuses_seeded_session(tmp_path, monkeypatch):
+    settings = Settings(
+        database_url=f"sqlite:///{tmp_path / 'race.sqlite3'}",
+        data_dir=tmp_path / "data",
+        static_dir=tmp_path / "missing-dist",
+    )
+    session_factory = make_session_factory(settings)
+    init_db(session_factory)
+
+    from apps.api.app.core import demo_fixtures
+
+    monkeypatch.setattr(demo_fixtures, "get_settings", lambda: settings)
+    original_seed_record = demo_fixtures.seed_record
+    first_seed_barrier = threading.Barrier(2)
+    first_seed_threads: set[int] = set()
+    first_seed_lock = threading.Lock()
+
+    def synchronized_seed_record(*args, **kwargs):
+        thread_id = threading.get_ident()
+        with first_seed_lock:
+            should_wait = thread_id not in first_seed_threads
+            first_seed_threads.add(thread_id)
+        if should_wait:
+            first_seed_barrier.wait(timeout=10)
+        return original_seed_record(*args, **kwargs)
+
+    monkeypatch.setattr(demo_fixtures, "seed_record", synchronized_seed_record)
+
+    def seed_in_session() -> int:
+        with session_factory() as db:
+            demo_fixtures.ensure_demo_session(db, "console-parallel-race")
+            return db.scalar(
+                select(func.count(models.Application.id)).where(
+                    models.Application.session_id == "console-parallel-race",
+                    models.Application.source == "public_cola_registry",
+                )
+            )
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        seeded_counts = list(executor.map(lambda _: seed_in_session(), range(2)))
+
+    assert min(seeded_counts) >= 50
+    with session_factory() as db:
+        application_ids = db.scalars(
+            select(models.Application.id).where(
+                models.Application.session_id == "console-parallel-race",
+                models.Application.source == "public_cola_registry",
+            )
+        ).all()
+        assert len(application_ids) == len(set(application_ids))
 
 
 def test_asset_upload_is_sanitized_and_session_scoped(client: TestClient):

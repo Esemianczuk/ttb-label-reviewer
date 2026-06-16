@@ -37,8 +37,24 @@ type BatchProgress = {
   message: string;
   percent: number;
   processedIds: string[];
+  failedIds: string[];
+  activeTitles: string[];
+  concurrency: number;
   mode: ProcessingMode;
   status: "running" | "paused" | "stopping" | "completed" | "stopped";
+};
+
+type BatchProgressState = {
+  total: number;
+  mode: ProcessingMode;
+  concurrency: number;
+  processedIds: string[];
+  failedIds: string[];
+  activeTitles: string[];
+  latestTitle: string;
+  message: string;
+  status: BatchProgress["status"];
+  inFlightWeight?: number;
 };
 
 export function ReviewerBatchesPage() {
@@ -125,76 +141,143 @@ export function ReviewerBatchesPage() {
     setBatchPaused(false);
     setBatchStopping(false);
     const idsToProcess = [...selectedProcessableIds];
+    const concurrency = resolveBatchConcurrency(processingMode, idsToProcess.length);
     const processedIds: string[] = [];
+    const failedIds: string[] = [];
+    const activeTitles = new Map<number, string>();
+    let nextIndex = 0;
 
     try {
-      for (let index = 0; index < idsToProcess.length; index += 1) {
-        if (batchControlRef.current.stop) break;
-        await waitWhileBatchPaused(index + 1, idsToProcess.length, processedIds, processingMode);
-        if (batchControlRef.current.stop) break;
-        const application = getSnapshot().applications.find((candidate) => candidate.id === idsToProcess[index]);
-        if (!application) continue;
-        const basePercent = Math.round((index / idsToProcess.length) * 100);
-        setBatchProgress({
-          index: index + 1,
-          total: idsToProcess.length,
-          applicationTitle: application.title,
-          message: `${modeLabel(processingMode)} review queued. Reading label evidence and matching expected fields.`,
-          percent: Math.max(basePercent, 5),
-          processedIds: [...processedIds],
-          mode: processingMode,
-          status: "running"
-        });
-        await new Promise((resolve) => window.setTimeout(resolve, 300));
-        if (batchControlRef.current.stop) break;
-        await waitWhileBatchPaused(index + 1, idsToProcess.length, processedIds, processingMode);
-        if (batchControlRef.current.stop) break;
+      setBatchProgress(toBatchProgress({
+        total: idsToProcess.length,
+        mode: processingMode,
+        concurrency,
+        processedIds,
+        failedIds,
+        activeTitles: [],
+        latestTitle: `${idsToProcess.length} selected applications`,
+        message: `${modeLabel(processingMode)} parallel batch ready. Starting up to ${concurrency} application${concurrency === 1 ? "" : "s"} at a time.`,
+        status: "running"
+      }));
 
-        await runAutomatedReviewForMode(application.id, processingMode, {
-          dataProvider,
-          backendUnavailable,
-          onProgress: (progressMessage) => {
-            setBatchProgress({
-              index: index + 1,
-              total: idsToProcess.length,
-              applicationTitle: application.title,
-              message: progressMessage,
-              percent: Math.min(95, Math.round(((index + 0.65) / idsToProcess.length) * 100)),
-              processedIds: [...processedIds],
-              mode: processingMode,
-              status: batchControlRef.current.stop ? "stopping" : batchControlRef.current.paused ? "paused" : "running"
+      const claimNextIndex = () => {
+        if (batchControlRef.current.stop) return null;
+        if (nextIndex >= idsToProcess.length) return null;
+        const index = nextIndex;
+        nextIndex += 1;
+        return index;
+      };
+
+      const runSlot = async (slot: number) => {
+        while (!batchControlRef.current.stop) {
+          await waitWhileBatchPaused(idsToProcess.length, processedIds, failedIds, processingMode, concurrency, activeTitles);
+          if (batchControlRef.current.stop) break;
+          const index = claimNextIndex();
+          if (index === null) break;
+          const application = getSnapshot().applications.find((candidate) => candidate.id === idsToProcess[index]);
+          if (!application) continue;
+          activeTitles.set(slot, application.title);
+          setBatchProgress(toBatchProgress({
+            total: idsToProcess.length,
+            mode: processingMode,
+            concurrency,
+            processedIds,
+            failedIds,
+            activeTitles: [...activeTitles.values()],
+            latestTitle: application.title,
+            message: `${modeLabel(processingMode)} review queued. Reading label evidence and matching expected fields.`,
+            status: "running",
+            inFlightWeight: 0.2
+          }));
+
+          try {
+            await runAutomatedReviewForMode(application.id, processingMode, {
+              dataProvider,
+              backendUnavailable,
+              onProgress: (progressMessage) => {
+                setBatchProgress(toBatchProgress({
+                  total: idsToProcess.length,
+                  mode: processingMode,
+                  concurrency,
+                  processedIds,
+                  failedIds,
+                  activeTitles: [...activeTitles.values()],
+                  latestTitle: application.title,
+                  message: progressMessage,
+                  status: batchControlRef.current.stop ? "stopping" : batchControlRef.current.paused ? "paused" : "running",
+                  inFlightWeight: 0.55
+                }));
+              }
             });
-          }
-        });
 
-        const processedApplication = getSnapshot().applications.find((candidate) => candidate.id === application.id) || application;
-        processedIds.push(processedApplication.id);
-        setBatchProgress({
-          index: index + 1,
-          total: idsToProcess.length,
-          applicationTitle: processedApplication.title,
-          message: "Automated review stored. Open the reviewed application to download its PDF report.",
-          percent: Math.round(((index + 1) / idsToProcess.length) * 100),
-          processedIds: [...processedIds],
-          mode: processingMode,
-          status: batchControlRef.current.stop ? "stopping" : "running"
-        });
-        await new Promise((resolve) => window.setTimeout(resolve, 180));
-      }
+            const processedApplication = getSnapshot().applications.find((candidate) => candidate.id === application.id) || application;
+            processedIds.push(processedApplication.id);
+            setBatchProgress(toBatchProgress({
+              total: idsToProcess.length,
+              mode: processingMode,
+              concurrency,
+              processedIds,
+              failedIds,
+              activeTitles: [...activeTitles.values()].filter((title) => title !== application.title),
+              latestTitle: processedApplication.title,
+              message: "Automated review stored. Open the reviewed application to download its PDF report.",
+              status: batchControlRef.current.stop ? "stopping" : "running",
+              inFlightWeight: 0
+            }));
+          } catch (error) {
+            failedIds.push(application.id);
+            setBatchProgress(toBatchProgress({
+              total: idsToProcess.length,
+              mode: processingMode,
+              concurrency,
+              processedIds,
+              failedIds,
+              activeTitles: [...activeTitles.values()].filter((title) => title !== application.title),
+              latestTitle: application.title,
+              message: error instanceof Error ? error.message : "Automated review failed for one application.",
+              status: batchControlRef.current.stop ? "stopping" : "running",
+              inFlightWeight: 0
+            }));
+          } finally {
+            activeTitles.delete(slot);
+          }
+
+          await new Promise((resolve) => window.setTimeout(resolve, 120));
+        }
+      };
+
+      await Promise.all(Array.from({ length: concurrency }, (_, slot) => runSlot(slot)));
       setSelectedIds((current) => current.filter((id) => !processedIds.includes(id)));
       if (batchControlRef.current.stop) {
         setBatchProgress((current) =>
           current
             ? {
                 ...current,
-                message: `Batch stopped cleanly after ${processedIds.length} application${processedIds.length === 1 ? "" : "s"}.`,
-                percent: Math.round((processedIds.length / idsToProcess.length) * 100),
+                message: `Batch stopped cleanly after ${processedIds.length} application${processedIds.length === 1 ? "" : "s"} completed${failedIds.length ? ` and ${failedIds.length} failed` : ""}.`,
+                percent: Math.round(((processedIds.length + failedIds.length) / idsToProcess.length) * 100),
                 processedIds: [...processedIds],
+                failedIds: [...failedIds],
+                activeTitles: [],
                 status: "stopped"
               }
             : current
         );
         messageApi.warning(`Batch stopped after ${processedIds.length} application${processedIds.length === 1 ? "" : "s"}.`);
+      } else if (failedIds.length) {
+        setBatchProgress((current) =>
+          current
+            ? {
+                ...current,
+                message: `Batch finished with ${processedIds.length} completed and ${failedIds.length} failed application${failedIds.length === 1 ? "" : "s"}.`,
+                percent: 100,
+                processedIds: [...processedIds],
+                failedIds: [...failedIds],
+                activeTitles: [],
+                status: "completed"
+              }
+            : current
+        );
+        messageApi.warning(`Processed ${processedIds.length} application${processedIds.length === 1 ? "" : "s"}; ${failedIds.length} failed.`);
       } else {
         setBatchProgress((current) =>
           current
@@ -203,6 +286,8 @@ export function ReviewerBatchesPage() {
                 message: "Batch complete. Open any reviewed application to download its PDF report.",
                 percent: 100,
                 processedIds: [...processedIds],
+                failedIds: [...failedIds],
+                activeTitles: [],
                 status: "completed"
               }
             : current
@@ -220,16 +305,24 @@ export function ReviewerBatchesPage() {
     }
   };
 
-  const waitWhileBatchPaused = async (index: number, total: number, processedIds: string[], mode: ProcessingMode) => {
+  const waitWhileBatchPaused = async (
+    total: number,
+    processedIds: string[],
+    failedIds: string[],
+    mode: ProcessingMode,
+    concurrency: number,
+    activeTitles: Map<number, string>
+  ) => {
     if (!batchControlRef.current.paused || batchControlRef.current.stop) return;
-    setBatchProgress((current) => ({
-      index,
+    setBatchProgress((current) => toBatchProgress({
       total,
-      applicationTitle: current?.applicationTitle || "Batch paused",
+      latestTitle: current?.applicationTitle || "Batch paused",
       message: "Batch paused. Resume when ready, or stop to end after the last completed application.",
-      percent: current?.percent || Math.round((processedIds.length / total) * 100),
-      processedIds: [...processedIds],
+      processedIds,
+      failedIds,
+      activeTitles: [...activeTitles.values()],
       mode,
+      concurrency,
       status: "paused"
     }));
     while (batchControlRef.current.paused && !batchControlRef.current.stop) {
@@ -245,7 +338,7 @@ export function ReviewerBatchesPage() {
       current
         ? {
             ...current,
-            message: `${current.message} Pause requested; the current application will finish safely.`,
+            message: `${current.message} Pause requested; active application reviews will finish safely.`,
             status: "paused"
           }
         : current
@@ -277,7 +370,7 @@ export function ReviewerBatchesPage() {
       current
         ? {
             ...current,
-            message: "Stop requested. The current application will finish safely, then the batch will end.",
+            message: "Stop requested. Active application reviews will finish safely, then the batch will end.",
             status: "stopping"
           }
         : current
@@ -623,6 +716,7 @@ function BatchFilterBar({
 
 function BatchProgressPanel({ progress }: { progress: BatchProgress }) {
   const statusTone = progress.status === "paused" ? "orange" : progress.status === "stopping" || progress.status === "stopped" ? "red" : progress.status === "completed" ? "green" : "blue";
+  const activeTitles = progress.activeTitles.slice(0, progress.concurrency);
   return (
     <GovAlert type={progress.status === "stopped" ? "warning" : "info"} title={`${progress.status === "paused" ? "Paused" : progress.status === "stopping" ? "Stopping" : progress.status === "stopped" ? "Stopped" : progress.status === "completed" ? "Batch complete" : "Processing"} ${progress.index} of ${progress.total}`}>
       <Space orientation="vertical" className="full-width" size={10}>
@@ -631,7 +725,16 @@ function BatchProgressPanel({ progress }: { progress: BatchProgress }) {
           <Typography.Text strong>{progress.applicationTitle}</Typography.Text>
           <Tag color={statusTone}>{progress.status}</Tag>
           <Tag>{modeLabel(progress.mode)}</Tag>
+          <Tag>Parallel slots: {progress.concurrency}</Tag>
         </Space>
+        {activeTitles.length ? (
+          <Space wrap>
+            <LoadingOutlined />
+            <Typography.Text type="secondary">
+              Active: {activeTitles.join(" · ")}
+            </Typography.Text>
+          </Space>
+        ) : null}
         <Typography.Text>{progress.message}</Typography.Text>
         <Progress
           aria-label="Batch processing progress"
@@ -646,9 +749,46 @@ function BatchProgressPanel({ progress }: { progress: BatchProgress }) {
             </Typography.Text>
           </Space>
         ) : null}
+        {progress.failedIds.length ? (
+          <Space wrap>
+            <StopOutlined />
+            <Typography.Text type="secondary">
+              {progress.failedIds.length} application{progress.failedIds.length === 1 ? "" : "s"} failed and should be retried after checking worker health.
+            </Typography.Text>
+          </Space>
+        ) : null}
       </Space>
     </GovAlert>
   );
+}
+
+function resolveBatchConcurrency(mode: ProcessingMode, selectedCount: number): number {
+  const configured = Number.parseInt(String(import.meta.env.VITE_TTB_BATCH_CONCURRENCY || ""), 10);
+  const defaultLimit = mode === "backend" ? 2 : 2;
+  const limit = Number.isFinite(configured) && configured > 0 ? configured : defaultLimit;
+  return Math.max(1, Math.min(selectedCount, limit, 4));
+}
+
+function toBatchProgress(state: BatchProgressState): BatchProgress {
+  const activeCount = state.activeTitles.length;
+  const finishedCount = state.processedIds.length + state.failedIds.length;
+  const index = Math.min(state.total, Math.max(1, finishedCount + activeCount));
+  const inFlightWeight = state.inFlightWeight ?? (activeCount ? 0.35 : 0);
+  const weightedComplete = Math.min(state.total, finishedCount + Math.min(activeCount, state.concurrency) * inFlightWeight);
+  const percent = state.total ? Math.min(100, Math.max(5, Math.round((weightedComplete / state.total) * 100))) : 0;
+  return {
+    index,
+    total: state.total,
+    applicationTitle: state.activeTitles.length > 1 ? `${state.activeTitles.length} applications in progress` : state.latestTitle,
+    message: state.message,
+    percent: state.status === "completed" ? 100 : percent,
+    processedIds: [...state.processedIds],
+    failedIds: [...state.failedIds],
+    activeTitles: [...state.activeTitles],
+    concurrency: state.concurrency,
+    mode: state.mode,
+    status: state.status
+  };
 }
 
 function modeLabel(mode: ProcessingMode): string {
