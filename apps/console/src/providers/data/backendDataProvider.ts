@@ -1,6 +1,7 @@
 import type { DataProvider } from "@refinedev/core";
 import type { ConsoleResourceName } from "../../resources";
 import { getStoredRole } from "../auth/authProvider";
+import type { UserRole } from "../../domain/application/types";
 
 const SESSION_KEY = "ttb-console-session-id";
 const SHARED_DEMO_SESSION_ID = "console-demo-session";
@@ -74,38 +75,42 @@ export const apiDataProvider: DataProvider = {
 
 export const backendDataProvider = apiDataProvider;
 
-async function listResource(resource: string): Promise<any[]> {
+export async function listBackendResourceAsRole(resource: string, role: UserRole): Promise<any[]> {
+  return listResource(resource, role);
+}
+
+async function listResource(resource: string, authRole?: UserRole): Promise<any[]> {
   switch (resource as ConsoleResourceName) {
     case "applications":
-      return request("/api/applications");
+      return request("/api/applications", {}, authRole);
     case "reviews":
-      return request("/api/reviews?limit=100");
+      return request("/api/reviews?limit=100", {}, authRole);
     case "workers":
-      return request("/api/workers");
+      return request("/api/workers", {}, authRole);
     case "auditEvents":
-      return request("/api/audit-events?limit=100");
+      return request("/api/audit-events?limit=100", {}, authRole);
     case "settings":
-      return request("/api/settings");
+      return request("/api/settings", {}, authRole);
     case "jobs":
-      return request("/api/jobs?limit=100");
+      return request("/api/jobs?limit=100", {}, authRole);
     case "benchmarks":
-      return request("/api/admin/benchmarks/results");
+      return request("/api/admin/benchmarks/results", {}, authRole);
     case "applicationVersions":
-      return request("/api/admin/application-versions");
+      return request("/api/admin/application-versions", {}, authRole);
     case "labelAssets":
-      return request("/api/admin/assets");
+      return request("/api/admin/assets", {}, authRole);
     case "reviewDecisions":
-      return request("/api/admin/review-decisions");
+      return request("/api/admin/review-decisions", {}, authRole);
     case "correctionRequests":
-      return request("/api/admin/correction-requests");
+      return request("/api/admin/correction-requests", {}, authRole);
     case "users":
-      return request("/api/admin/users");
+      return request("/api/admin/users", {}, authRole);
     case "reports":
-      return request("/api/admin/reports");
+      return request("/api/admin/reports", {}, authRole);
     case "fixtures":
-      return request("/api/admin/fixtures");
+      return request("/api/admin/fixtures", {}, authRole);
     case "ocrModelStatus":
-      return request("/api/admin/ocr-model-status");
+      return request("/api/admin/ocr-model-status", {}, authRole);
     default:
       throw new Error(`Backend provider does not expose resource ${resource}.`);
   }
@@ -113,7 +118,7 @@ async function listResource(resource: string): Promise<any[]> {
 
 async function runAdminAction(action: string, payload: any): Promise<any | null> {
   if (action === "admin/benchmark") {
-    return request("/api/admin/benchmarks/run", { method: "POST", body: JSON.stringify(payload || {}) });
+    return request("/api/admin/benchmarks/run", { method: "POST", body: JSON.stringify(payload || {}) }, "admin");
   }
   if (action.startsWith("admin/")) {
     throw new Error("This admin console is read-only except for benchmark runs.");
@@ -163,8 +168,8 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
-export async function request<T = any>(path: string, init: RequestInit = {}): Promise<T> {
-  const authHeader = await demoAuthHeader();
+export async function request<T = any>(path: string, init: RequestInit = {}, authRole?: UserRole): Promise<T> {
+  const authHeader = await demoAuthHeader(authRole);
   const response = await fetch(`${getBackendUrl()}${path.startsWith("/") ? path : `/${path}`}`, {
     ...init,
     headers: {
@@ -179,8 +184,8 @@ export async function request<T = any>(path: string, init: RequestInit = {}): Pr
   return response.json() as Promise<T>;
 }
 
-export async function demoAuthHeader(): Promise<Record<string, string>> {
-  const role = getStoredRole();
+export async function demoAuthHeader(authRole?: UserRole): Promise<Record<string, string>> {
+  const role = authRole || getStoredRole();
   const cacheKey = `${getBackendUrl()}:${role}`;
   const cached = authCache.get(cacheKey);
   if (cached && Date.parse(cached.expiresAt) - Date.now() > 60_000) {

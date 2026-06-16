@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSubscription } from "@refinedev/core";
-import type { DataProvider } from "@refinedev/core";
 import type { AdminJob, AdminSettings, AuditEvent, BenchmarkRun, ConsoleSnapshot, OcrModelStatus, ProcessingMode, ReviewApplication, WorkerSnapshot } from "../../domain/application/types";
 import { createDefaultAdminSettings } from "../../domain/application/demoData";
 import { useConsoleStore } from "../../hooks/useConsoleStore";
+import { listBackendResourceAsRole } from "../../providers/data/backendDataProvider";
 import { useProcessingModeContext } from "../../providers/processing/ProcessingModeProvider";
 
 type AdminActionPayload = Record<string, unknown>;
@@ -26,8 +26,8 @@ export function useAdminOperations() {
     try {
       const entries = await Promise.all(
         adminResources.map(async (resource) => {
-          const response = await dataProvider.getList({ resource });
-          return [resource, response.data] as const;
+          const data = await listBackendResourceAsRole(resource, "admin");
+          return [resource, data] as const;
         })
       );
       setRemoteSnapshot(normalizeRemoteSnapshot(localSnapshot, Object.fromEntries(entries)));
@@ -36,7 +36,7 @@ export function useAdminOperations() {
     } finally {
       setLoading(false);
     }
-  }, [backendUnavailable, dataProvider, localSnapshot, mode]);
+  }, [backendUnavailable, localSnapshot, mode]);
 
   useEffect(() => {
     void refresh();

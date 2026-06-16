@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { consoleResourceNames } from "../../resources";
 import { healthApiHealthGet } from "../../api/generated/ttbApi";
-import { apiDataProvider, setBackendUrl } from "../../providers/data/backendDataProvider";
+import { apiDataProvider, listBackendResourceAsRole, setBackendUrl } from "../../providers/data/backendDataProvider";
 import { browserDataProvider } from "../../providers/data/browserDataProvider";
 import { providerForMode } from "../../providers/data/providerRegistry";
 import { applyBackendReviewResult, getSnapshot, resetSnapshot } from "../../providers/data/browserStore";
@@ -184,6 +184,28 @@ describe("phase 8 provider consolidation", () => {
 
     expect(response.data[0]).toMatchObject({ id: "benchmark-json-1", engineUsed: "python-validator-fixture", queueMs: 8 });
     expect(fetchMock.mock.calls[1][0]).toBe("http://127.0.0.1:8124/api/admin/benchmarks/results");
+    setBackendUrl("http://127.0.0.1:8000");
+  });
+
+  it("keeps admin refresh auth stable when the visible role changes", async () => {
+    window.localStorage.setItem("ttb-console-role", "applicant");
+    setBackendUrl("http://127.0.0.1:8130");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ token: "token-admin-explicit", expiresAt: new Date(Date.now() + 3600_000).toISOString() }))
+      .mockResolvedValueOnce(jsonResponse([{ id: "worker-1", status: "online" }]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await listBackendResourceAsRole("workers", "admin");
+
+    expect(response).toEqual([{ id: "worker-1", status: "online" }]);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual({ role: "admin" });
+    expect(fetchMock.mock.calls[1][0]).toBe("http://127.0.0.1:8130/api/workers");
+    expect(fetchMock.mock.calls[1][1].headers).toEqual(
+      expect.objectContaining({
+        Authorization: "Bearer token-admin-explicit"
+      })
+    );
     setBackendUrl("http://127.0.0.1:8000");
   });
 
